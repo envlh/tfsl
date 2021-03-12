@@ -3,6 +3,8 @@ from functools import singledispatch
 from json import JSONEncoder
 import re
 
+import requests
+
 default_indent = "    "
 
 # TODO: how best to override these for wikibases with custom prefixes?
@@ -52,8 +54,20 @@ def sub_from_list(references, arg):
     newreferences = [reference for reference in newreferences if reference != arg]
     return newreferences
 
-def newjsondefault(self, obj):
-    return getattr(obj.__class__, "__jsonout__", newjsondefault.default)(obj)
+def find_lexeme(lemma, language, category):
+    # TODO: have a method in lexeme.py that returns each lexeme from the result list?
+    # TODO: make the query customizable?
+    query_in = f'SELECT ?i {{ ?i dct:language wd:{language.item} ; wikibase:lemma "{lemma.text}"@{lemma.language.code} ; wikibase:lexicalCategory wd:{category} }}'
+    query_url = "https://query.wikidata.org/sparql"
+    query_parameters = {
+        "query": query_in
+    }
+    query_headers = {
+        "Accept": "application/sparql-results+json"
+    }
+    R = requests.post(query_url, data=query_parameters, headers=query_headers)
+    if R.status_code != 200:
+        raise Exception("POST was unsuccessfull ({}): {}".format(R.status_code, R.text))
 
-newjsondefault.default = JSONEncoder.default  # Save unmodified default.
-JSONEncoder.default = newjsondefault # Replace it.
+    query_out = R.json()
+    return [binding["i"]["value"].replace('http://www.wikidata.org/entity/','') for binding in query_out["results"]["bindings"]]
