@@ -87,11 +87,27 @@ class Reference:
     def __jsonout__(self):
         snaks_order = list(self._claims.keys())
         base_dict = {
-                        "snaks": self._claims,
                         "snaks-order": snaks_order
                     }
+        base_dict["snaks"] = defaultdict(list)
+        for snak in snaks_order:
+            for claim in self._claims[snak]:
+                base_dict["snaks"][snak].append(claim.__jsonout__())
+        base_dict["snaks"] = dict(base_dict["snaks"])
         try:
             base_dict["hash"] = self.hash
         except AttributeError:
             pass
         return base_dict
+
+def build_ref(ref_in):
+    claim_list = ref_in["snaks"]
+    ref_claims = defaultdict(list)
+    for prop in claim_list:
+        for claim in claim_list[prop]:
+            ref_claims[prop].append(tfsl.claim.build_claim(claim))
+
+    ref_out = Reference(ref_claims)
+    ref_out.snaks_order = ref_in["snaks-order"]
+    ref_out.hash = ref_in["hash"]
+    return ref_out

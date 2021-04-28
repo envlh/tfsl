@@ -12,7 +12,8 @@ All you need besides that or some other similarly recent version of Python is th
 
 ## Use
 
-Most facets of use are exemplified in the unit tests.
+Most facets of use are exemplified in the unit tests. (Unless otherwise stated in a comment in a unit test file, any functionality which is not exhibited in a unit test should be assumed to be unstable.)
+
 Perhaps when this is better developed a more thorough tutorial on its use will come.
 
 ## Licensing and external credits

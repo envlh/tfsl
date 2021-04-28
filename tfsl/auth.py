@@ -3,6 +3,7 @@ import logging
 import time
 import requests
 
+import tfsl.lexeme
 import tfsl.utils
 
 from getpass import getpass
@@ -23,6 +24,9 @@ csrf_token_params = {
     "format": "json"
 }
 
+wikidata_api_url = "https://www.wikidata.org/w/api.php"
+default_user_agent = 'tfsl 0.0.1'
+
 class WikibaseSession:
     """Auth library for Wikibases.
     """
@@ -31,8 +35,8 @@ class WikibaseSession:
         password: Optional[str] = None,
         token: Optional[str] = None,
         auth: Optional[str] = None,
-        user_agent: str = 'tfsl 0.0.1',
-        URL: str = "https://www.wikidata.org/w/api.php"
+        user_agent: str = default_user_agent,
+        URL: str = wikidata_api_url
     ):
         self.URL = URL
         self.user_agent = user_agent
@@ -91,6 +95,8 @@ class WikibaseSession:
                 requestjson["new"] = "item"
             else:
                 requestjson["new"] = "property"
+        else:
+            requestjson["id"] = data["id"]
 
         if summary is not None:
             requestjson["summary"] = summary
@@ -103,8 +109,6 @@ class WikibaseSession:
         requestjson["assertuser"] = self.assertUser
 
         requestjson["maxlag"] = str(maxlag_in)
-
-        print(requestjson)
 
         R = self.S.post(self.URL, data=requestjson, headers=self.headers, auth=self.auth)
         if R.status_code != 200:
@@ -181,3 +185,35 @@ class WikibaseSession:
                 )
         logging.debug("Get request succeed")
         return DATA
+
+    def find_lexeme(self, lemma, language, category):
+        # TODO: have a method in lexeme.py that returns each lexeme from the result list?
+        # TODO: handle multiple combos of one of these inputs?
+        # TODO: make the query customizable?
+        query_in = f'SELECT ?i {{ ?i dct:language wd:{language.item} ; wikibase:lemma "{lemma.text}"@{lemma.language.code} ; wikibase:lexicalCategory wd:{category} }}'
+        query_url = "https://query.wikidata.org/sparql"
+        query_parameters = {
+            "query": query_in
+        }
+        query_headers = {
+            "Accept": "application/sparql-results+json",
+            "User-Agent": self.user_agent
+        }
+        R = requests.post(query_url, data=query_parameters, headers=query_headers)
+        if R.status_code != 200:
+            raise Exception("POST was unsuccessfull ({}): {}".format(R.status_code, R.text))
+    
+        query_out = R.json()
+        return [binding["i"]["value"].replace('http://www.wikidata.org/entity/','') for binding in query_out["results"]["bindings"]]
+
+    def get_lexemes(self, lids):
+        query_parameters = get_lexeme_params = {
+            "action": "wbgetentities",
+            "format": "json",
+            "ids": "|".join(lids)
+        }
+        data_output = self.get(query_parameters)
+        out_lexemes = []
+        for key in data_output["entities"]:
+            out_lexemes.append(tfsl.lexeme.build_lexeme(data_output["entities"][key]))
+        return out_lexemes

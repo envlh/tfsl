@@ -29,12 +29,36 @@ class Claim:
         return Statement(self.property, self.value) @ arg
 
     def __jsonout__(self):
+        if(type(self.value) == str):
+            value_out = self.value
+        else:
+            value_out = self.value.__jsonout__()
         return {
                    "snaktype": "value",
                    "property": self.property,
                    "datatype": tfsl.utils.values_datatype(self.property),
                    "datavalue": {
-                       "value": self.value.__jsonout__,
+                       "value": value_out,
                        "type": tfsl.utils.values_type(self.property)
                    }
                }
+
+def build_value(value_in):
+    if(value_in["type"] == "string"):
+        return value_in["value"]
+    elif(value_in["type"] == "wikibase-entityid"):
+        return tfsl.itemvalue.build_itemvalue(value_in["value"])
+    elif(value_in["type"] == "monolingualtext"):
+        return tfsl.monolingualtext.build_mtvalue(value_in["value"])
+    else:
+        raise ValueError("Type "+value_in["type"]+" is not supported yet!")
+
+def build_claim(claim_in):
+    claim_prop = claim_in["property"]
+    claim_value = build_value(claim_in["datavalue"])
+
+    claim_out = Claim(claim_prop, claim_value)
+    claim_out.snaktype = claim_in["snaktype"]
+    claim_out.hash = claim_in["hash"]
+    claim_out.datatype = claim_in["datatype"]
+    return claim_out

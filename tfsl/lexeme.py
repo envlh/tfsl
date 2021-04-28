@@ -3,6 +3,8 @@ from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
 
+import tfsl.auth
+import tfsl.languages
 import tfsl.lexemeform
 import tfsl.lexemesense
 import tfsl.monolingualtext
@@ -43,6 +45,9 @@ class Lexeme:
     def _(self, arg: tfsl.lexemeform.LexemeForm):
         return Lexeme(self.lemmata, self.language, self.category, self.statements, self.senses, tfsl.utils.add_to_list(self.forms, arg))
 
+    def getForms(self, inflections):
+        return [form for form in self.forms if all(i in inflections for i in form.features)]
+
     def __str__(self):
         # TODO: fix indentation of components
         lemma_strings = [str(lemma) for lemma in self.lemmata]
@@ -62,9 +67,14 @@ class Lexeme:
     def __jsonout__(self):
         base_dict = {"lexicalCategory": self.category, "language": self.language.item, "type": "lexeme"}
         base_dict["lemmas"] = {lemma.language.code: {"value": lemma.text, "language": lemma.language.code} for lemma in self.lemmata}
-        base_dict["claims"] = self.statements
+        base_dict["claims"] = defaultdict(list)
+        for stmtprop in self.statements:
+            for stmtval in self.statements[stmtprop]:
+                base_dict["claims"][stmtprop].append(stmtval.__jsonout__())
         if(base_dict["claims"] == {}):
             del base_dict["claims"]
+        else:
+            base_dict["claims"] = dict(base_dict["claims"])
         base_dict["forms"] = [form.__jsonout__() for form in self.forms]
         if(base_dict["forms"] == []):
             del base_dict["forms"]
@@ -77,3 +87,30 @@ class Lexeme:
         except AttributeError:
             pass
         return base_dict
+
+def build_lexeme(lexeme_in):
+    lemmas = []
+    for code, lemma in lexeme_in["lemmas"].items():
+        lemmas.append(lemma["value"] @ tfsl.languages.langs.find(lemma["language"])[0])
+
+    lexemecat = lexeme_in["lexicalCategory"]
+    language = tfsl.languages.langs.find(lexeme_in["language"])[0]
+
+    statements_in = lexeme_in["claims"]
+    statements = defaultdict(list)
+    for prop in statements_in:
+        for claim in statements_in[prop]:
+            statements[prop].append(tfsl.statement.build_statement(claim))
+
+    forms = [tfsl.lexemeform.build_form(form) for form in lexeme_in["forms"]]
+    senses = [tfsl.lexemesense.build_sense(sense) for sense in lexeme_in["senses"]]
+
+    lexeme_out = Lexeme(lemmas, language, lexemecat, statements, senses, forms)
+    lexeme_out.pageid = lexeme_in["pageid"]
+    lexeme_out.ns = lexeme_in["ns"]
+    lexeme_out.title = lexeme_in["title"]
+    lexeme_out.lastrevid = lexeme_in["lastrevid"]
+    lexeme_out.modified = lexeme_in["modified"]
+    lexeme_out.lexeme_type = lexeme_in["type"]
+    lexeme_out.id = lexeme_in["id"]
+    return lexeme_out

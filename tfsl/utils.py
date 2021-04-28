@@ -1,9 +1,11 @@
 from copy import deepcopy
-from functools import singledispatch
+from functools import singledispatch, lru_cache
 from json import JSONEncoder
 import re
 
 import requests
+
+import tfsl.auth
 
 default_indent = "    "
 
@@ -16,6 +18,12 @@ def matches_property(arg):
 
 def matches_lexeme(arg):
     return re.match(r"^L\d+$", arg)
+
+def matches_form(arg):
+    return re.match(r"^L\d+-F\d+$", arg)
+
+def matches_sense(arg):
+    return re.match(r"^L\d+-S\d+$", arg)
 
 def remove_replang(list_in, lang_in):
     newlist = deepcopy(list_in)
@@ -54,20 +62,34 @@ def sub_from_list(references, arg):
     newreferences = [reference for reference in newreferences if reference != arg]
     return newreferences
 
-def find_lexeme(lemma, language, category):
-    # TODO: have a method in lexeme.py that returns each lexeme from the result list?
-    # TODO: make the query customizable?
-    query_in = f'SELECT ?i {{ ?i dct:language wd:{language.item} ; wikibase:lemma "{lemma.text}"@{lemma.language.code} ; wikibase:lexicalCategory wd:{category} }}'
-    query_url = "https://query.wikidata.org/sparql"
-    query_parameters = {
-        "query": query_in
+@lru_cache
+def values_type(prop):
+    # TODO: rewrite better and make extensible
+    mapping = {
+    "commonsMedia": "string",
+    "entity-schema": "string",
+    "external-id": "string",
+    "geo-shape": "string",
+    "globe-coordinate": "globecoordinate",
+    "monolingualtext": "monolingualtext",
+    "quantity": "quantity",
+    "string": "string",
+    "tabular-data": "string",
+    "time": "time",
+    "url": "string",
+    "wikibase-item": "wikibase-entityid",
+    "wikibase-property": "wikibase-entityid",
+    "math":"string",
+    "wikibase-lexeme": "wikibase-entityid",
+    "wikibase-form": "wikibase-entityid",
+    "wikibase-sense": "wikibase-entityid",
+    "musical-notation": "string"
     }
-    query_headers = {
-        "Accept": "application/sparql-results+json"
-    }
-    R = requests.post(query_url, data=query_parameters, headers=query_headers)
-    if R.status_code != 200:
-        raise Exception("POST was unsuccessfull ({}): {}".format(R.status_code, R.text))
+    return mapping[values_datatype(prop)]
 
-    query_out = R.json()
-    return [binding["i"]["value"].replace('http://www.wikidata.org/entity/','') for binding in query_out["results"]["bindings"]]
+@lru_cache
+def values_datatype(prop):
+    # TODO: rewrite better
+    prop_data = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
+    prop_data = prop_data.json()
+    return prop_data["entities"][prop]["datatype"]

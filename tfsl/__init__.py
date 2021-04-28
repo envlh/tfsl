@@ -1,5 +1,6 @@
 from tfsl.auth import WikibaseSession
 from tfsl.claim import Claim
+from tfsl.itemvalue import ItemValue
 from tfsl.languages import Language, langs
 from tfsl.lexeme import Lexeme
 from tfsl.lexemeform import LexemeForm

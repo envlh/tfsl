@@ -76,7 +76,7 @@ class Statement:
     def matmul(self, arg: Rank):
         if(arg == self.rank):
             return self
-        return Statement(self.property, self.value, arg, self.qualifiers, self.references)        
+        return Statement(self.property, self.value, arg, self.qualifiers, self.references)
 
     def __eq__(self, rhs):
         return self.property == rhs.property and self.value == rhs.value and self.rank == rhs.rank and self.qualifiers == rhs.qualifiers and self.references == rhs.references
@@ -94,14 +94,51 @@ class Statement:
         return base_str + qualifiers_str + references_str
 
     def __jsonout__(self):
-        base_dict = {"type": "statement", "mainsnak": tfsl.claim.Claim(self.property, self.value)}
+        base_dict = {"type": "statement", "mainsnak": tfsl.claim.Claim(self.property, self.value).__jsonout__()}
         try:
             base_dict["id"] = self.id
         except AttributeError:
             pass
         base_dict["rank"] = ["deprecated", "normal", "preferred"][self.rank.value+1]
-        base_dict["qualifiers-order"] = list(self._claims.keys())
+        base_dict["qualifiers"] = defaultdict(list)
+        for stmtprop, stmtval in self.qualifiers.items():
+            base_dict["qualifiers"][stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
+        if(base_dict["qualifiers"] == {}):
+            del base_dict["qualifiers"]
+        else:
+            base_dict["qualifiers"] = dict(base_dict["qualifiers"])
+        base_dict["qualifiers-order"] = list(self.qualifiers.keys())
         if(base_dict["qualifiers-order"] == []):
             del base_dict["qualifiers-order"]
-        base_dit["references"] = references
+        base_dict["references"] = [reference.__jsonout__() for reference in self.references]
         return base_dict
+
+def build_quals(quals_in):
+    if(quals_in is None):
+        return []
+    quals = defaultdict(list)
+    for prop in quals_in:
+        for qual in quals_in[prop]:
+            quals[prop].append(tfsl.claim.build_claim(qual))
+    return quals
+
+def build_statement(stmt_in):
+    stmt_rank = Rank.Normal
+    if(stmt_in["rank"] == 'preferred'):
+        stmt_rank = Rank.Preferred
+    elif(stmt_in["rank"] == 'deprecated'):
+        stmt_rank = Rank.Deprecated
+    
+    stmt_mainsnak = stmt_in["mainsnak"]
+    stmt_property = stmt_mainsnak["property"]
+    stmt_datatype = stmt_mainsnak["datatype"]
+    stmt_value = tfsl.claim.build_value(stmt_mainsnak["datavalue"])
+    stmt_quals = build_quals(stmt_in.get("qualifiers", None))
+    stmt_refs = []
+    if(stmt_in.get("references",False)):
+        stmt_refs = [tfsl.reference.build_ref(ref) for ref in stmt_in["references"]]
+    
+    stmt_out = Statement(stmt_property, stmt_value, stmt_rank, stmt_quals, stmt_refs)
+    stmt_out.id = stmt_in["id"]
+    stmt_out.qualifiers_order = stmt_in.get("qualifiers-order", None)
+    return stmt_out

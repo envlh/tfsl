@@ -111,7 +111,7 @@ class LexemeForm:
         feat_str = ': '+', '.join(self.features)
         stmt_str = ""
         if(self.statements != {}):
-            stmt_str = "\n<\n"+indent("\n".join([str(stmt) for stmt in self.statements]), tfsl.utils.default_indent)+"\n>"
+            stmt_str = "\n<\n"+indent("\n".join([str(stmt) for prop in self.statements for stmt in self.statements[prop]]), tfsl.utils.default_indent)+"\n>"
         return base_str + feat_str + stmt_str
 
     def __jsonout__(self):
@@ -121,7 +121,28 @@ class LexemeForm:
             base_dict["id"] = self.id
         except AttributeError:
             base_dict["add"] = ""
-        base_dict["claims"] = self.statements
+        base_dict["claims"] = defaultdict(list)
+        for stmtprop, stmtval in self.statements.items():
+            base_dict["claims"][stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
         if(base_dict["claims"] == {}):
             del base_dict["claims"]
+        else:
+            base_dict["claims"] = dict(base_dict["claims"])
         return base_dict
+
+def build_form(form_in):
+    reps = []
+    for code, rep in form_in["representations"].items():
+        reps.append(rep["value"] @ tfsl.languages.langs.find(rep["language"])[0])
+
+    feats = form_in["grammaticalFeatures"]
+
+    claims = defaultdict(list)
+    claims_in = form_in["claims"]
+    for prop in claims_in:
+        for claim in claims_in[prop]:
+            claims[prop].append(tfsl.statement.build_statement(claim))
+
+    form_out = LexemeForm(reps, feats, claims)
+    form_out.id = form_in["id"]
+    return form_out
