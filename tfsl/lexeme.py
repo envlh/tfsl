@@ -28,25 +28,54 @@ class Lexeme:
 
     def __add__(self, arg):
         return self.add(arg)
+
+    def __sub__(self, arg):
+        return self.sub(arg)
     
     @singledispatchmethod
     def add(self, arg):
         raise NotImplementedError(f"Can't add {type(arg)} to Lexeme")
 
+    @singledispatchmethod
+    def sub(self, arg):
+        raise NotImplementedError(f"Can't subtract {type(arg)} from Lexeme")
+
     @add.register
     def _(self, arg: tfsl.statement.Statement):
         return Lexeme(self.lemmata, self.language, self.category, tfsl.utils.add_claimlike(self.statements, arg), self.senses, self.forms)
+
+    @sub.register
+    def _(self, arg: tfsl.statement.Statement):
+        return Lexeme(self.lemmata, self.language, self.category, tfsl.utils.sub_claimlike(self.statements, arg), self.senses, self.forms)
 
     @add.register
     def _(self, arg: tfsl.lexemesense.LexemeSense):
         return Lexeme(self.lemmata, self.language, self.category, self.statements, tfsl.utils.add_to_list(self.senses, arg), self.forms)
 
+    @sub.register
+    def _(self, arg: tfsl.lexemesense.LexemeSense):
+        return Lexeme(self.lemmata, self.language, self.category, self.statements, tfsl.utils.sub_from_list(self.senses, arg), self.forms)
+
     @add.register
     def _(self, arg: tfsl.lexemeform.LexemeForm):
         return Lexeme(self.lemmata, self.language, self.category, self.statements, self.senses, tfsl.utils.add_to_list(self.forms, arg))
 
+    @sub.register
+    def _(self, arg: tfsl.lexemeform.LexemeForm):
+        return Lexeme(self.lemmata, self.language, self.category, self.statements, self.senses, tfsl.utils.sub_from_list(self.forms, arg))
+
     def getForms(self, inflections):
-        return [form for form in self.forms if all(i in inflections for i in form.features)]
+        if len(inflections) == 0:
+            return self.forms
+        return [form for form in self.forms if all(i in form.features for i in inflections)]
+    
+    def getSenses(self, specifiers=None):
+        # TODO: handle specifiers argument
+        if specifiers is None:
+            return self.senses
+
+    def getLanguage(self):
+        return self.language
 
     def __str__(self):
         # TODO: fix indentation of components

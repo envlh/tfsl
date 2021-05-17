@@ -44,14 +44,22 @@ class Claim:
                }
 
 def build_value(value_in):
-    if(value_in["type"] == "string"):
-        return value_in["value"]
-    elif(value_in["type"] == "wikibase-entityid"):
-        return tfsl.itemvalue.build_itemvalue(value_in["value"])
-    elif(value_in["type"] == "monolingualtext"):
-        return tfsl.monolingualtext.build_mtvalue(value_in["value"])
+    value_type = value_in["type"]
+    actual_value = value_in["value"]
+    if(value_type == "string"):
+        return actual_value
+    elif(value_type == "wikibase-entityid"):
+        return tfsl.itemvalue.build_itemvalue(actual_value)
+    elif(value_type == "monolingualtext"):
+        return tfsl.monolingualtext.build_mtvalue(actual_value)
+    elif(value_type == "globecoordinate"): # TODO
+        return tfsl.coordinatevalue.build_coordinatevalue(actual_value)
+    elif(value_type == "quantity"): # TODO
+        return tfsl.quantityvalue.build_quantityvalue(actual_value)
+    elif(value_type == "time"): # TODO
+        return tfsl.timevalue.build_timevalue(actual_value)
     else:
-        raise ValueError("Type "+value_in["type"]+" is not supported yet!")
+        raise ValueError("Type "+value_type+" is not supported yet!")
 
 def build_claim(claim_in):
     claim_prop = claim_in["property"]

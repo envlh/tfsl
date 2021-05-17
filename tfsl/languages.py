@@ -13,7 +13,7 @@ class Language:
         self.code = code
         self.item = item
 
-    def __str__(self):
+    def __repr__(self):
         return f'{self.code} ({self.item})'
     
     def __eq__(self, rhs):
@@ -56,6 +56,10 @@ class Languages:
     """
     __itemlookup__ = defaultdict(list)
     __codelookup__ = defaultdict(list)
+    __selectform__ = defaultdict()
+    __processconfig__ = defaultdict()
+    __surfacejoin__ = defaultdict()
+    __surfacetransform__ = defaultdict()
 
     # TODO: everywhere this method is called, find a way to specify among results if multiple found
     @classmethod
@@ -70,6 +74,38 @@ class Languages:
         if(type(value) == Language):
             self.__itemlookup__[value.item].append(value)
             self.__codelookup__[value.code].append(value)
+    
+    @classmethod
+    def registerSelectForm(cls, method_in, language_in):
+        cls.__selectform__[language_in] = method_in
+
+    @classmethod
+    def getSelectForm(cls, language_in):
+        return cls.__selectform__[language_in]
+
+    @classmethod
+    def registerProcessConfig(cls, method_in, language_in):
+        cls.__processconfig__[language_in] = method_in
+
+    @classmethod
+    def getProcessConfig(cls, language_in):
+        return cls.__processconfig__[language_in]
+
+    @classmethod
+    def registerSurfaceJoin(cls, method_in, language_in):
+        cls.__surfacejoin__[language_in] = method_in
+
+    @classmethod
+    def getSurfaceJoin(cls, language_in):
+        return cls.__surfacejoin__[language_in]
+
+    @classmethod
+    def registerSurfaceTransform(cls, method_in, language_in):
+        cls.__surfacetransform__[language_in] = method_in
+
+    @classmethod
+    def getSurfaceTransform(cls, language_in):
+        return cls.__surfacetransform__[language_in]
 
 langs = Languages()
 # Eastern Indo-Aryan languages
@@ -82,6 +118,10 @@ langs.rhg_rohg_ = Language("rhg-rohg", "Q3241177") # Rohingya
 langs.as_ = Language("as", "Q29401") # Assamese
 langs.or_ = Language("or", "Q33810") # Odia
 langs.bho_ = Language("bho", "Q33268") # Bhojpuri
+
+# multiple languages -- export using this to Wikidata might fail
+# no selectForm/processConfig/surfaceJoin/surfaceTransform should be registered for these
+langs.mul_ = Language("mul", "Q20923490")
 
 # Languages of the United Nations
 langs.en_ = Language("en", "Q1860") # English

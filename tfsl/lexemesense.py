@@ -8,7 +8,7 @@ import tfsl.statement
 import tfsl.utils
 
 class LexemeSense:
-    def __init__(self, glosses: list, statements=[]):
+    def __init__(self, glosses, statements=[]):
         if(type(glosses) == tfsl.monolingualtext.MonolingualText):
             self.glosses = [glosses.text @ glosses.language]
         else:
