@@ -53,6 +53,9 @@ class Languages:
         Only those whose codes are available either as termbox codes, monolingual text codes,
         or separate lexeme language codes should have entries here.
         (Dashes, if present in a code, should be substituted with underscores here.)
+
+        The 'register*' and 'get*' methods are for use with udiron, and should not be
+        used if udiron is not being used.
     """
     __itemlookup__ = defaultdict(list)
     __codelookup__ = defaultdict(list)

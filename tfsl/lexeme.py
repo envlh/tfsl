@@ -64,7 +64,7 @@ class Lexeme:
     def _(self, arg: tfsl.lexemeform.LexemeForm):
         return Lexeme(self.lemmata, self.language, self.category, self.statements, self.senses, tfsl.utils.sub_from_list(self.forms, arg))
 
-    def getForms(self, inflections):
+    def getForms(self, inflections=[]):
         if len(inflections) == 0:
             return self.forms
         return [form for form in self.forms if all(i in form.features for i in inflections)]

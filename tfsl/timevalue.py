@@ -1,5 +1,6 @@
 from functools import singledispatchmethod
 import json
+import datetime
 
 import tfsl.languages
 import tfsl.utils
@@ -27,6 +28,18 @@ class TimeValue:
                    "calendarmodel": self.calendarmodel
                }
         return base_dict
+
+@singledispatch
+def toTimeValue(obj_in):
+    raise ValueError("Can't convert " + str(type(obj_in)) + " to TimeValue")
+
+@toTimeValue.register
+def _(obj_in: datetime.datetime):
+    pass
+
+@toTimeValue.register
+def _(obj_in: datetime.date):
+    pass
 
 def build_timevalue(value_in):
     return TimeValue(**value_in)
