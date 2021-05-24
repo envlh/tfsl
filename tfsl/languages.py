@@ -53,16 +53,9 @@ class Languages:
         Only those whose codes are available either as termbox codes, monolingual text codes,
         or separate lexeme language codes should have entries here.
         (Dashes, if present in a code, should be substituted with underscores here.)
-
-        The 'register*' and 'get*' methods are for use with udiron, and should not be
-        used if udiron is not being used.
     """
     __itemlookup__ = defaultdict(list)
     __codelookup__ = defaultdict(list)
-    __selectform__ = defaultdict()
-    __processconfig__ = defaultdict()
-    __surfacejoin__ = defaultdict()
-    __surfacetransform__ = defaultdict()
 
     # TODO: everywhere this method is called, find a way to specify among results if multiple found
     @classmethod
@@ -77,38 +70,6 @@ class Languages:
         if(type(value) == Language):
             self.__itemlookup__[value.item].append(value)
             self.__codelookup__[value.code].append(value)
-    
-    @classmethod
-    def registerSelectForm(cls, method_in, language_in):
-        cls.__selectform__[language_in] = method_in
-
-    @classmethod
-    def getSelectForm(cls, language_in):
-        return cls.__selectform__[language_in]
-
-    @classmethod
-    def registerProcessConfig(cls, method_in, language_in):
-        cls.__processconfig__[language_in] = method_in
-
-    @classmethod
-    def getProcessConfig(cls, language_in):
-        return cls.__processconfig__[language_in]
-
-    @classmethod
-    def registerSurfaceJoin(cls, method_in, language_in):
-        cls.__surfacejoin__[language_in] = method_in
-
-    @classmethod
-    def getSurfaceJoin(cls, language_in):
-        return cls.__surfacejoin__[language_in]
-
-    @classmethod
-    def registerSurfaceTransform(cls, method_in, language_in):
-        cls.__surfacetransform__[language_in] = method_in
-
-    @classmethod
-    def getSurfaceTransform(cls, language_in):
-        return cls.__surfacetransform__[language_in]
 
 langs = Languages()
 # Eastern Indo-Aryan languages
@@ -123,7 +84,6 @@ langs.or_ = Language("or", "Q33810") # Odia
 langs.bho_ = Language("bho", "Q33268") # Bhojpuri
 
 # multiple languages -- export using this to Wikidata might fail
-# no selectForm/processConfig/surfaceJoin/surfaceTransform should be registered for these
 langs.mul_ = Language("mul", "Q20923490")
 
 # Languages of the United Nations
@@ -176,11 +136,26 @@ langs.pa_ = Language("pa", "Q58635") # Punjabi (guru)
 langs.pnb_ = Language("pnb", "Q58635") # Punjabi (aran)
 langs.sa_ = Language("sa", "Q11059") # Sanskrit
 langs.sat_ = Language("sat", "Q33965") # Santali (olck)
-langs.sat_beng_ = Language("sat-beng", "Q33965") # Santali (beng)
-langs.sat_latn_ = Language("sat-latn", "Q33965") # Santali (latn)
-langs.sat_orya_ = Language("sat-orya", "Q33965") # Santali (orya)
+langs.sat_beng_ = Language("sat-beng", "Q33965") # Santali
+langs.sat_latn_ = Language("sat-latn", "Q33965") # Santali
+langs.sat_orya_ = Language("sat-orya", "Q33965") # Santali
 langs.sd_ = Language("sd", "Q33997") # Sindhi (aran)
 # omitting sd-deva for now pending script request
 langs.ta_ = Language("ta", "Q5885") # Tamil
 langs.te_ = Language("te", "Q8097") # Telugu
 langs.ur_ = Language("ur", "Q11051") # Hindustani (aran)
+
+# other languages from the Nordic Council area
+langs.is_ = Language("is", "Q294") # Icelandic
+langs.nb_ = Language("nb", "Q25167") # Bokmål
+langs.nn_ = Language("nn", "Q25164") # Nynorsk
+langs.kl_ = Language("kl", "Q25355") # Kalaallisut
+langs.fo_ = Language("fo", "Q25258") # Faroese
+langs.sjd_ = Language("sjd", "Q33656") # Kildin Sami
+langs.se_ = Language("se", "Q33947") # Northern Sami
+langs.smn_ = Language("smn", "Q33462") # Inari Sami
+langs.sms_ = Language("sms", "Q13271") # Skolt Sami
+langs.smj_ = Language("smj", "Q56322") # Lule Sami
+langs.sje_ = Language("sje", "Q56314") # Pite Sami
+langs.sju_ = Language("sju", "Q56415") # Ume Sami
+langs.sma_ = Language("sma", "Q13293") # Southern Sami
