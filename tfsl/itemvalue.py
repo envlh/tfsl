@@ -4,6 +4,7 @@ import json
 import tfsl.languages
 import tfsl.utils
 
+
 class ItemValue:
     """ Representation of a Wikibase entity of some sort.
     """
@@ -25,7 +26,7 @@ class ItemValue:
 
     def __hash__(self):
         return hash((self.item_type, self.item_id))
-        
+
     def __str__(self):
         return f'{self.item_id}'
 
@@ -35,8 +36,9 @@ class ItemValue:
                    "id": self.item_id
                }
         if(self.item_type in ['item', 'property', 'lexeme']):
-           base_dict["numeric-id"] = int(self.item_id[1:])
+            base_dict["numeric-id"] = int(self.item_id[1:])
         return base_dict
+
 
 def build_itemvalue(value_in):
     return ItemValue(value_in["id"])

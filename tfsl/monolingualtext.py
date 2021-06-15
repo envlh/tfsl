@@ -23,6 +23,9 @@ class MonolingualText:
     def __str__(self):
         return f'{self.text}@{self.language.code} ({self.language.item})'
 
+    def __repr__(self):
+        return f'{self.text}@{self.language.code} ({self.language.item})'
+
     def __jsonout__(self):
         return {
                    "text": self.text,
@@ -30,4 +33,4 @@ class MonolingualText:
                }
 
 def build_mtvalue(value_in):
-    return MonolingualText(value_in["text"], tfsl.languages.langs.find(value_in["language"])[0])
+    return MonolingualText(value_in["text"], tfsl.languages.get_first_lang(value_in["language"]))

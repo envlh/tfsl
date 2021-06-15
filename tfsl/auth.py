@@ -27,17 +27,18 @@ csrf_token_params = {
 wikidata_api_url = "https://www.wikidata.org/w/api.php"
 default_user_agent = 'tfsl 0.0.1'
 
+
 class WikibaseSession:
     """Auth library for Wikibases.
     """
     def __init__(self,
-        username,
-        password: Optional[str] = None,
-        token: Optional[str] = None,
-        auth: Optional[str] = None,
-        user_agent: str = default_user_agent,
-        URL: str = wikidata_api_url
-    ):
+                 username,
+                 password: Optional[str] = None,
+                 token: Optional[str] = None,
+                 auth: Optional[str] = None,
+                 user_agent: str = default_user_agent,
+                 URL: str = wikidata_api_url
+                 ):
         self.URL = URL
         self.user_agent = user_agent
         self.auth = auth
@@ -78,7 +79,7 @@ class WikibaseSession:
             # truncate bot name if a "bot password" is used
             self.assertUser = username.split("@")[0]
 
-    def push(self, obj_in, summary = None, maxlag_in = maxlag) -> Any:
+    def push(self, obj_in, summary=None, maxlag_in=maxlag) -> Any:
         """Post data to Wikibase.
         """
         data = obj_in.__jsonout__()
@@ -127,7 +128,7 @@ class WikibaseSession:
         logging.debug("Post request succeed")
         return DATA
 
-    def post(self, data: Dict[str, str], maxlag_in = maxlag) -> Any:
+    def post(self, data: Dict[str, str], maxlag_in=maxlag) -> Any:
         """Post data to Wikibase. The CSRF token is automatically
         filled in if __AUTO__ is given instead.
 
@@ -202,9 +203,9 @@ class WikibaseSession:
         R = requests.post(query_url, data=query_parameters, headers=query_headers)
         if R.status_code != 200:
             raise Exception("POST was unsuccessfull ({}): {}".format(R.status_code, R.text))
-    
+
         query_out = R.json()
-        return [binding["i"]["value"].replace('http://www.wikidata.org/entity/','') for binding in query_out["results"]["bindings"]]
+        return [binding["i"]["value"].replace('http://www.wikidata.org/entity/', '') for binding in query_out["results"]["bindings"]]
 
     def get_lexemes(self, lids):
         query_parameters = get_lexeme_params = {

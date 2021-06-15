@@ -2,10 +2,11 @@ from functools import singledispatchmethod
 
 import tfsl.utils
 
+
 class Claim:
     """ Representation of a claim, or a property-predicate pair.
         These may be added to statements directly, as qualifiers, or as parts of references.
-        
+
         CHECKS THAT THE VALUE MATCHES THE PROPERTY'S TYPE ARE NOT PERFORMED!
         YOU ARE RESPONSIBLE FOR ENSURING THAT THESE MATCH!
     """
@@ -18,13 +19,13 @@ class Claim:
 
     def __hash__(self):
         return hash((self.property, self.value))
-    
+
     def __str__(self):
         return f'{self.property}: {self.value}'
 
     def __add__(self, arg):
         return Statement(self.property, self.value) + arg
-    
+
     def __matmul__(self, arg):
         return Statement(self.property, self.value) @ arg
 
@@ -43,6 +44,7 @@ class Claim:
                    }
                }
 
+
 def build_value(value_in):
     value_type = value_in["type"]
     actual_value = value_in["value"]
@@ -52,14 +54,15 @@ def build_value(value_in):
         return tfsl.itemvalue.build_itemvalue(actual_value)
     elif(value_type == "monolingualtext"):
         return tfsl.monolingualtext.build_mtvalue(actual_value)
-    elif(value_type == "globecoordinate"): # TODO
+    elif(value_type == "globecoordinate"):  # TODO
         return tfsl.coordinatevalue.build_coordinatevalue(actual_value)
-    elif(value_type == "quantity"): # TODO
+    elif(value_type == "quantity"):  # TODO
         return tfsl.quantityvalue.build_quantityvalue(actual_value)
-    elif(value_type == "time"): # TODO
+    elif(value_type == "time"):  # TODO
         return tfsl.timevalue.build_timevalue(actual_value)
     else:
         raise ValueError("Type "+value_type+" is not supported yet!")
+
 
 def build_claim(claim_in):
     claim_prop = claim_in["property"]

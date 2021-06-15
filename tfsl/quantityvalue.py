@@ -7,6 +7,7 @@ import tfsl.utils
 # TODO: handle non-Wikidata entity prefixes
 entity_prefix = 'http://www.wikidata.org/entity/'
 
+
 class QuantityValue:
     def __init__(self, amount=0, lowerBound=1, upperBound=-1, unit=entity_prefix+"Q199"):
         self.amount = amount
@@ -21,14 +22,15 @@ class QuantityValue:
         self.unit = unit
 
     def __eq__(self, rhs):
-        return self.amount == rhs.amount and
-               self.lower == rhs.lower and
-               self.upper == rhs.upper and
-               self.unit == rhs.unit
+        amts_equal = self.amount == rhs.amount
+        lowers_equal = self.lower == rhs.lower
+        uppers_equal = self.upper == rhs.upper
+        units_equal = self.unit == rhs.unit
+        return amts_equal and lowers_equal and uppers_equal and units_equal
 
     def __hash__(self):
         return hash((self.amount, self.lower, self.upper, self.unit))
-    
+
     def __str__(self):
         if(self.lower == self.amount and self.upper == self.amount):
             value_string = f'{self.amount}'
@@ -48,6 +50,7 @@ class QuantityValue:
             base_dict["lowerBound"] = self.lower
             base_dict["upperBound"] = self.upper
         return base_dict
+
 
 def build_quantityvalue(value_in):
     return QuantityValue(**value_in)

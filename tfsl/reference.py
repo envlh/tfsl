@@ -7,11 +7,12 @@ from typing import Any, Tuple
 import tfsl.claim
 import tfsl.utils
 
+
 class Reference:
     """ Representation of a reference.
     """
     # TODO: define __setitem__
-    
+
     def __init__(self, *args):
         self._claims = defaultdict(list)
         if(len(args) == 1 and type(args[0]) == defaultdict):
@@ -26,17 +27,17 @@ class Reference:
 
     def __getitem__(self, property_in: str):
         return self._claims[property_in]
-    
+
     def __delitem__(self, claim_in):
         if(type(claim_in) == str):
             del self._claims[claim_in]
         else:
             self._claims[claim_in[0]] = [claim for claim in self._claims[claim_in[0]] if claim.value != claim_in[1]]
-    
+
     def __add__(self, arg):
         newclaims = self.add(arg)
         return Reference(newclaims)
-    
+
     @singledispatchmethod
     def add(self, arg):
         return self._claims
@@ -48,11 +49,11 @@ class Reference:
     def __sub__(self, arg):
         newclaims = self.sub(arg)
         return Reference(newclaims)
-    
+
     @singledispatchmethod
     def sub(self, arg):
         return self._claims
-        
+
     @sub.register
     def _(self, arg: tfsl.claim.Claim):
         return tfsl.utils.sub_claimlike(self._claims, arg)
@@ -63,11 +64,11 @@ class Reference:
     @singledispatchmethod
     def contains(self, arg):
         return arg in self._claims[arg.property]
-    
+
     @contains.register
     def _(self, arg: str):
         return arg in self._claims
-    
+
     @contains.register
     def _(self, arg: tfsl.claim.Claim):
         for prop in self._claims:
@@ -82,7 +83,7 @@ class Reference:
         return hash((claim for k, v in self._claims.items() for claim in v))
 
     def __str__(self):
-        return "["+indent("\n".join([str(claim) for key in self._claims for claim in self._claims[key]]),tfsl.utils.default_indent)+"]"
+        return "["+indent("\n".join([str(claim) for key in self._claims for claim in self._claims[key]]), tfsl.utils.default_indent)+"]"
 
     def __jsonout__(self):
         snaks_order = list(self._claims.keys())
@@ -99,6 +100,7 @@ class Reference:
         except AttributeError:
             pass
         return base_dict
+
 
 def build_ref(ref_in):
     claim_list = ref_in["snaks"]

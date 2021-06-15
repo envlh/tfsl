@@ -7,6 +7,7 @@ import tfsl.monolingualtext
 import tfsl.statement
 import tfsl.utils
 
+
 class LexemeSense:
     def __init__(self, glosses, statements=[]):
         if(type(glosses) == tfsl.monolingualtext.MonolingualText):
@@ -23,22 +24,22 @@ class LexemeSense:
 
     def __add__(self, arg):
         return self.add(arg)
-    
+
     @singledispatchmethod
     def add(self, arg):
         raise NotImplementedError(f"Can't add {type(arg)} to LexemeSense")
-    
+
     def __sub__(self, arg):
         return self.sub(arg)
-    
+
     @singledispatchmethod
     def sub(self, arg):
         raise NotImplementedError(f"Can't subtract {type(arg)} from LexemeForm")
-    
+
     @add.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
         return LexemeSense(tfsl.utils.add_to_mtlist(self.glosses, arg), self.statements)
-    
+
     @add.register
     def _(self, arg: tfsl.statement.Statement):
         return LexemeSense(self.glosses, tfsl.utils.add_claimlike(self.statements, arg))
@@ -66,7 +67,7 @@ class LexemeSense:
     @singledispatchmethod
     def contains(self, arg):
         return arg in self.statements[arg.property]
-    
+
     @contains.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
         return arg in self.glosses
@@ -75,7 +76,7 @@ class LexemeSense:
     def _(self, arg: str):
         if(tfsl.utils.matches_property(arg)):
             return arg in self.statements
-    
+
     @contains.register
     def _(self, arg: tfsl.claim.Claim):
         for prop in self.statements:
@@ -89,7 +90,7 @@ class LexemeSense:
             if(gloss.language == arg):
                 return True
         return False
-    
+
     def __eq__(self, rhs):
         return self.glosses == rhs.glosses and self.statements == rhs.statements
 
@@ -117,10 +118,12 @@ class LexemeSense:
             base_dict["claims"] = dict(base_dict["claims"])
         return base_dict
 
+
 def build_sense(sense_in):
     glosses = []
     for code, gloss in sense_in["glosses"].items():
-        glosses.append(gloss["value"] @ tfsl.languages.langs.find(gloss["language"])[0])
+        new_gloss = gloss["value"] @ tfsl.languages.get_first_lang(gloss["language"])
+        glosses.append(new_gloss)
 
     claims = defaultdict(list)
     claims_in = sense_in["claims"]
