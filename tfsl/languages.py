@@ -42,7 +42,7 @@ class Language:
 
     @compare_eq.register
     def _(self, rhs: str):
-        if(rhs[0] == "Q"):
+        if rhs[0] == "Q":
             return self.item == rhs
         return self.code == rhs
 
@@ -69,7 +69,7 @@ class Languages:
 
     def __setattr__(self, name, value):
         super().__setattr__(name, value)
-        if(type(value) == Language):
+        if isinstance(value, Language):
             self.__itemlookup__[value.item].append(value)
             self.__codelookup__[value.code].append(value)
 
@@ -80,6 +80,7 @@ langs = Languages()
 def get_first_lang(arg):
     return langs.find(arg)[0]
 
+# pylint: disable=attribute-defined-outside-init
 
 # Eastern Indo-Aryan languages
 langs.bn_ = Language("bn", "Q9610")  # Bengali
