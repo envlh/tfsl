@@ -1,3 +1,4 @@
+import json
 import unittest
 
 from tfsl.languages import langs

@@ -1,4 +1,4 @@
-from functools import singledispatchmethod
+from functools import singledispatchmethod, singledispatch
 import json
 import datetime
 

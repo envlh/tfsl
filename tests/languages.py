@@ -19,7 +19,7 @@ class TestLanguageMethods(unittest.TestCase):
         self.assertEqual(self.language, "bn")
         self.assertNotEqual(self.language, "ctg")
         self.assertEqual(self.language2, "ctg")
-        
+
         self.assertEqual(self.language, "Q9610")
         self.assertNotEqual(self.language, "Q33173")
         self.assertEqual(self.language2, "Q33173")
