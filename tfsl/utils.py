@@ -5,7 +5,7 @@ import re
 import requests
 
 DEFAULT_INDENT = "    "
-
+WD_PREFIX = "http://www.wikidata.org/entity/"
 
 # TODO: how best to override these for wikibases with custom prefixes?
 def matches_item(arg):
@@ -35,6 +35,15 @@ def matches_sense(arg):
 def matches_sense_suffix(arg):
     return re.match(r"^S\d+$", arg)
 
+
+def prefix_wd(arg):
+    return WD_PREFIX + arg
+
+
+def strip_prefix_wd(arg):
+    if arg.startswith(WD_PREFIX):
+        return arg[len(WD_PREFIX):]
+    return arg
 
 def remove_replang(list_in, lang_in):
     newlist = deepcopy(list_in)

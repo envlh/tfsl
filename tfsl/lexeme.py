@@ -22,7 +22,7 @@ class Lexeme:
     def __init__(self, lemmalist, lang_in, cat_in,
                  statements=None, senses=None, forms=None):
         # TODO: better validation/type hinting and argument fallbacks
-        self.lemmata = [lemmalist] if not isinstance(lemmalist, list) else lemmalist
+        self.lemmata = lemmalist if isinstance(lemmalist, list) else [lemmalist]
         self.language = lang_in
         self.category = cat_in
         if statements is None:
@@ -135,17 +135,17 @@ class Lexeme:
         self.modified = lexeme_in["modified"]
         self.lexeme_type = lexeme_in["type"]
         self.lexeme_id = lexeme_in["id"]
-    
+
     def __getitem__(self, key):
-        if(tfsl.utils.matches_property(key)):
+        if tfsl.utils.matches_property(key):
             return self.statements.get(key, [])
-        if(tfsl.utils.matches_form(key)):
+        if tfsl.utils.matches_form(key):
             return next(form for form in self.forms if form.id == key)
-        if(tfsl.utils.matches_form_suffix(key)):
+        if tfsl.utils.matches_form_suffix(key):
             return next(form for form in self.forms if form.id == self.lexeme_id + '-' + key)
-        if(tfsl.utils.matches_sense(key)):
+        if tfsl.utils.matches_sense(key):
             return next(sense for sense in self.senses if sense.id == key)
-        if(tfsl.utils.matches_sense_suffix(key)):
+        if tfsl.utils.matches_sense_suffix(key):
             return next(sense for sense in self.senses if sense.id == self.lexeme_id + '-' + key)
 
     def __str__(self):

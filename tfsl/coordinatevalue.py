@@ -4,10 +4,9 @@ import json
 import tfsl.languages
 import tfsl.utils
 
-
 class CoordinateValue:
     def __init__(self, latitude, longitude, precision,
-                 globe="http://www.wikidata.org/entity/Q2", altitude=None):
+                 globe=tfsl.utils.prefix_wd("Q2"), altitude=None):
         self.lat = latitude
         self.lon = longitude
         self.prec = precision
@@ -17,7 +16,7 @@ class CoordinateValue:
     def __jsonout__(self):
         base_dict = {
                    "latitude": self.lat,
-                   "longitude": self.long,
+                   "longitude": self.lon,
                    "altitude": self.alt,
                    "precision": self.prec,
                    "globe": self.globe

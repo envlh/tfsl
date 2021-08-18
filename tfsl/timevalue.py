@@ -12,7 +12,9 @@ def matches_time(arg):
 
 
 class TimeValue:
-    def __init__(self, time, before=0, after=0, precision=11, timezone=0, calendarmodel="http://www.wikidata.org/entity/Q1985727"):
+    def __init__(self, time,
+        before=0, after=0, precision=11, timezone=0,
+        calendarmodel=tfsl.utils.prefix_wd("Q1985727")):
         self.time = time
         self.timezone = timezone
         self.before = before
