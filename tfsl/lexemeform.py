@@ -135,7 +135,7 @@ class LexemeForm:
             prefix = "\n<\n"
             suffix = "\n>"
             stmt_strings = [str(stmt) for prop in self.statements for stmt in self.statements[prop]]
-            stmts = indent("\n".join(stmt_strings), tfsl.utils.default_indent)
+            stmts = indent("\n".join(stmt_strings), tfsl.utils.DEFAULT_INDENT)
             stmt_str = prefix + stmts + suffix
 
         return base_str + feat_str + stmt_str

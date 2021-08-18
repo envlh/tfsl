@@ -1,13 +1,10 @@
 from copy import deepcopy
-from functools import singledispatch, lru_cache
-from json import JSONEncoder
+from functools import lru_cache
 import re
 
 import requests
 
-import tfsl.auth
-
-default_indent = "    "
+DEFAULT_INDENT = "    "
 
 
 # TODO: how best to override these for wikibases with custom prefixes?
@@ -27,8 +24,16 @@ def matches_form(arg):
     return re.match(r"^L\d+-F\d+$", arg)
 
 
+def matches_form_suffix(arg):
+    return re.match(r"^F\d+$", arg)
+
+
 def matches_sense(arg):
     return re.match(r"^L\d+-S\d+$", arg)
+
+
+def matches_sense_suffix(arg):
+    return re.match(r"^S\d+$", arg)
 
 
 def remove_replang(list_in, lang_in):
@@ -64,7 +69,7 @@ def sub_property(qualifiers, arg):
 def sub_claimlike(qualifiers, arg):
     newqualifiers = deepcopy(qualifiers)
     newqualifiers[arg.property] = [claim for claim in newqualifiers[arg.property] if claim != arg]
-    if(len(newqualifiers[arg.property]) == 0):
+    if len(newqualifiers[arg.property]) == 0:
         return sub_property(newqualifiers, arg.property)
     return newqualifiers
 

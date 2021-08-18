@@ -90,9 +90,9 @@ class Statement:
         references_str = ""
 
         if self.qualifiers != {}:
-            qualifiers_str = "(\n" + indent("\n".join([str(qual) for key in self.qualifiers for qual in self.qualifiers[key]]), tfsl.utils.default_indent) + "\n)"
+            qualifiers_str = "(\n" + indent("\n".join([str(qual) for key in self.qualifiers for qual in self.qualifiers[key]]), tfsl.utils.DEFAULT_INDENT) + "\n)"
         if len(self.references) != 0:
-            references_str = "[\n" + indent("\n".join([str(ref) for ref in self.references]), tfsl.utils.default_indent) + "\n]"
+            references_str = "[\n" + indent("\n".join([str(ref) for ref in self.references]), tfsl.utils.DEFAULT_INDENT) + "\n]"
         return base_str + qualifiers_str + references_str
 
     def __jsonout__(self):

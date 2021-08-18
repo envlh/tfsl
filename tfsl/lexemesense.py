@@ -99,7 +99,7 @@ class LexemeSense:
         base_str = ' / '.join([str(gloss) for gloss in self.glosses])
         stmt_str = ""
         if(self.statements != {}):
-            stmt_str = "\n<\n"+indent("\n".join([str(stmt) for prop in self.statements for stmt in self.statements[prop]]), tfsl.utils.default_indent)+"\n>"
+            stmt_str = "\n<\n"+indent("\n".join([str(stmt) for prop in self.statements for stmt in self.statements[prop]]), tfsl.utils.DEFAULT_INDENT)+"\n>"
         return base_str + stmt_str
 
     def __jsonout__(self):

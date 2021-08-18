@@ -83,7 +83,7 @@ class Reference:
         return hash((claim for k, v in self._claims.items() for claim in v))
 
     def __str__(self):
-        return "["+indent("\n".join([str(claim) for key in self._claims for claim in self._claims[key]]), tfsl.utils.default_indent)+"]"
+        return "["+indent("\n".join([str(claim) for key in self._claims for claim in self._claims[key]]), tfsl.utils.DEFAULT_INDENT)+"]"
 
     def __jsonout__(self):
         snaks_order = list(self._claims.keys())

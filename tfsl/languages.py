@@ -1,7 +1,6 @@
 from collections import defaultdict
 from functools import singledispatchmethod
 
-import tfsl.lexeme
 import tfsl.monolingualtext
 import tfsl.utils
 
@@ -106,7 +105,6 @@ langs.zh_ = Language("zh", "Q9192")  # Mandarin Chinese
 
 # Languages of the European Union
 langs.bg_ = Language("bg", "Q7918")  # Bulgarian
-# omitting Croatian for now pending resolution on handling of Shtokavian standards
 langs.cs_ = Language("cs", "Q9056")  # Czech
 langs.da_ = Language("da", "Q9035")  # Danish
 langs.de_ = Language("de", "Q183")  # German
@@ -171,4 +169,20 @@ langs.sju_ = Language("sju", "Q56415")  # Ume Sami
 langs.sma_ = Language("sma", "Q13293")  # Southern Sami
 
 # other languages (in general)
+langs.dag_ = Language("dag", "Q32238")  # Dagbani
+langs.ha_ = Language("ha", "Q56475")  # Hausa
+langs.ha_arab_ = Language("ha-arab", "Q56475")  # Hausa
+langs.ig_ = Language("ig", "Q33578")  # Igbo
+langs.nan_ = Language("nan", "Q36495")  # Southern Min
 langs.pwn_ = Language("pwn", "Q715755")  # Paiwan
+langs.uk_ = Language("uk", "Q8798")  # Ukrainian
+
+# Shtokavian variants
+langs.hr_ = Language("hr", "Q6654")  # Croatian
+# certain languages of Southeast Asia
+langs.id_ = Language("id", "Q9240")  # Indonesian
+# certain languages of East Asia
+langs.zh_ = Language("zh", "Q9192")  # Mandarin Chinese
+langs.zh_hans_ = Language("zh-hant", "Q9192")  # Mandarin Chinese (Simplified)
+langs.zh_hant_ = Language("zh-hant", "Q9192")  # Mandarin Chinese (Traditional)
+langs.zh_tw_ = Language("zh-tw", "Q9192")  # Mandarin Chinese (Taiwan)

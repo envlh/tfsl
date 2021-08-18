@@ -1,3 +1,7 @@
+import json
+import os
+import os.path
+import time
 from collections import defaultdict
 from copy import deepcopy
 from functools import singledispatchmethod
@@ -11,22 +15,40 @@ import tfsl.monolingualtext
 import tfsl.statement
 import tfsl.utils
 
+default_lexeme_cache_path = os.path.expanduser('~/.cache/tfsl')
+os.makedirs(default_lexeme_cache_path,exist_ok=True)
 
 class Lexeme:
     def __init__(self, lemmalist, lang_in, cat_in,
-                 statements=[], senses=[], forms=[]):
+                 statements=None, senses=None, forms=None):
         # TODO: better validation/type hinting and argument fallbacks
-        self.lemmata = [lemmalist] if type(lemmalist) != list else lemmalist
+        self.lemmata = [lemmalist] if not isinstance(lemmalist, list) else lemmalist
         self.language = lang_in
         self.category = cat_in
-        if(type(statements) == list):
+        if statements is None:
+            self.statements = []
+        elif isinstance(statements, list):
             self.statements = defaultdict(list)
             for arg in statements:
                 self.statements[arg.property].append(arg)
         else:
             self.statements = deepcopy(statements)
-        self.senses = [senses] if type(senses) != list else senses
-        self.forms = [forms] if type(forms) != list else forms
+        if senses is None:
+            self.senses = []
+        else:
+            self.senses = senses if isinstance(senses, list) else [senses]
+        if forms is None:
+            self.forms = []
+        else:
+            self.forms = forms if isinstance(forms, list) else [forms]
+
+        self.pageid = None
+        self.namespace = None
+        self.title = None
+        self.lastrevid = None
+        self.modified = None
+        self.lexeme_type = None
+        self.lexeme_id = None
 
     def __add__(self, arg):
         return self.add(arg)
@@ -91,19 +113,40 @@ class Lexeme:
                       self.language, self.category, self.statements,
                       self.senses, self.forms)
 
-    def getForms(self, inflections=[]):
-        if len(inflections) == 0:
+    def get_forms(self, inflections=None):
+        if inflections is None:
             return self.forms
         return [form for form in self.forms
                 if all(i in form.features for i in inflections)]
 
-    def getSenses(self, specifiers=None):
+    def get_senses(self, specifiers=None):
         # TODO: handle specifiers argument
         if specifiers is None:
             return self.senses
 
-    def getLanguage(self):
+    def get_language(self):
         return self.language
+
+    def set_published_settings(self, lexeme_in):
+        self.pageid = lexeme_in["pageid"]
+        self.namespace = lexeme_in["ns"]
+        self.title = lexeme_in["title"]
+        self.lastrevid = lexeme_in["lastrevid"]
+        self.modified = lexeme_in["modified"]
+        self.lexeme_type = lexeme_in["type"]
+        self.lexeme_id = lexeme_in["id"]
+    
+    def __getitem__(self, key):
+        if(tfsl.utils.matches_property(key)):
+            return self.statements.get(key, [])
+        if(tfsl.utils.matches_form(key)):
+            return next(form for form in self.forms if form.id == key)
+        if(tfsl.utils.matches_form_suffix(key)):
+            return next(form for form in self.forms if form.id == self.lexeme_id + '-' + key)
+        if(tfsl.utils.matches_sense(key)):
+            return next(sense for sense in self.senses if sense.id == key)
+        if(tfsl.utils.matches_sense_suffix(key)):
+            return next(sense for sense in self.senses if sense.id == self.lexeme_id + '-' + key)
 
     def __str__(self):
         # TODO: fix indentation of components
@@ -112,27 +155,27 @@ class Lexeme:
         base_str = f': {self.category} in {self.language.item}'
 
         stmts_str = ""
-        if(self.statements != {}):
+        if self.statements != {}:
             prefix = "\n<\n"
             suffix = "\n>"
             stmt_strings = [str(stmt) for stmt in self.statements]
-            base_str = indent('\n'.join(stmt_strings), tfsl.utils.default_indent)
+            base_str = indent('\n'.join(stmt_strings), tfsl.utils.DEFAULT_INDENT)
             stmts_str = prefix + base_str + suffix
 
         senses_str = ""
-        if(len(self.senses) != 0):
+        if len(self.senses) != 0:
             prefix = "\n{\n"
             suffix = "\n}"
             sense_strings = [str(sense) for sense in self.senses]
-            base_str = indent('\n'.join(sense_strings), tfsl.utils.default_indent)
+            base_str = indent('\n'.join(sense_strings), tfsl.utils.DEFAULT_INDENT)
             senses_str = prefix + base_str + suffix
 
         forms_str = ""
-        if(len(self.forms) != 0):
+        if len(self.forms) != 0:
             prefix = "\n(\n"
             suffix = "\n)"
             form_strings = [str(form) for form in self.forms]
-            base_str = indent('\n'.join(form_strings), tfsl.utils.default_indent)
+            base_str = indent('\n'.join(form_strings), tfsl.utils.DEFAULT_INDENT)
             forms_str = prefix + base_str + suffix
 
         return lemma_str + base_str + stmts_str + senses_str + forms_str
@@ -151,17 +194,17 @@ class Lexeme:
         for stmtprop in self.statements:
             for stmtval in self.statements[stmtprop]:
                 base_dict["claims"][stmtprop].append(stmtval.__jsonout__())
-        if(base_dict["claims"] == {}):
+        if base_dict["claims"] == {}:
             del base_dict["claims"]
         else:
             base_dict["claims"] = dict(base_dict["claims"])
 
         base_dict["forms"] = [form.__jsonout__() for form in self.forms]
-        if(base_dict["forms"] == []):
+        if base_dict["forms"] == []:
             del base_dict["forms"]
 
         base_dict["senses"] = [sense.__jsonout__() for sense in self.senses]
-        if(base_dict["senses"] == []):
+        if base_dict["senses"] == []:
             del base_dict["senses"]
 
         try:
@@ -175,7 +218,7 @@ class Lexeme:
 
 def build_lexeme(lexeme_in):
     lemmas = []
-    for code, lemma in lexeme_in["lemmas"].items():
+    for _, lemma in lexeme_in["lemmas"].items():
         new_lemma = lemma["value"] @ tfsl.languages.get_first_lang(lemma["language"])
         lemmas.append(new_lemma)
 
@@ -192,11 +235,22 @@ def build_lexeme(lexeme_in):
     senses = [tfsl.lexemesense.build_sense(sense) for sense in lexeme_in["senses"]]
 
     lexeme_out = Lexeme(lemmas, language, lexemecat, statements, senses, forms)
-    lexeme_out.pageid = lexeme_in["pageid"]
-    lexeme_out.ns = lexeme_in["ns"]
-    lexeme_out.title = lexeme_in["title"]
-    lexeme_out.lastrevid = lexeme_in["lastrevid"]
-    lexeme_out.modified = lexeme_in["modified"]
-    lexeme_out.lexeme_type = lexeme_in["type"]
-    lexeme_out.id = lexeme_in["id"]
+    lexeme_out.set_published_settings(lexeme_in)
     return lexeme_out
+
+# pylint: disable=invalid-name
+
+def L(lid, cache_path=default_lexeme_cache_path, ttl=86400):
+    if isinstance(lid, int):
+        lid = 'L'+str(lid)
+    filename = os.path.join(cache_path, str(lid)+".json")
+    try:
+        assert time.time() - os.path.getmtime(filename) < ttl
+        with open(filename) as fileptr:
+            lexeme_json = json.load(fileptr)
+    except (FileNotFoundError, OSError, AssertionError):
+        current_lexeme = tfsl.auth.get_lexemes([lid])
+        lexeme_json = current_lexeme[lid]
+        with open(filename, "w") as fileptr:
+            json.dump(lexeme_json, fileptr)
+    return build_lexeme(lexeme_json)

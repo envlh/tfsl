@@ -3,7 +3,7 @@ from tfsl.claim import Claim
 from tfsl.coordinatevalue import CoordinateValue
 from tfsl.itemvalue import ItemValue
 from tfsl.languages import Language, langs
-from tfsl.lexeme import Lexeme
+from tfsl.lexeme import Lexeme, L
 from tfsl.lexemeform import LexemeForm
 from tfsl.lexemesense import LexemeSense
 from tfsl.monolingualtext import MonolingualText
