@@ -171,6 +171,7 @@ langs.sma_ = Language("sma", "Q13293")  # Southern Sami
 # other languages (in general)
 langs.ca_ = Language("ca", "Q7026")  # Catalan
 langs.dag_ = Language("dag", "Q32238")  # Dagbani
+langs.eo_ = Language("eo", "Q143")  # Esperanto
 langs.ha_ = Language("ha", "Q56475")  # Hausa
 langs.ha_arab_ = Language("ha-arab", "Q56475")  # Hausa
 langs.ig_ = Language("ig", "Q33578")  # Igbo

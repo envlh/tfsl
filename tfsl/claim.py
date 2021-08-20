@@ -23,12 +23,6 @@ class Claim:
     def __str__(self):
         return f'{self.property}: {self.value}'
 
-    def __add__(self, arg):
-        return Statement(self.property, self.value) + arg
-
-    def __matmul__(self, arg):
-        return Statement(self.property, self.value) @ arg
-
     def __jsonout__(self):
         if(type(self.value) == str):
             value_out = self.value

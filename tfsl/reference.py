@@ -40,11 +40,9 @@ class Reference:
 
     @singledispatchmethod
     def add(self, arg):
+        if isinstance(arg, tfsl.claim.Claim):
+            return tfsl.utils.add_claimlike(self._claims, arg)
         return self._claims
-
-    @add.register
-    def _(self, arg: tfsl.claim.Claim):
-        return tfsl.utils.add_claimlike(self._claims, arg)
 
     def __sub__(self, arg):
         newclaims = self.sub(arg)
@@ -52,29 +50,24 @@ class Reference:
 
     @singledispatchmethod
     def sub(self, arg):
+        if isinstance(arg, tfsl.claim.Claim):
+            return tfsl.utils.sub_claimlike(self._claims, arg)
         return self._claims
-
-    @sub.register
-    def _(self, arg: tfsl.claim.Claim):
-        return tfsl.utils.sub_claimlike(self._claims, arg)
 
     def __contains__(self, arg):
         return self.contains(arg)
 
     @singledispatchmethod
     def contains(self, arg):
+        if isinstance(arg, tfsl.claim.Claim):
+            for prop in self._claims:
+                if arg in self._claims[prop]:
+                    return True
         return arg in self._claims[arg.property]
 
     @contains.register
     def _(self, arg: str):
         return arg in self._claims
-
-    @contains.register
-    def _(self, arg: tfsl.claim.Claim):
-        for prop in self._claims:
-            if arg in self._claims[prop]:
-                return True
-        return False
 
     def __eq__(self, rhs):
         return Counter(self._claims) == Counter(rhs._claims)

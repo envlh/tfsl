@@ -21,7 +21,7 @@ def matches_lexeme(arg):
 
 
 def matches_form(arg):
-    return re.match(r"^L\d+-F\d+$", arg)
+    return re.match(r"^(L\d+)-(F\d+)$", arg)
 
 
 def matches_form_suffix(arg):
@@ -29,7 +29,7 @@ def matches_form_suffix(arg):
 
 
 def matches_sense(arg):
-    return re.match(r"^L\d+-S\d+$", arg)
+    return re.match(r"^(L\d+)-(S\d+)$", arg)
 
 
 def matches_sense_suffix(arg):

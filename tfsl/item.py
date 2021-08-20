@@ -53,8 +53,8 @@ class Item:
         self.title = None
         self.lastrevid = None
         self.modified = None
-        self.item_type = None
-        self.item_id = None
+        self.type = None
+        self.id = None
 
     def set_published_settings(self, item_in):
         self.pageid = item_in["pageid"]
@@ -62,8 +62,8 @@ class Item:
         self.title = item_in["title"]
         self.lastrevid = item_in["lastrevid"]
         self.modified = item_in["modified"]
-        self.item_type = item_in["type"]
-        self.item_id = item_in["id"]
+        self.type = item_in["type"]
+        self.id = item_in["id"]
 
 def build_item(item_in):
     labels = {}
