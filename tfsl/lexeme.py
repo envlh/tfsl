@@ -147,6 +147,7 @@ class Lexeme:
             return next(sense for sense in self.senses if sense.id == key)
         if tfsl.utils.matches_sense_suffix(key):
             return next(sense for sense in self.senses if sense.id == self.lexeme_id + '-' + key)
+        raise KeyError
 
     def __str__(self):
         # TODO: fix indentation of components

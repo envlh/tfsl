@@ -22,6 +22,8 @@ class ItemValue:
             self.type = 'sense'
 
     def __eq__(self, rhs):
+        if isinstance(rhs, str):
+            return self.id == rhs
         return self.id == rhs.id and self.type == rhs.type
 
     def __hash__(self):
