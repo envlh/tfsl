@@ -77,7 +77,10 @@ langs = Languages()
 
 
 def get_first_lang(arg):
-    return langs.find(arg)[0]
+    try:
+        return langs.find(arg)[0]
+    except IndexError as e:
+         raise Exception('Could not find', arg) from e
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -169,15 +172,28 @@ langs.sju_ = Language("sju", "Q56415")  # Ume Sami
 langs.sma_ = Language("sma", "Q13293")  # Southern Sami
 
 # other languages (in general)
+langs.ast_ = Language("ast", "Q29507")  # Asturian
 langs.ca_ = Language("ca", "Q7026")  # Catalan
 langs.dag_ = Language("dag", "Q32238")  # Dagbani
 langs.eo_ = Language("eo", "Q143")  # Esperanto
+langs.eu_ = Language("eu", "Q8752")  # Basque
+langs.fa_ = Language("fa", "Q9168")  # Persian
 langs.ha_ = Language("ha", "Q56475")  # Hausa
 langs.ha_arab_ = Language("ha-arab", "Q56475")  # Hausa
+langs.he_ = Language("he", "Q9288")  # Hebrew
 langs.ig_ = Language("ig", "Q33578")  # Igbo
+langs.io_ = Language("io", "Q35224")  # Ido
+langs.ja_ = Language("ja", "Q5287")  # Japanese
+langs.jv_ = Language("jv", "Q33549")  # Javanese
+langs.ko_ = Language("ko", "Q9176")  # Korean
+langs.lfn_ = Language("lfn", "Q146803")  # Lingua Franca Nova
+langs.ms_ = Language("ms", "Q9237")  # Malay
 langs.nan_ = Language("nan", "Q36495")  # Southern Min
+langs.oc_ = Language("oc", "Q14185")  # Occitan
 langs.pwn_ = Language("pwn", "Q715755")  # Paiwan
+langs.scn_ = Language("scn", "Q33973")  # Sicilian
 langs.uk_ = Language("uk", "Q8798")  # Ukrainian
+langs.vo_ = Language("vo", "Q36986")  # Volapuk
 
 # Shtokavian variants
 langs.hr_ = Language("hr", "Q6654")  # Croatian
