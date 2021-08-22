@@ -80,7 +80,7 @@ def get_first_lang(arg):
     try:
         return langs.find(arg)[0]
     except IndexError as e:
-         raise Exception('Could not find', arg) from e
+        raise Exception('Could not find', arg) from e
 
 # pylint: disable=attribute-defined-outside-init
 
@@ -172,35 +172,70 @@ langs.sju_ = Language("sju", "Q56415")  # Ume Sami
 langs.sma_ = Language("sma", "Q13293")  # Southern Sami
 
 # other languages (in general)
+langs.af_ = Language("af", "Q14196")  # Afrikaans
 langs.ast_ = Language("ast", "Q29507")  # Asturian
+langs.az_ = Language("az", "Q9292")  # Azerbaijani
+langs.be_ = Language("be", "Q9091")  # Belarusian
+langs.be_tarask_ = Language("be-tarask", "Q9091")  # Taraskievica
 langs.ca_ = Language("ca", "Q7026")  # Catalan
+langs.cy_ = Language("cy", "Q9309")  # Welsh
 langs.dag_ = Language("dag", "Q32238")  # Dagbani
+langs.dsb_ = Language("dsb", "Q13286")  # Lower Sorbian
+langs.de_at_ = Language("de-at", "Q306626")  # Austrian German
+langs.de_ch_ = Language("de-ch", "Q387066")  # Austrian German
+langs.en_gb_ = Language("en-gb", "Q7979")  # British English
 langs.eo_ = Language("eo", "Q143")  # Esperanto
 langs.eu_ = Language("eu", "Q8752")  # Basque
 langs.fa_ = Language("fa", "Q9168")  # Persian
+langs.gd_ = Language("gd", "Q9314")  # Scottish Gaelic
+langs.gl_ = Language("gl", "Q9307")  # Galician
 langs.ha_ = Language("ha", "Q56475")  # Hausa
 langs.ha_arab_ = Language("ha-arab", "Q56475")  # Hausa
 langs.he_ = Language("he", "Q9288")  # Hebrew
+langs.hsb_ = Language("hsb", "Q13248")  # Upper Sorbian
+langs.hy_ = Language("hy", "Q8785")  # Armenian
 langs.ig_ = Language("ig", "Q33578")  # Igbo
 langs.io_ = Language("io", "Q35224")  # Ido
 langs.ja_ = Language("ja", "Q5287")  # Japanese
 langs.jv_ = Language("jv", "Q33549")  # Javanese
+langs.ka_ = Language("ka", "Q8108")  # Georgian
 langs.ko_ = Language("ko", "Q9176")  # Korean
+langs.la_ = Language("la", "Q397")  # Latin
 langs.lfn_ = Language("lfn", "Q146803")  # Lingua Franca Nova
+langs.mk_ = Language("mk", "Q9296")  # Macedonian
 langs.ms_ = Language("ms", "Q9237")  # Malay
 langs.nan_ = Language("nan", "Q36495")  # Southern Min
+langs.nqo_ = Language("nqo", "Q35772")  # Manding languages
 langs.oc_ = Language("oc", "Q14185")  # Occitan
+langs.pi_ = Language("pi", "Q36727")  # Pali
+langs.ps_ = Language("ps", "Q58680")  # Pashto
+langs.pt_br_ = Language("pt-br", "Q750553")  # Brazilian Portuguese
 langs.pwn_ = Language("pwn", "Q715755")  # Paiwan
 langs.scn_ = Language("scn", "Q33973")  # Sicilian
+langs.sco_ = Language("sco", "Q14549")  # Scots
+langs.ss_ = Language("ss", "Q34014")  # Swazi
+langs.tg_ = Language("tg", "Q9260")  # Tajik
+langs.th_ = Language("th", "Q9217")  # Thai
+langs.tr_ = Language("tr", "Q256")  # Turkish
+langs.udm_ = Language("udm", "Q13238")  # Udmurt
 langs.uk_ = Language("uk", "Q8798")  # Ukrainian
+langs.vi_ = Language("vi", "Q9199")  # Vietnamese
+langs.vmf_ = Language("vmf", "Q71223")  # East Franconian
 langs.vo_ = Language("vo", "Q36986")  # Volapuk
+langs.zxx_ = Language("zxx", "Q22282939")  # no linguistic content
 
+# Lahjas and Darjas
+langs.arq_ = Language("arq", "Q56499")  # Algerian
+langs.arz_ = Language("arz", "Q29919")  # Egyptian
 # Shtokavian variants
 langs.hr_ = Language("hr", "Q6654")  # Croatian
+langs.sr_ = Language("sr", "Q9299")  # Serbian
+langs.sr_ec_ = Language("sr-ec", "Q9299")  # Serbian written in Cyrillic
 # certain languages of Southeast Asia
 langs.id_ = Language("id", "Q9240")  # Indonesian
 # certain languages of East Asia
-langs.zh_ = Language("zh", "Q9192")  # Mandarin Chinese
-langs.zh_hans_ = Language("zh-hant", "Q9192")  # Mandarin Chinese (Simplified)
-langs.zh_hant_ = Language("zh-hant", "Q9192")  # Mandarin Chinese (Traditional)
-langs.zh_tw_ = Language("zh-tw", "Q9192")  # Mandarin Chinese (Taiwan)
+langs.zh_ = Language("zh", "Q9192")  # Mandarin
+langs.zh_cn_ = Language("zh-cn", "Q9192")  # Mandarin (Mainland)
+langs.zh_hans_ = Language("zh-hans", "Q9192")  # Mandarin (Simplified)
+langs.zh_hant_ = Language("zh-hant", "Q9192")  # Mandarin (Traditional)
+langs.zh_tw_ = Language("zh-tw", "Q9192")  # Mandarin (Taiwan)
