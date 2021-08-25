@@ -41,6 +41,9 @@ class Statement:
             self.references = []
         else:
             self.references = deepcopy(references)
+        
+        self.id = None
+        self.qualifiers_order = None
 
     def __add__(self, arg):
         return self.add(arg)
@@ -87,6 +90,10 @@ class Statement:
 
     def __eq__(self, rhs):
         return self.property == rhs.property and self.value == rhs.value and self.rank == rhs.rank and self.qualifiers == rhs.qualifiers and self.references == rhs.references
+
+    def set_published_settings(self, stmt_in):
+        self.id = stmt_in["id"]
+        self.qualifiers_order = stmt_in.get("qualifiers-order", None)
 
     def __str__(self):
         # TODO: output everything else
@@ -153,6 +160,5 @@ def build_statement(stmt_in):
         stmt_refs = [tfsl.reference.build_ref(ref) for ref in stmt_in["references"]]
 
     stmt_out = Statement(stmt_property, stmt_value, stmt_rank, stmt_quals, stmt_refs)
-    stmt_out.id = stmt_in["id"]
-    stmt_out.qualifiers_order = stmt_in.get("qualifiers-order", None)
+    stmt_out.set_published_settings(stmt_in)
     return stmt_out

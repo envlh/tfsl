@@ -244,9 +244,9 @@ def build_lexeme(lexeme_in):
 def L(lid, cache_path=default_lexeme_cache_path, ttl=86400):
     if isinstance(lid, int):
         lid = 'L'+str(lid)
-    elif(match := tfsl.utils.matches_sense(lid)):
+    elif match := tfsl.utils.matches_sense(lid):
         lid = match.group(1)
-    elif(match := tfsl.utils.matches_form(lid)):
+    elif match := tfsl.utils.matches_form(lid):
         lid = match.group(1)
     filename = os.path.join(cache_path, str(lid)+".json")
     try:
