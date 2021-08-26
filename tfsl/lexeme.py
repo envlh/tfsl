@@ -137,16 +137,19 @@ class Lexeme:
         self.lexeme_id = lexeme_in["id"]
 
     def __getitem__(self, key):
+        id_matches_key = lambda obj: obj.id == key
+        id_matches_key_suffix = lambda obj: obj.id == '-'.join([self.lexeme_id, key])
+
         if tfsl.utils.matches_property(key):
             return self.statements.get(key, [])
         if tfsl.utils.matches_form(key):
-            return next(form for form in self.forms if form.id == key)
+            return next(filter(id_matches_key, self.forms))
         if tfsl.utils.matches_form_suffix(key):
-            return next(form for form in self.forms if form.id == self.lexeme_id + '-' + key)
+            return next(filter(id_matches_key_suffix, self.forms))
         if tfsl.utils.matches_sense(key):
-            return next(sense for sense in self.senses if sense.id == key)
+            return next(filter(id_matches_key, self.senses))
         if tfsl.utils.matches_sense_suffix(key):
-            return next(sense for sense in self.senses if sense.id == self.lexeme_id + '-' + key)
+            return next(filter(id_matches_key_suffix, self.senses))
         raise KeyError
 
     def __str__(self):
