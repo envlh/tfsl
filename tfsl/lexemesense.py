@@ -9,18 +9,23 @@ import tfsl.utils
 
 
 class LexemeSense:
-    def __init__(self, glosses, statements=[]):
-        if(type(glosses) == tfsl.monolingualtext.MonolingualText):
+    def __init__(self, glosses, statements=None):
+        if isinstance(glosses, tfsl.monolingualtext.MonolingualText):
             self.glosses = [glosses.text @ glosses.language]
         else:
             self.glosses = deepcopy(glosses)
+
         # TODO: split statement dict handling off someplace else?
-        if(type(statements) == list):
+        if statements is None:
+            self.statements = defaultdict(list)
+        elif isinstance(statements, list):
             self.statements = defaultdict(list)
             for arg in statements:
                 self.statements[arg.property].append(arg)
         else:
             self.statements = deepcopy(statements)
+
+        self.id = None
 
     def __add__(self, arg):
         return self.add(arg)
@@ -54,7 +59,7 @@ class LexemeSense:
 
     @sub.register
     def _(self, arg: str):
-        if(tfsl.utils.matches_property(arg)):
+        if tfsl.utils.matches_property(arg):
             return LexemeSense(self.glosses, tfsl.utils.sub_property(self.statements, arg))
 
     @sub.register
@@ -74,22 +79,16 @@ class LexemeSense:
 
     @contains.register
     def _(self, arg: str):
-        if(tfsl.utils.matches_property(arg)):
+        if tfsl.utils.matches_property(arg):
             return arg in self.statements
 
     @contains.register
     def _(self, arg: tfsl.claim.Claim):
-        for prop in self.statements:
-            if arg in self.statements[prop]:
-                return True
-        return False
+        return any((arg in self.statements[prop]) for prop in self.statements)
 
     @contains.register
     def _(self, arg: tfsl.languages.Language):
-        for gloss in self.glosses:
-            if(gloss.language == arg):
-                return True
-        return False
+        return any((gloss.language == arg) for gloss in self.glosses)
 
     def __eq__(self, rhs):
         return self.glosses == rhs.glosses and self.statements == rhs.statements
@@ -98,7 +97,7 @@ class LexemeSense:
         # TODO: output everything else
         base_str = ' / '.join([str(gloss) for gloss in self.glosses])
         stmt_str = ""
-        if(self.statements != {}):
+        if self.statements != {}:
             stmt_str = "\n<\n"+indent("\n".join([str(stmt) for prop in self.statements for stmt in self.statements[prop]]), tfsl.utils.DEFAULT_INDENT)+"\n>"
         return base_str + stmt_str
 
@@ -112,7 +111,7 @@ class LexemeSense:
         base_dict["claims"] = defaultdict(list)
         for stmtprop, stmtval in self.statements.items():
             base_dict["claims"][stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
-        if(base_dict["claims"] == {}):
+        if base_dict["claims"] == {}:
             del base_dict["claims"]
         else:
             base_dict["claims"] = dict(base_dict["claims"])

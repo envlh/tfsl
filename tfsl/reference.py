@@ -2,7 +2,6 @@ from collections import defaultdict, Counter
 from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import Any, Tuple
 
 import tfsl.claim
 import tfsl.utils
@@ -15,21 +14,24 @@ class Reference:
 
     def __init__(self, *args):
         self._claims = defaultdict(list)
-        if(len(args) == 1 and type(args[0]) == defaultdict):
+        if len(args) == 1 and isinstance(args[0], defaultdict):
             self._claims = deepcopy(args[0])
         else:
-            if(len(args) == 1 and type(args[0]) == list):
+            if len(args) == 1 and isinstance(args[0], list):
                 arglist = args[0]
             else:
                 arglist = args
             for arg in arglist:
                 self._claims[arg.property].append(deepcopy(arg))
 
+        self.snaks_order = None
+        self.hash = None
+
     def __getitem__(self, property_in: str):
         return self._claims[property_in]
 
     def __delitem__(self, claim_in):
-        if(type(claim_in) == str):
+        if isinstance(claim_in, str):
             del self._claims[claim_in]
         else:
             self._claims[claim_in[0]] = [claim for claim in self._claims[claim_in[0]] if claim.value != claim_in[1]]

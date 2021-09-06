@@ -9,23 +9,29 @@ import tfsl.utils
 
 
 class LexemeForm:
-    def __init__(self, representations, features=[], statements=[]):
-        if(type(representations) == tfsl.monolingualtext.MonolingualText):
+    def __init__(self, representations, features=None, statements=None):
+        if isinstance(representations, tfsl.monolingualtext.MonolingualText):
             self.representations = [representations]
         else:
             self.representations = deepcopy(representations)
 
-        if(type(features) == str):
+        if features is None:
+            self.features = []
+        elif isinstance(features, str):
             self.features = [features]
         else:
             self.features = deepcopy(features)
 
-        if(type(statements) == list):
+        if statements is None:
+            self.statements = defaultdict(list)
+        elif isinstance(statements, list):
             self.statements = defaultdict(list)
             for arg in statements:
                 self.statements[arg.property].append(arg)
         else:
             self.statements = deepcopy(statements)
+
+        self.id = None
 
     def __add__(self, arg):
         return self.add(arg)
@@ -73,11 +79,11 @@ class LexemeForm:
 
     @sub.register
     def _(self, arg: str):
-        if(tfsl.utils.matches_item(arg)):
+        if tfsl.utils.matches_item(arg):
             return LexemeForm(self.representations,
                               tfsl.utils.sub_from_list(self.features, arg),
                               self.statements)
-        elif(tfsl.utils.matches_property(arg)):
+        elif tfsl.utils.matches_property(arg):
             return LexemeForm(self.representations,
                               self.features,
                               tfsl.utils.sub_property(self.statements, arg))
@@ -101,24 +107,18 @@ class LexemeForm:
 
     @contains.register
     def _(self, arg: str):
-        if(tfsl.utils.matches_property(arg)):
+        if tfsl.utils.matches_property(arg):
             return arg in self.statements
-        elif(tfsl.utils.matches_item(arg)):
+        elif tfsl.utils.matches_item(arg):
             return arg in self.features
 
     @contains.register
     def _(self, arg: tfsl.claim.Claim):
-        for prop in self.statements:
-            if arg in self.statements[prop]:
-                return True
-        return False
+        return any((arg in self.statements[prop]) for prop in self.statements)
 
     @contains.register
     def _(self, arg: tfsl.languages.Language):
-        for rep in self.representations:
-            if(rep.language == arg):
-                return True
-        return False
+        return any((rep.language == arg) for rep in self.representations)
 
     def __eq__(self, rhs):
         reps_equal = (self.representations == rhs.representations)
@@ -131,7 +131,7 @@ class LexemeForm:
         feat_str = ': '+', '.join(self.features)
 
         stmt_str = ""
-        if(self.statements != {}):
+        if self.statements != {}:
             prefix = "\n<\n"
             suffix = "\n>"
             stmt_strings = [str(stmt) for prop in self.statements for stmt in self.statements[prop]]
@@ -152,7 +152,7 @@ class LexemeForm:
         base_dict["claims"] = defaultdict(list)
         for stmtprop, stmtval in self.statements.items():
             base_dict["claims"][stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
-        if(base_dict["claims"] == {}):
+        if base_dict["claims"] == {}:
             del base_dict["claims"]
         else:
             base_dict["claims"] = dict(base_dict["claims"])

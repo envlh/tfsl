@@ -1,5 +1,3 @@
-from functools import singledispatchmethod
-
 import tfsl.utils
 
 
@@ -14,6 +12,10 @@ class Claim:
         self.property = property_in
         self.value = value
 
+        self.snaktype = None
+        self.hash = None
+        self.datatype = tfsl.utils.values_datatype(self.property)
+
     def __eq__(self, rhs):
         return self.property == rhs.property and self.value == rhs.value
 
@@ -24,7 +26,7 @@ class Claim:
         return f'{self.property}: {self.value}'
 
     def __jsonout__(self):
-        if(type(self.value) == str):
+        if isinstance(self.value, str):
             value_out = self.value
         else:
             value_out = self.value.__jsonout__()
@@ -42,17 +44,17 @@ class Claim:
 def build_value(value_in):
     value_type = value_in["type"]
     actual_value = value_in["value"]
-    if(value_type == "string"):
+    if value_type == "string":
         return actual_value
-    elif(value_type == "wikibase-entityid"):
+    elif value_type == "wikibase-entityid":
         return tfsl.itemvalue.build_itemvalue(actual_value)
-    elif(value_type == "monolingualtext"):
+    elif value_type == "monolingualtext":
         return tfsl.monolingualtext.build_mtvalue(actual_value)
-    elif(value_type == "globecoordinate"):  # TODO
+    elif value_type == "globecoordinate":  # TODO
         return tfsl.coordinatevalue.build_coordinatevalue(actual_value)
-    elif(value_type == "quantity"):  # TODO
+    elif value_type == "quantity":  # TODO
         return tfsl.quantityvalue.build_quantityvalue(actual_value)
-    elif(value_type == "time"):  # TODO
+    elif value_type == "time":  # TODO
         return tfsl.timevalue.build_timevalue(actual_value)
     else:
         raise ValueError("Type "+value_type+" is not supported yet!")
