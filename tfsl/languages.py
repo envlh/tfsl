@@ -206,6 +206,7 @@ langs.jv_ = Language("jv", "Q33549")  # Javanese
 langs.ka_ = Language("ka", "Q8108")  # Georgian
 langs.kk_ = Language("kk", "Q9252")  # Kazakh
 langs.ko_ = Language("ko", "Q9176")  # Korean
+langs.kw_ = Language("kw", "Q25289")  # Cornish
 langs.la_ = Language("la", "Q397")  # Latin
 langs.lb_ = Language("lb", "Q9051")  # Luxembourgish
 langs.lfn_ = Language("lfn", "Q146803")  # Lingua Franca Nova
@@ -231,6 +232,7 @@ langs.th_ = Language("th", "Q9217")  # Thai
 langs.tr_ = Language("tr", "Q256")  # Turkish
 langs.udm_ = Language("udm", "Q13238")  # Udmurt
 langs.uk_ = Language("uk", "Q8798")  # Ukrainian
+langs.vep_ = Language("vep", "Q32747")  # Veps
 langs.vi_ = Language("vi", "Q9199")  # Vietnamese
 langs.vmf_ = Language("vmf", "Q71223")  # East Franconian
 langs.vo_ = Language("vo", "Q36986")  # Volapuk
@@ -239,8 +241,10 @@ langs.zxx_ = Language("zxx", "Q22282939")  # no linguistic content
 
 # Lahjas and Darjas
 langs.arq_ = Language("arq", "Q56499")  # Algerian
+langs.ary_ = Language("ary", "Q56426")  # Moroccan
 langs.arz_ = Language("arz", "Q29919")  # Egyptian
 # Shtokavian variants
+langs.bs_ = Language("bs", "Q9303")  # Bosnian
 langs.hr_ = Language("hr", "Q6654")  # Croatian
 langs.sr_ = Language("sr", "Q9299")  # Serbian
 langs.sr_ec_ = Language("sr-ec", "Q9299")  # Serbian written in Cyrillic
