@@ -45,6 +45,15 @@ class Statement:
         self.id = None
         self.qualifiers_order = None
 
+    def __getitem__(self, key):
+        id_matches_key = lambda obj: obj.id == key
+
+        if key == self.property:
+            return self.value
+        elif tfsl.utils.matches_property(key):
+            return self.qualifiers.get(key, [])
+        raise KeyError
+
     def __add__(self, arg):
         return self.add(arg)
 

@@ -27,6 +27,13 @@ class LexemeSense:
 
         self.id = None
 
+    def __getitem__(self, key):
+        id_matches_key = lambda obj: obj.id == key
+
+        if tfsl.utils.matches_property(key):
+            return self.statements.get(key, [])
+        raise KeyError
+
     def __add__(self, arg):
         return self.add(arg)
 

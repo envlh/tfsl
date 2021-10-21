@@ -251,7 +251,6 @@ langs.sr_ec_ = Language("sr-ec", "Q9299")  # Serbian written in Cyrillic
 # certain languages of Southeast Asia
 langs.id_ = Language("id", "Q9240")  # Indonesian
 # certain languages of East Asia
-langs.zh_ = Language("zh", "Q9192")  # Mandarin
 langs.zh_cn_ = Language("zh-cn", "Q9192")  # Mandarin (Mainland)
 langs.zh_hans_ = Language("zh-hans", "Q9192")  # Mandarin (Simplified)
 langs.zh_hant_ = Language("zh-hant", "Q9192")  # Mandarin (Traditional)

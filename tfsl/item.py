@@ -56,6 +56,13 @@ class Item:
         self.type = None
         self.id = None
 
+    def __getitem__(self, key):
+        id_matches_key = lambda obj: obj.id == key
+
+        if tfsl.utils.matches_property(key):
+            return self.statements.get(key, [])
+        raise KeyError
+
     def set_published_settings(self, item_in):
         self.pageid = item_in["pageid"]
         self.namespace = item_in["ns"]
