@@ -41,7 +41,7 @@ class LexemeForm:
         }
 
     def set_published_settings(self, form_in):
-        form_out.id = form_in["id"]
+        self.id = form_in["id"]
 
     def __add__(self, arg):
         return self.add(arg)
