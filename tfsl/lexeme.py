@@ -50,6 +50,19 @@ class Lexeme:
         self.lexeme_type = None
         self.lexeme_id = None
 
+        self.removed_lemmata = []
+
+    def get_published_settings(self):
+        return {
+            "pageid": self.pageid,
+            "ns": self.namespace,
+            "title": self.title,
+            "lastrevid": self.lastrevid,
+            "modified": self.modified,
+            "type": self.lexeme_type,
+            "id": self.lexeme_id
+        }
+
     def __add__(self, arg):
         return self.add(arg)
 
@@ -103,15 +116,22 @@ class Lexeme:
 
     @add.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return Lexeme(tfsl.utils.add_to_mtlist(self.lemmata, arg),
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(tfsl.utils.add_to_mtlist(self.lemmata, arg),
                       self.language, self.category, self.statements,
                       self.senses, self.forms)
+        lexeme_out.set_published_settings(published_settings)
+        return lexeme_out
 
     @sub.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return Lexeme(tfsl.utils.sub_from_list(self.lemmata, arg),
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(tfsl.utils.sub_from_list(self.lemmata, arg),
                       self.language, self.category, self.statements,
                       self.senses, self.forms)
+        lexeme_out.set_published_settings(published_settings)
+        lexeme_out.removed['lemmata'].append(arg)
+        return lexeme_out
 
     def get_forms(self, inflections=None):
         if inflections is None:
@@ -190,6 +210,9 @@ class Lexeme:
                      "type": "lexeme"}
 
         base_dict["lemmas"] = {}
+        for lemma in self.removed_lemmata:
+            new_dict = {"value": lemma.text, "language": lemma.language.code, "remove": ""}
+            base_dict["lemmas"][lemma.language.code] = new_dict
         for lemma in self.lemmata:
             new_dict = {"value": lemma.text, "language": lemma.language.code}
             base_dict["lemmas"][lemma.language.code] = new_dict
@@ -212,7 +235,7 @@ class Lexeme:
             del base_dict["senses"]
 
         try:
-            base_dict["id"] = self.id
+            base_dict["id"] = self.lexeme_id
             base_dict["lastrevid"] = self.lastrevid
         except AttributeError:
             pass

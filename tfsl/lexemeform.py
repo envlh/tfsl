@@ -33,6 +33,16 @@ class LexemeForm:
 
         self.id = None
 
+        self.removed_representations = []
+
+    def get_published_settings(self):
+        return {
+            "id": self.id
+        }
+
+    def set_published_settings(self, form_in):
+        form_out.id = form_in["id"]
+
     def __add__(self, arg):
         return self.add(arg)
 
@@ -61,15 +71,22 @@ class LexemeForm:
 
     @add.register
     def _(self, arg: tfsl.statement.Statement):
-        return LexemeForm(self.representations,
+        published_settings = self.get_published_settings()
+        form_out = LexemeForm(self.representations,
                           self.features,
                           tfsl.utils.add_claimlike(self.statements, arg))
+        form_out.set_published_settings(published_settings)
+        return form_out
 
     @sub.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return LexemeForm(tfsl.utils.sub_from_list(self.representations, arg),
+        published_settings = self.get_published_settings()
+        form_out = LexemeForm(tfsl.utils.sub_from_list(self.representations, arg),
                           self.features,
                           self.statements)
+        form_out.set_published_settings(published_settings)
+        form_out.removed_representations.append(arg)
+        return form_out
 
     @sub.register
     def _(self, arg: tfsl.languages.Language):
@@ -142,6 +159,8 @@ class LexemeForm:
 
     def __jsonout__(self):
         reps_dict = {}
+        for rep in self.removed_representations:
+            reps_dict[rep.language.code] = {"value": rep.text, "language": rep.language.code, "remove": ""}
         for rep in self.representations:
             reps_dict[rep.language.code] = {"value": rep.text, "language": rep.language.code}
         base_dict = {"representations": reps_dict, "grammaticalFeatures": self.features}
@@ -174,5 +193,7 @@ def build_form(form_in):
             claims[prop].append(tfsl.statement.build_statement(claim))
 
     form_out = LexemeForm(reps, feats, claims)
-    form_out.id = form_in["id"]
+
+    form_out.set_published_settings(form_in)
+
     return form_out
