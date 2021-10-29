@@ -8,6 +8,7 @@ from functools import singledispatchmethod
 from textwrap import indent
 
 import tfsl.auth
+import tfsl.itemvalue
 import tfsl.languages
 import tfsl.lexemeform
 import tfsl.lexemesense
@@ -171,6 +172,15 @@ class Lexeme:
         if tfsl.utils.matches_sense_suffix(key):
             return next(filter(id_matches_key_suffix, self.senses))
         raise KeyError
+
+    def haswbstatement(self, property_in, value_in=None):
+        """Shamelessly named after the keyword used on Wikidata to look for a statement."""
+        if value_in is None:
+            return property_in in self
+        compare = value_in
+        if tfsl.utils.matches_wikibase_object(value_in):
+            compare = tfsl.itemvalue.ItemValue(value_in)
+        return any(map(lambda stmt: stmt.value == compare, self.statements.get(property_in, [])))
 
     def __str__(self):
         # TODO: fix indentation of components

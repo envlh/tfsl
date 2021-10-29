@@ -238,6 +238,7 @@ langs.vmf_ = Language("vmf", "Q71223")  # East Franconian
 langs.vo_ = Language("vo", "Q36986")  # Volapuk
 langs.wa_ = Language("wa", "Q34219")  # Walloon
 langs.zxx_ = Language("zxx", "Q22282939")  # no linguistic content
+langs.mis_ = Language("mis", "Q22283016")  # language without a specific language code
 
 # Lahjas and Darjas
 langs.arq_ = Language("arq", "Q56499")  # Algerian

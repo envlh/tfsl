@@ -8,6 +8,10 @@ DEFAULT_INDENT = "    "
 WD_PREFIX = "http://www.wikidata.org/entity/"
 
 # TODO: how best to override these for wikibases with custom prefixes?
+def matches_wikibase_object(arg):
+    return re.match(r"^([QPL]\d+$|^L\d+-[FS]\d+)$", arg)
+
+
 def matches_item(arg):
     return re.match(r"^Q\d+$", arg)
 
