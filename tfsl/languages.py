@@ -230,6 +230,7 @@ langs.ss_ = Language("ss", "Q34014")  # Swazi
 langs.tg_ = Language("tg", "Q9260")  # Tajik
 langs.th_ = Language("th", "Q9217")  # Thai
 langs.tr_ = Language("tr", "Q256")  # Turkish
+langs.tw_ = Language("tw", "Q36850")  # Twi
 langs.udm_ = Language("udm", "Q13238")  # Udmurt
 langs.uk_ = Language("uk", "Q8798")  # Ukrainian
 langs.vep_ = Language("vep", "Q32747")  # Veps
