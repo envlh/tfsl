@@ -164,9 +164,9 @@ class LexemeForm:
         for rep in self.representations:
             reps_dict[rep.language.code] = {"value": rep.text, "language": rep.language.code}
         base_dict = {"representations": reps_dict, "grammaticalFeatures": self.features}
-        try:
+        if self.id is not None:
             base_dict["id"] = self.id
-        except AttributeError:
+        else:
             base_dict["add"] = ""
         base_dict["claims"] = defaultdict(list)
         for stmtprop, stmtval in self.statements.items():

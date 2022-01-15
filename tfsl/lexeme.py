@@ -80,40 +80,58 @@ class Lexeme:
 
     @add.register
     def _(self, arg: tfsl.statement.Statement):
-        return Lexeme(self.lemmata, self.language, self.category,
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
                       tfsl.utils.add_claimlike(self.statements, arg),
                       self.senses, self.forms)
+        lexeme_out.set_published_settings(published_settings)
+        return lexeme_out
 
     @sub.register
     def _(self, arg: tfsl.statement.Statement):
-        return Lexeme(self.lemmata, self.language, self.category,
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
                       tfsl.utils.sub_claimlike(self.statements, arg),
                       self.senses, self.forms)
+        lexeme_out.set_published_settings(published_settings)
+        return lexeme_out
 
     @add.register
     def _(self, arg: tfsl.lexemesense.LexemeSense):
-        return Lexeme(self.lemmata, self.language, self.category,
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
                       self.statements, tfsl.utils.add_to_list(self.senses, arg),
                       self.forms)
+        lexeme_out.set_published_settings(published_settings)
+        return lexeme_out
 
     @sub.register
     def _(self, arg: tfsl.lexemesense.LexemeSense):
-        return Lexeme(self.lemmata, self.language, self.category,
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
                       self.statements,
                       tfsl.utils.sub_from_list(self.senses, arg),
                       self.forms)
+        lexeme_out.set_published_settings(published_settings)
+        return lexeme_out
 
     @add.register
     def _(self, arg: tfsl.lexemeform.LexemeForm):
-        return Lexeme(self.lemmata, self.language, self.category,
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
                       self.statements, self.senses,
                       tfsl.utils.add_to_list(self.forms, arg))
+        lexeme_out.set_published_settings(published_settings)
+        return lexeme_out
 
     @sub.register
     def _(self, arg: tfsl.lexemeform.LexemeForm):
-        return Lexeme(self.lemmata, self.language, self.category,
+        published_settings = self.get_published_settings()
+        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
                       self.statements, self.senses,
                       tfsl.utils.sub_from_list(self.forms, arg))
+        lexeme_out.set_published_settings(published_settings)
+        return lexeme_out
 
     @add.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
