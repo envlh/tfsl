@@ -149,14 +149,18 @@ class Lexeme:
                       self.language, self.category, self.statements,
                       self.senses, self.forms)
         lexeme_out.set_published_settings(published_settings)
-        lexeme_out.removed['lemmata'].append(arg)
+        lexeme_out.removed_lemmata.append(arg)
         return lexeme_out
 
-    def get_forms(self, inflections=None):
+    def get_forms(self, inflections=None, exclusions=None):
         if inflections is None:
             return self.forms
-        return [form for form in self.forms
+        initial_form_list = [form for form in self.forms
                 if all(i in form.features for i in inflections)]
+        if exclusions is None:
+            return initial_form_list
+        return [form for form in initial_form_list
+                if all(i not in form.features for i in exclusions)]
 
     def get_senses(self, specifiers=None):
         # TODO: handle specifiers argument
@@ -295,16 +299,16 @@ def build_lexeme(lexeme_in):
 
 # pylint: disable=invalid-name
 
-def L(lid, cache_path=default_lexeme_cache_path, ttl=86400):
+def L(lid):
     if isinstance(lid, int):
         lid = 'L'+str(lid)
     elif match := tfsl.utils.matches_sense(lid):
         lid = match.group(1)
     elif match := tfsl.utils.matches_form(lid):
         lid = match.group(1)
-    filename = os.path.join(cache_path, str(lid)+".json")
+    filename = tfsl.utils.get_filename(lid)
     try:
-        assert time.time() - os.path.getmtime(filename) < ttl
+        assert time.time() - os.path.getmtime(filename) < tfsl.utils.time_to_live
         with open(filename) as fileptr:
             lexeme_json = json.load(fileptr)
     except (FileNotFoundError, OSError, AssertionError):

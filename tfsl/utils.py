@@ -1,6 +1,9 @@
+import configparser
+import os
+import re
 from copy import deepcopy
 from functools import lru_cache
-import re
+from pathlib import Path
 
 import requests
 
@@ -118,10 +121,28 @@ def values_type(prop):
     }
     return mapping[values_datatype(prop)]
 
-
 @lru_cache
 def values_datatype(prop):
     # TODO: rewrite better
     prop_data = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
     prop_data = prop_data.json()
     return prop_data["entities"][prop]["datatype"]
+
+def read_config():
+    """ Reads the config file residing at /path/to/tfsl/config.ini.
+    """
+    config = configparser.ConfigParser()
+    current_config_path = (Path(__file__).parent / '../config.ini').resolve()
+    config.read(current_config_path)
+    cpath = config['Tfsl']['CachePath']
+    ttl = float(config['Tfsl']['TimeToLive'])
+    return cpath, ttl
+
+def get_filename(entity_name):
+    """ Constructs the name of a text file containing a sense subgraph based on a given property.
+    """
+    return os.path.join(cache_path, f"{entity_name}.json")
+
+cache_path, time_to_live = read_config()
+os.makedirs(cache_path,exist_ok=True)
+

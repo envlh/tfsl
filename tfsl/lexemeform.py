@@ -43,6 +43,11 @@ class LexemeForm:
     def set_published_settings(self, form_in):
         self.id = form_in["id"]
 
+    def __getitem__(self, key):
+        if tfsl.utils.matches_property(key):
+            return self.statements.get(key, [])
+        raise KeyError
+
     def __add__(self, arg):
         return self.add(arg)
 

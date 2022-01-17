@@ -104,12 +104,12 @@ def build_item(item_in):
 
 # pylint: disable=invalid-name
 
-def Q(lid, cache_path=default_item_cache_path, ttl=86400):
+def Q(lid):
     if isinstance(lid, int):
         lid = 'Q'+str(lid)
-    filename = os.path.join(cache_path, str(lid)+".json")
+    filename = tfsl.utils.get_filename(lid)
     try:
-        assert time.time() - os.path.getmtime(filename) < ttl
+        assert time.time() - os.path.getmtime(filename) < tfsl.utils.time_to_live
         with open(filename) as fileptr:
             item_json = json.load(fileptr)
     except (FileNotFoundError, OSError, AssertionError):

@@ -1,0 +1,3 @@
+[Tfsl]
+CachePath = /tmp/tfsl
+TimeToLive = 604800
