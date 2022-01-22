@@ -266,11 +266,9 @@ class Lexeme:
         if base_dict["senses"] == []:
             del base_dict["senses"]
 
-        try:
+        if self.lexeme_id is not None:
             base_dict["id"] = self.lexeme_id
             base_dict["lastrevid"] = self.lastrevid
-        except AttributeError:
-            pass
 
         return base_dict
 

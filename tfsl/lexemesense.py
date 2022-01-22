@@ -111,9 +111,9 @@ class LexemeSense:
     def __jsonout__(self):
         glosses_dict = {gloss.language.code: {"value": gloss.text, "language": gloss.language.code} for gloss in self.glosses}
         base_dict = {"glosses": glosses_dict}
-        try:
+        if self.id is not None:
             base_dict["id"] = self.id
-        except AttributeError:
+        else:
             base_dict["add"] = ""
         base_dict["claims"] = defaultdict(list)
         for stmtprop, stmtval in self.statements.items():
