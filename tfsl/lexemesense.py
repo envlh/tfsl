@@ -1,6 +1,5 @@
-from collections import defaultdict
 from functools import singledispatchmethod
-from textwrap import indent
+from typing import Union
 
 import tfsl.monolingualtext
 import tfsl.monolingualtextholder
@@ -9,20 +8,34 @@ import tfsl.statementholder
 import tfsl.utils
 
 class LexemeSense(
-    tfsl.statementholder.StatementHolder,
-    tfsl.monolingualtextholder.MonolingualTextHolder
+    tfsl.monolingualtextholder.MonolingualTextHolder,
+    tfsl.statementholder.StatementHolder
 ):
-    def __init__(self, glosses=None, statements=None):
+    def __init__(self, glosses, statements=None):
         super().__init__(texts=glosses, statements=statements)
 
         self.glosses = self.texts
-
+        self.removed_glosses = self.removed_texts
         self.id = None
 
-    def __getitem__(self, key):
-        if tfsl.utils.matches_property(key):
-            return self.statements.get(key, [])
-        raise KeyError
+    def __getitem__(self, arg):
+        return self.getitem(arg)
+
+    @singledispatchmethod
+    def getitem(self, arg):
+        raise KeyError(f"Can't get {type(arg)} from LexemeSense")
+
+    @getitem.register
+    def _(self, arg: str):
+        return tfsl.statementholder.StatementHolder.__getitem__(self, arg)
+
+    @getitem.register
+    def _(self, arg: tfsl.languages.Language):
+        return tfsl.monolingualtextholder.MonolingualTextHolder.__getitem__(self, arg)
+
+    @getitem.register
+    def _(self, arg: tfsl.monolingualtext.MonolingualText):
+        return tfsl.monolingualtextholder.MonolingualTextHolder.__getitem__(self, arg)
 
     def __add__(self, arg):
         return self.add(arg)
@@ -68,24 +81,20 @@ class LexemeSense(
 
     @singledispatchmethod
     def contains(self, arg):
-        return arg in self.statements[arg.property]
-
-    @contains.register
-    def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return arg in self.glosses
-
-    @contains.register
-    def _(self, arg: str):
-        if tfsl.utils.matches_property(arg):
-            return arg in self.statements
-
-    @contains.register
-    def _(self, arg: tfsl.claim.Claim):
-        return any((arg in self.statements[prop]) for prop in self.statements)
+        raise KeyError(f"Can't check for {type(arg)} in LexemeSense")
 
     @contains.register
     def _(self, arg: tfsl.languages.Language):
-        return any((gloss.language == arg) for gloss in self.glosses)
+        return tfsl.monolingualtextholder.MonolingualTextHolder.__contains__(self, arg)
+
+    @contains.register
+    def _(self, arg: tfsl.monolingualtext.MonolingualText):
+        return tfsl.monolingualtextholder.MonolingualTextHolder.__contains__(self, arg)
+
+    @contains.register(tfsl.claim.Claim)
+    @contains.register(str)
+    def _(self, arg: Union[str, tfsl.claim.Claim]):
+        return tfsl.statementholder.StatementHolder.__contains__(self, arg)
 
     def __eq__(self, rhs):
         glosses_equal = tfsl.monolingualtextholder.MonolingualTextHolder.__eq__(self, rhs)
@@ -94,11 +103,9 @@ class LexemeSense(
 
     def __str__(self):
         # TODO: output everything else
-        base_str = ' / '.join([str(gloss) for gloss in self.glosses])
-        stmt_str = ""
-        if self.statements != {}:
-            stmt_str = "\n<\n"+indent("\n".join([str(stmt) for prop in self.statements for stmt in self.statements[prop]]), tfsl.utils.DEFAULT_INDENT)+"\n>"
-        return base_str + stmt_str
+        gloss_str = tfsl.monolingualtextholder.MonolingualTextHolder.__str__(self)
+        stmt_str = tfsl.statementholder.StatementHolder.__str__(self)
+        return "\n".join([gloss_str, stmt_str])
 
     def __jsonout__(self):
         glosses_dict = self.build_text_dict()
@@ -116,7 +123,6 @@ class LexemeSense(
 
 def build_sense(sense_in):
     glosses = tfsl.monolingualtextholder.build_text_list(sense_in["glosses"])
-
     statements = tfsl.statementholder.build_statement_list(sense_in["claims"])
 
     sense_out = LexemeSense(glosses, statements)

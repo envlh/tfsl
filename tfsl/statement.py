@@ -41,7 +41,7 @@ class Statement:
             self.references = []
         else:
             self.references = deepcopy(references)
-        
+
         self.id = None
         self.qualifiers_order = None
 
