@@ -3,10 +3,15 @@ from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
 
+import tfsl.languages
 import tfsl.monolingualtext
 import tfsl.statement
 import tfsl.utils
 
+def rep_language_is(desired_language: tfsl.languages.Language):
+    def is_desired_language(text: tfsl.monolingualtext.MonolingualText):
+        return text.language == desired_language
+    return is_desired_language
 
 class LexemeForm:
     def __init__(self, representations, features=None, statements=None):
@@ -44,6 +49,8 @@ class LexemeForm:
         self.id = form_in["id"]
 
     def __getitem__(self, key):
+        if isinstance(key, tfsl.languages.Language):
+            return next(filter(rep_language_is(key), self.representations))
         if tfsl.utils.matches_property(key):
             return self.statements.get(key, [])
         raise KeyError

@@ -183,6 +183,8 @@ class Lexeme:
         id_matches_key = lambda obj: obj.id == key
         id_matches_key_suffix = lambda obj: obj.id == '-'.join([self.lexeme_id, key])
 
+        if isinstance(key, tfsl.languages.Language):
+            return next(filter(tfsl.lexemeform.rep_language_is(key), self.lemmata))
         if tfsl.utils.matches_property(key):
             return self.statements.get(key, [])
         if tfsl.utils.matches_form(key):

@@ -1,35 +1,25 @@
 from collections import defaultdict
-from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
 
 import tfsl.monolingualtext
+import tfsl.monolingualtextholder
 import tfsl.statement
+import tfsl.statementholder
 import tfsl.utils
 
+class LexemeSense(
+    tfsl.statementholder.StatementHolder,
+    tfsl.monolingualtextholder.MonolingualTextHolder
+):
+    def __init__(self, glosses=None, statements=None):
+        super().__init__(texts=glosses, statements=statements)
 
-class LexemeSense:
-    def __init__(self, glosses, statements=None):
-        if isinstance(glosses, tfsl.monolingualtext.MonolingualText):
-            self.glosses = [glosses.text @ glosses.language]
-        else:
-            self.glosses = deepcopy(glosses)
-
-        # TODO: split statement dict handling off someplace else?
-        if statements is None:
-            self.statements = defaultdict(list)
-        elif isinstance(statements, list):
-            self.statements = defaultdict(list)
-            for arg in statements:
-                self.statements[arg.property].append(arg)
-        else:
-            self.statements = deepcopy(statements)
+        self.glosses = self.texts
 
         self.id = None
 
     def __getitem__(self, key):
-        id_matches_key = lambda obj: obj.id == key
-
         if tfsl.utils.matches_property(key):
             return self.statements.get(key, [])
         raise KeyError
@@ -41,13 +31,6 @@ class LexemeSense:
     def add(self, arg):
         raise NotImplementedError(f"Can't add {type(arg)} to LexemeSense")
 
-    def __sub__(self, arg):
-        return self.sub(arg)
-
-    @singledispatchmethod
-    def sub(self, arg):
-        raise NotImplementedError(f"Can't subtract {type(arg)} from LexemeForm")
-
     @add.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
         return LexemeSense(tfsl.utils.add_to_mtlist(self.glosses, arg), self.statements)
@@ -55,6 +38,13 @@ class LexemeSense:
     @add.register
     def _(self, arg: tfsl.statement.Statement):
         return LexemeSense(self.glosses, tfsl.utils.add_claimlike(self.statements, arg))
+
+    def __sub__(self, arg):
+        return self.sub(arg)
+
+    @singledispatchmethod
+    def sub(self, arg):
+        raise NotImplementedError(f"Can't subtract {type(arg)} from LexemeForm")
 
     @sub.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
@@ -98,7 +88,9 @@ class LexemeSense:
         return any((gloss.language == arg) for gloss in self.glosses)
 
     def __eq__(self, rhs):
-        return self.glosses == rhs.glosses and self.statements == rhs.statements
+        glosses_equal = tfsl.monolingualtextholder.MonolingualTextHolder.__eq__(self, rhs)
+        statements_equal = tfsl.statementholder.StatementHolder.__eq__(self, rhs)
+        return glosses_equal and statements_equal
 
     def __str__(self):
         # TODO: output everything else
@@ -109,34 +101,24 @@ class LexemeSense:
         return base_str + stmt_str
 
     def __jsonout__(self):
-        glosses_dict = {gloss.language.code: {"value": gloss.text, "language": gloss.language.code} for gloss in self.glosses}
+        glosses_dict = self.build_text_dict()
         base_dict = {"glosses": glosses_dict}
+
         if self.id is not None:
             base_dict["id"] = self.id
         else:
             base_dict["add"] = ""
-        base_dict["claims"] = defaultdict(list)
-        for stmtprop, stmtval in self.statements.items():
-            base_dict["claims"][stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
-        if base_dict["claims"] == {}:
-            del base_dict["claims"]
-        else:
-            base_dict["claims"] = dict(base_dict["claims"])
+
+        if (statement_dict := self.build_statement_dict()):
+            base_dict["claims"] = statement_dict
+
         return base_dict
 
-
 def build_sense(sense_in):
-    glosses = []
-    for code, gloss in sense_in["glosses"].items():
-        new_gloss = gloss["value"] @ tfsl.languages.get_first_lang(gloss["language"])
-        glosses.append(new_gloss)
+    glosses = tfsl.monolingualtextholder.build_text_list(sense_in["glosses"])
 
-    claims = defaultdict(list)
-    claims_in = sense_in["claims"]
-    for prop in claims_in:
-        for claim in claims_in[prop]:
-            claims[prop].append(tfsl.statement.build_statement(claim))
+    statements = tfsl.statementholder.build_statement_list(sense_in["claims"])
 
-    sense_out = LexemeSense(glosses, claims)
+    sense_out = LexemeSense(glosses, statements)
     sense_out.id = sense_in["id"]
     return sense_out

@@ -48,9 +48,7 @@ class Statement:
     def __getitem__(self, key):
         id_matches_key = lambda obj: obj.id == key
 
-        if key == self.property:
-            return self.value
-        elif tfsl.utils.matches_property(key):
+        if tfsl.utils.matches_property(key):
             return self.qualifiers.get(key, [])
         raise KeyError
 
