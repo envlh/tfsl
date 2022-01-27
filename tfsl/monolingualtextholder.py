@@ -2,6 +2,7 @@ from copy import deepcopy
 from functools import singledispatchmethod
 from typing import Union
 
+import tfsl.languages
 import tfsl.monolingualtext
 
 lang_or_mt = Union[tfsl.languages.Language, tfsl.monolingualtext.MonolingualText]
@@ -11,11 +12,10 @@ def rep_language_is(desired_language: tfsl.languages.Language):
         return text.language == desired_language
     return is_desired_language
 
-class MonolingualTextHolder:
-    def __init__(self, **others):
+class MonolingualTextHolder(object):
+    def __init__(self, texts=None):
         super().__init__()
 
-        texts = others.get("texts", None)
         if isinstance(texts, tfsl.monolingualtext.MonolingualText):
             self.texts = [texts.text @ texts.language]
         elif isinstance(texts, list):
@@ -24,7 +24,7 @@ class MonolingualTextHolder:
             self.texts = []
         self.removed_texts = []
 
-    def build_text_dict(self):
+    def __jsonout__(self):
         base_dict = {text.language.code: {"value": text.text, "language": text.language.code, "remove": ""} for text in self.removed_texts}
         for text in self.texts:
             base_dict[text.language.code] = {"value": text.text, "language": text.language.code}
@@ -65,6 +65,46 @@ class MonolingualTextHolder:
 
     def __str__(self):
         return ' / '.join([str(text) for text in self.texts])
+
+    def __add__(self, rhs):
+        return self.add(rhs)
+
+    @singledispatchmethod
+    def add(self, rhs):
+        raise TypeError(f"Can't add {type(rhs)} to MonolingualTextHolder")
+
+    @add.register
+    def _(self, rhs: tfsl.monolingualtext.MonolingualText):
+        newtexts = tfsl.utils.remove_replang(self.texts, rhs.language)
+        newtexts.append(newtexts)
+        self.texts = newtexts
+        return self
+
+    def __sub__(self, rhs):
+        return self.sub(rhs)
+
+    @singledispatchmethod
+    def sub(self, rhs):
+        raise TypeError(f"Can't subtract {type(rhs)} from MonolingualTextHolder")
+
+    @sub.register
+    def _(self, rhs: tfsl.languages.Language):
+        newtexts = []
+        for rep in self.texts:
+            if rep.language == rhs:
+                self.removed_texts.append(rep)
+            else:
+                newtexts.append(rep)
+        self.texts = newtexts
+        return self
+
+    @sub.register
+    def _(self, rhs: tfsl.monolingualtext.MonolingualText):
+        newtexts = [rep for rep in self.texts if rep != rhs]
+        if rhs in self.texts:
+            self.removed_texts.append(rhs)
+        self.texts = newtexts
+        return self
 
 def build_text_list(text_dict):
     texts = []

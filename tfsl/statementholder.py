@@ -5,11 +5,10 @@ from textwrap import indent
 
 import tfsl.statement
 
-class StatementHolder:
-    def __init__(self, **others):
+class StatementHolder(object):
+    def __init__(self, statements=None):
         super().__init__()
 
-        statements = others.get("statements", None)
         if statements is None:
             self.statements = defaultdict(list)
         elif isinstance(statements, list):
@@ -25,7 +24,7 @@ class StatementHolder:
     def has_property_value_pair(self, property_in, value):
         return any(statement.value == value for statement in self.statements[property_in])
 
-    def build_statement_dict(self):
+    def __jsonout__(self):
         statement_dict = defaultdict(list)
         for stmtprop, stmtval in self.statements.items():
             statement_dict[stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
@@ -69,6 +68,44 @@ class StatementHolder:
             stmt_list = [str(stmt) for prop in self.statements for stmt in self.statements[prop]]
             return "<\n"+indent("\n".join(stmt_list), tfsl.utils.DEFAULT_INDENT)+"\n>"
         return ""
+
+    def __add__(self, rhs):
+        return self.add(rhs)
+
+    @singledispatchmethod
+    def add(self, rhs):
+        raise TypeError(f"Can't add {type(rhs)} to StatementHolder")
+
+    @add.register
+    def _(self, rhs: tfsl.statement.Statement):
+        newstmts = deepcopy(self.statements)
+        newstmts[rhs.property].append(rhs)
+        self.statements = newstmts
+        return self
+
+    def __sub__(self, rhs):
+        return self.sub(rhs)
+
+    @singledispatchmethod
+    def sub(self, rhs):
+        raise TypeError(f"Can't subtract {type(rhs)} from StatementHolder")
+
+    @sub.register
+    def _(self, rhs: str):
+        newstmts = deepcopy(self.statements)
+        if rhs in newstmts:
+            del newstmts[rhs]
+        self.statements = newstmts
+        return self
+
+    @sub.register
+    def _(self, rhs: tfsl.statement.Statement):
+        newstmts = deepcopy(self.statements)
+        newstmts[rhs.property] = [stmt for stmt in newstmts[rhs.property] if stmt != rhs]
+        if not newstmts[rhs.property]:
+            del newstmts[rhs.property]
+        self.statements = newstmts
+        return self
 
 def build_statement_list(claims_dict):
     claims = defaultdict(list)

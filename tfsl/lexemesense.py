@@ -12,10 +12,10 @@ class LexemeSense(
     tfsl.statementholder.StatementHolder
 ):
     def __init__(self, glosses, statements=None):
-        super().__init__(texts=glosses, statements=statements)
+        super().__init__()
+        self.glosses = tfsl.monolingualtextholder.MonolingualTextHolder(glosses)
+        self.statements = tfsl.statementholder.StatementHolder(statements)
 
-        self.glosses = self.texts
-        self.removed_glosses = self.removed_texts
         self.id = None
 
     def __getitem__(self, arg):
@@ -27,15 +27,12 @@ class LexemeSense(
 
     @getitem.register
     def _(self, arg: str):
-        return tfsl.statementholder.StatementHolder.__getitem__(self, arg)
+        return self.statements[arg]
 
-    @getitem.register
-    def _(self, arg: tfsl.languages.Language):
-        return tfsl.monolingualtextholder.MonolingualTextHolder.__getitem__(self, arg)
-
-    @getitem.register
-    def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return tfsl.monolingualtextholder.MonolingualTextHolder.__getitem__(self, arg)
+    @getitem.register(tfsl.monolingualtext.MonolingualText)
+    @getitem.register(tfsl.languages.Language)
+    def _(self, arg: tfsl.monolingualtextholder.lang_or_mt):
+        return self.glosses[arg]
 
     def __add__(self, arg):
         return self.add(arg)
@@ -46,35 +43,47 @@ class LexemeSense(
 
     @add.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return LexemeSense(tfsl.utils.add_to_mtlist(self.glosses, arg), self.statements)
+        published_settings = self.get_published_settings()
+        sense_out = LexemeSense(self.glosses + arg, self.statements)
+        sense_out.set_published_settings(published_settings)
+        return sense_out
 
     @add.register
     def _(self, arg: tfsl.statement.Statement):
-        return LexemeSense(self.glosses, tfsl.utils.add_claimlike(self.statements, arg))
+        published_settings = self.get_published_settings()
+        sense_out = LexemeSense(self.glosses, self.statements + arg)
+        sense_out.set_published_settings(published_settings)
+        return sense_out
 
     def __sub__(self, arg):
         return self.sub(arg)
 
     @singledispatchmethod
     def sub(self, arg):
-        raise NotImplementedError(f"Can't subtract {type(arg)} from LexemeForm")
+        raise NotImplementedError(f"Can't subtract {type(arg)} from LexemeSense")
 
-    @sub.register
-    def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return LexemeSense(tfsl.utils.sub_from_list(self.glosses, arg), self.statements)
-
-    @sub.register
-    def _(self, arg: tfsl.languages.Language):
-        return LexemeSense(tfsl.utils.remove_replang(self.glosses, arg), self.statements)
+    @sub.register(tfsl.languages.Language)
+    @sub.register(tfsl.monolingualtext.MonolingualText)
+    def _(self, arg: tfsl.monolingualtextholder.lang_or_mt):
+        published_settings = self.get_published_settings()
+        sense_out = LexemeSense(self.glosses - arg, self.statements)
+        sense_out.set_published_settings(published_settings)
+        return sense_out
 
     @sub.register
     def _(self, arg: str):
+        published_settings = self.get_published_settings()
         if tfsl.utils.matches_property(arg):
-            return LexemeSense(self.glosses, tfsl.utils.sub_property(self.statements, arg))
+            sense_out = LexemeSense(self.glosses, self.statements - arg)
+        sense_out.set_published_settings(published_settings)
+        return sense_out
 
     @sub.register
     def _(self, arg: tfsl.statement.Statement):
-        return LexemeSense(self.glosses, tfsl.utils.sub_claimlike(self.statements, arg))
+        published_settings = self.get_published_settings()
+        sense_out = LexemeSense(self.glosses, self.statements - arg)
+        sense_out.set_published_settings(published_settings)
+        return sense_out
 
     def __contains__(self, arg):
         return self.contains(arg)
@@ -83,32 +92,29 @@ class LexemeSense(
     def contains(self, arg):
         raise KeyError(f"Can't check for {type(arg)} in LexemeSense")
 
-    @contains.register
-    def _(self, arg: tfsl.languages.Language):
-        return tfsl.monolingualtextholder.MonolingualTextHolder.__contains__(self, arg)
-
-    @contains.register
-    def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        return tfsl.monolingualtextholder.MonolingualTextHolder.__contains__(self, arg)
+    @contains.register(tfsl.languages.Language)
+    @contains.register(tfsl.monolingualtext.MonolingualText)
+    def _(self, arg: tfsl.monolingualtextholder.lang_or_mt):
+        return arg in self.glosses
 
     @contains.register(tfsl.claim.Claim)
     @contains.register(str)
     def _(self, arg: Union[str, tfsl.claim.Claim]):
-        return tfsl.statementholder.StatementHolder.__contains__(self, arg)
+        return arg in self.statements
 
     def __eq__(self, rhs):
-        glosses_equal = tfsl.monolingualtextholder.MonolingualTextHolder.__eq__(self, rhs)
-        statements_equal = tfsl.statementholder.StatementHolder.__eq__(self, rhs)
+        glosses_equal = self.representations == rhs.representations
+        statements_equal = self.statements == rhs.statements
         return glosses_equal and statements_equal
 
     def __str__(self):
         # TODO: output everything else
-        gloss_str = tfsl.monolingualtextholder.MonolingualTextHolder.__str__(self)
-        stmt_str = tfsl.statementholder.StatementHolder.__str__(self)
+        gloss_str = str(self.glosses)
+        stmt_str = str(self.statements)
         return "\n".join([gloss_str, stmt_str])
 
     def __jsonout__(self):
-        glosses_dict = self.build_text_dict()
+        glosses_dict = self.glosses.__jsonout__()
         base_dict = {"glosses": glosses_dict}
 
         if self.id is not None:
@@ -116,7 +122,7 @@ class LexemeSense(
         else:
             base_dict["add"] = ""
 
-        if (statement_dict := self.build_statement_dict()):
+        if (statement_dict := self.statements.__jsonout__()):
             base_dict["claims"] = statement_dict
 
         return base_dict
