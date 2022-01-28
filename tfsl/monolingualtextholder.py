@@ -18,10 +18,10 @@ class MonolingualTextHolder(object):
 
         if isinstance(texts, tfsl.monolingualtext.MonolingualText):
             self.texts = [texts.text @ texts.language]
-        elif isinstance(texts, list):
-            self.texts = deepcopy(texts)
-        else:
+        elif texts is None:
             self.texts = []
+        else:
+            self.texts = deepcopy(texts)
         self.removed_texts = []
 
     def __jsonout__(self):
@@ -31,10 +31,21 @@ class MonolingualTextHolder(object):
         return base_dict
 
     def __eq__(self, rhs):
+        return self.eq(rhs)
+    
+    @singledispatchmethod
+    def eq(self, rhs):
         return self.texts == rhs.texts
+
+    @eq.register
+    def _(self, rhs: list):
+        return self.texts == rhs
 
     def __contains__(self, arg):
         return self.contains(arg)
+
+    def __len__(self):
+        return len(self.texts)
 
     @singledispatchmethod
     def contains(self, arg):
@@ -76,9 +87,8 @@ class MonolingualTextHolder(object):
     @add.register
     def _(self, rhs: tfsl.monolingualtext.MonolingualText):
         newtexts = tfsl.utils.remove_replang(self.texts, rhs.language)
-        newtexts.append(newtexts)
-        self.texts = newtexts
-        return self
+        newtexts.append(rhs)
+        return newtexts
 
     def __sub__(self, rhs):
         return self.sub(rhs)
@@ -95,16 +105,14 @@ class MonolingualTextHolder(object):
                 self.removed_texts.append(rep)
             else:
                 newtexts.append(rep)
-        self.texts = newtexts
-        return self
+        return newtexts
 
     @sub.register
     def _(self, rhs: tfsl.monolingualtext.MonolingualText):
         newtexts = [rep for rep in self.texts if rep != rhs]
         if rhs in self.texts:
             self.removed_texts.append(rhs)
-        self.texts = newtexts
-        return self
+        return newtexts
 
 def build_text_list(text_dict):
     texts = []

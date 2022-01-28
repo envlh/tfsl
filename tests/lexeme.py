@@ -41,31 +41,31 @@ class TestLexemeMethods(unittest.TestCase):
         self.x = Lexeme(self.lemmalist, langs.bn_, self.category, self.stmtlist, self.senselist, self.formlist)
 
     def test_lexeme_create(self):
-        self.assertCountEqual(self.x.lemmata, self.lemmalist)
+        self.assertCountEqual(self.x.lemmata.texts, self.lemmalist)
         self.assertEqual(self.x.language, langs.bn_)
         self.assertEqual(self.x.category, self.category)
-        self.assertCountEqual(self.x.statements, {self.property: self.stmtlist})
+        self.assertCountEqual(self.x.statements.statements, {self.property: self.stmtlist})
         self.assertEqual(self.x.senses, self.senselist)
         self.assertEqual(self.x.forms, self.formlist)
 
     def test_lexeme_add_statement(self):
         newstmt = Statement(self.property, self.value_mt2)
         y = self.x + newstmt
-        self.assertCountEqual(y.lemmata, self.lemmalist)
+        self.assertCountEqual(y.lemmata.texts, self.lemmalist)
         self.assertEqual(y.language, langs.bn_)
         self.assertEqual(y.category, self.category)
-        self.assertCountEqual(self.x.statements, {self.property: self.stmtlist})
-        self.assertCountEqual(y.statements, {self.property: [self.stmtlist[0], newstmt]})
+        self.assertCountEqual(self.x.statements.statements, {self.property: self.stmtlist})
+        self.assertCountEqual(y.statements.statements, {self.property: [self.stmtlist[0], newstmt]})
         self.assertEqual(y.senses, self.senselist)
         self.assertEqual(y.forms, self.formlist)
     
     def test_lexeme_add_sense(self):
         newsense = LexemeSense(self.glosslist2)
         y = self.x + newsense
-        self.assertCountEqual(y.lemmata, self.lemmalist)
+        self.assertCountEqual(y.lemmata.texts, self.lemmalist)
         self.assertEqual(y.language, langs.bn_)
         self.assertEqual(y.category, self.category)
-        self.assertCountEqual(y.statements, {self.property: self.stmtlist})
+        self.assertCountEqual(y.statements.statements, {self.property: self.stmtlist})
         self.assertEqual(self.x.senses, self.senselist)
         self.assertEqual(y.senses, [self.senselist[0], self.senselist[1], newsense])
         self.assertEqual(y.forms, self.formlist)
@@ -73,10 +73,10 @@ class TestLexemeMethods(unittest.TestCase):
     def test_lexeme_add_form(self):
         newform = LexemeForm(self.replist2)
         y = self.x + newform
-        self.assertCountEqual(y.lemmata, self.lemmalist)
+        self.assertCountEqual(y.lemmata.texts, self.lemmalist)
         self.assertEqual(y.language, langs.bn_)
         self.assertEqual(y.category, self.category)
-        self.assertCountEqual(y.statements, {self.property: self.stmtlist})
+        self.assertCountEqual(y.statements.statements, {self.property: self.stmtlist})
         self.assertEqual(y.senses, self.senselist)
         self.assertEqual(self.x.forms, self.formlist)
         self.assertEqual(y.forms, [self.formlist[0], self.formlist[1], newform])

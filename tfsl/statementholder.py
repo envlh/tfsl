@@ -30,8 +30,19 @@ class StatementHolder(object):
             statement_dict[stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
         return dict(statement_dict)
 
+    def __len__(self):
+        return len(self.statements)
+
     def __eq__(self, rhs):
+        return self.eq(rhs)
+
+    @singledispatchmethod
+    def eq(self, rhs):
         return self.statements == rhs.statements
+
+    @eq.register
+    def _(self, rhs: dict):
+        return self.statements == rhs
 
     def __contains__(self, arg):
         return self.contains(arg)
@@ -49,6 +60,10 @@ class StatementHolder(object):
     @contains.register
     def _(self, arg: tfsl.claim.Claim):
         return any((arg in self.statements[prop]) for prop in self.statements)
+
+    @contains.register
+    def _(self, arg: tfsl.statement.Statement):
+        return arg in self.statements[arg.property]
 
     def __getitem__(self, arg):
         return self.get_st(arg)
@@ -80,8 +95,7 @@ class StatementHolder(object):
     def _(self, rhs: tfsl.statement.Statement):
         newstmts = deepcopy(self.statements)
         newstmts[rhs.property].append(rhs)
-        self.statements = newstmts
-        return self
+        return newstmts
 
     def __sub__(self, rhs):
         return self.sub(rhs)
@@ -95,8 +109,7 @@ class StatementHolder(object):
         newstmts = deepcopy(self.statements)
         if rhs in newstmts:
             del newstmts[rhs]
-        self.statements = newstmts
-        return self
+        return newstmts
 
     @sub.register
     def _(self, rhs: tfsl.statement.Statement):
@@ -104,8 +117,7 @@ class StatementHolder(object):
         newstmts[rhs.property] = [stmt for stmt in newstmts[rhs.property] if stmt != rhs]
         if not newstmts[rhs.property]:
             del newstmts[rhs.property]
-        self.statements = newstmts
-        return self
+        return newstmts
 
 def build_statement_list(claims_dict):
     claims = defaultdict(list)

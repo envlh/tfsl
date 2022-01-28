@@ -7,16 +7,28 @@ import tfsl.statement
 import tfsl.statementholder
 import tfsl.utils
 
-class LexemeSense(
-    tfsl.monolingualtextholder.MonolingualTextHolder,
-    tfsl.statementholder.StatementHolder
-):
+class LexemeSense:
     def __init__(self, glosses, statements=None):
         super().__init__()
-        self.glosses = tfsl.monolingualtextholder.MonolingualTextHolder(glosses)
-        self.statements = tfsl.statementholder.StatementHolder(statements)
+        if isinstance(glosses, tfsl.monolingualtextholder.MonolingualTextHolder):
+            self.glosses = glosses
+        else:
+            self.glosses = tfsl.monolingualtextholder.MonolingualTextHolder(glosses)
+        
+        if isinstance(statements, tfsl.statementholder.StatementHolder):
+            self.statements = statements
+        else:
+            self.statements = tfsl.statementholder.StatementHolder(statements)
 
         self.id = None
+
+    def get_published_settings(self):
+        return {
+            "id": self.id
+        }
+
+    def set_published_settings(self, sense_in):
+        self.id = sense_in["id"]
 
     def __getitem__(self, arg):
         return self.getitem(arg)
@@ -97,13 +109,14 @@ class LexemeSense(
     def _(self, arg: tfsl.monolingualtextholder.lang_or_mt):
         return arg in self.glosses
 
+    @contains.register(tfsl.statement.Statement)
     @contains.register(tfsl.claim.Claim)
     @contains.register(str)
-    def _(self, arg: Union[str, tfsl.claim.Claim]):
+    def _(self, arg: Union[str, tfsl.claim.Claim, tfsl.statement.Statement]):
         return arg in self.statements
 
     def __eq__(self, rhs):
-        glosses_equal = self.representations == rhs.representations
+        glosses_equal = self.glosses == rhs.glosses
         statements_equal = self.statements == rhs.statements
         return glosses_equal and statements_equal
 

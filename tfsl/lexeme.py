@@ -24,8 +24,15 @@ class Lexeme:
                  statements=None, senses=None, forms=None):
         # TODO: better validation/type hinting and argument fallbacks
         super().__init__()
-        self.lemmata = tfsl.monolingualtextholder.MonolingualTextHolder(lemmata)
-        self.statements = tfsl.statementholder.StatementHolder(statements)
+        if isinstance(lemmata, tfsl.monolingualtextholder.MonolingualTextHolder):
+            self.lemmata = lemmata
+        else:
+            self.lemmata = tfsl.monolingualtextholder.MonolingualTextHolder(lemmata)
+        
+        if isinstance(statements, tfsl.statementholder.StatementHolder):
+            self.statements = statements
+        else:
+            self.statements = tfsl.statementholder.StatementHolder(statements)
 
         self.language = lang_in
         self.category = cat_in
@@ -179,7 +186,7 @@ class Lexeme:
     @singledispatchmethod
     def getitem(self, key):
         raise TypeError(f"Can't get {type(key)} from Lexeme")
-    
+
     @getitem.register(tfsl.languages.Language)
     @getitem.register(tfsl.monolingualtext.MonolingualText)
     def _(self, key: tfsl.monolingualtextholder.lang_or_mt):

@@ -11,15 +11,22 @@ import tfsl.utils
 class LexemeForm:
     def __init__(self, representations, features=None, statements=None):
         super().__init__()
-        self.representations = tfsl.monolingualtextholder.MonolingualTextHolder(representations)
-        self.statements = tfsl.statementholder.StatementHolder(statements)
+        if isinstance(representations, tfsl.monolingualtextholder.MonolingualTextHolder):
+            self.representations = representations
+        else:
+            self.representations = tfsl.monolingualtextholder.MonolingualTextHolder(representations)
+        
+        if isinstance(statements, tfsl.statementholder.StatementHolder):
+            self.statements = statements
+        else:
+            self.statements = tfsl.statementholder.StatementHolder(statements)
 
         if features is None:
             self.features = set()
         elif isinstance(features, str):
             self.features = set([features])
         else:
-            self.features = deepcopy(features)
+            self.features = set(deepcopy(features))
 
         self.id = None
 
@@ -64,7 +71,7 @@ class LexemeForm:
     @add.register
     def _(self, arg: str):
         published_settings = self.get_published_settings()
-        form_out = LexemeForm(self.representations, self.features | set(arg), self.statements)
+        form_out = LexemeForm(self.representations, self.features | set([arg]), self.statements)
         form_out.set_published_settings(published_settings)
         return form_out
 
