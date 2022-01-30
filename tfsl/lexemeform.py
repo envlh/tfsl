@@ -153,7 +153,7 @@ class LexemeForm:
 
     def __jsonout__(self):
         reps_dict = self.representations.__jsonout__()
-        base_dict = {"representations": reps_dict, "grammaticalFeatures": self.features}
+        base_dict = {"representations": reps_dict, "grammaticalFeatures": list(self.features)}
 
         if self.id is not None:
             base_dict["id"] = self.id
