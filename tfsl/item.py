@@ -83,6 +83,12 @@ class Item:
         self.item_type = item_in["type"]
         self.item_id = item_in["id"]
 
+    def get_label(self, arg: tfsl.languages.Language):
+        return self.labels[arg]
+
+    def get_description(self, arg: tfsl.languages.Language):
+        return self.descriptions[arg]
+
     def __add__(self, arg):
         return self.add(arg)
 
