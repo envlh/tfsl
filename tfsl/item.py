@@ -169,7 +169,7 @@ def build_item(item_in):
 
 # pylint: disable=invalid-name
 
-def Q(lid):
+def retrieve_item_json(lid):
     if isinstance(lid, int):
         lid = 'Q'+str(lid)
     filename = tfsl.utils.get_filename(lid)
@@ -182,4 +182,32 @@ def Q(lid):
         item_json = current_lexeme[lid]
         with open(filename, "w") as fileptr:
             json.dump(item_json, fileptr)
+    return item_json
+
+def Q(lid):
+    item_json = retrieve_item_json(lid)
     return build_item(item_json)
+
+class Q_lazy:
+    """ An Item, but labels/descriptions are not auto-converted to MonolingualTexts
+        and statements are only assembled into Statements when accessed.
+    """
+    def __init__(self, input_arg):
+        if isinstance(input_arg, Item):
+            self.item_json = input_arg.__jsonout__()
+        elif tfsl.utils.matches_item(input_arg):
+            self.item_json = retrieve_item_json(input_arg)
+
+    def get_label(self, lang):
+        label_dict = self.item_json["labels"][lang.code]
+        return label_dict["value"] @ lang
+
+    def get_description(self, lang):
+        description_dict = self.item_json["descriptions"][lang.code]
+        return description_dict["value"] @ lang
+
+    def get_stmts(self, prop):
+        return [tfsl.statement.build_statement(stmt) for stmt in self.item_json["claims"][prop]]
+
+    def __getitem__(self, prop):
+        return self.get_stmts(prop)
