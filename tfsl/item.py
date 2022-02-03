@@ -4,6 +4,7 @@ import os.path
 import time
 from collections import defaultdict
 from copy import deepcopy
+from functools import singledispatchmethod
 
 import tfsl.auth
 import tfsl.languages
@@ -52,15 +53,26 @@ class Item:
         self.title = None
         self.lastrevid = None
         self.modified = None
-        self.type = None
-        self.id = None
+        self.item_type = None
+        self.item_id = None
 
     def __getitem__(self, key):
         id_matches_key = lambda obj: obj.id == key
 
         if tfsl.utils.matches_property(key):
-            return self.statements.get(key, [])
+            return self.statements[key]
         raise KeyError
+
+    def get_published_settings(self):
+        return {
+            "pageid": self.pageid,
+            "ns": self.namespace,
+            "title": self.title,
+            "lastrevid": self.lastrevid,
+            "modified": self.modified,
+            "type": self.item_type,
+            "id": self.item_id
+        }
 
     def set_published_settings(self, item_in):
         self.pageid = item_in["pageid"]
@@ -68,8 +80,74 @@ class Item:
         self.title = item_in["title"]
         self.lastrevid = item_in["lastrevid"]
         self.modified = item_in["modified"]
-        self.type = item_in["type"]
-        self.id = item_in["id"]
+        self.item_type = item_in["type"]
+        self.item_id = item_in["id"]
+
+    def __add__(self, arg):
+        return self.add(arg)
+
+    @singledispatchmethod
+    def add(self, arg):
+        raise NotImplementedError(f"Can't add {type(arg)} to Lexeme")
+
+    @add.register
+    def _(self, arg: tfsl.statement.Statement):
+        published_settings = self.get_published_settings()
+        item_out = Item(self.labels, self.descriptions, self.aliases,
+                      self.statements + arg, self.sitelinks)
+        item_out.set_published_settings(published_settings)
+        return item_out
+
+    @add.register
+    def _(self, arg: tfsl.monolingualtext.MonolingualText):
+        raise NotImplementedError(f"Adding MonolingualText to Item is ambiguous")
+
+    def add_label(self, arg: tfsl.monolingualtext.MonolingualText):
+        published_settings = self.get_published_settings()
+        item_out = Item(self.labels + arg, self.descriptions, self.aliases,
+                      self.statements, self.sitelinks)
+        item_out.set_published_settings(published_settings)
+        return item_out
+
+    def add_description(self, arg: tfsl.monolingualtext.MonolingualText):
+        published_settings = self.get_published_settings()
+        item_out = Item(self.labels, self.descriptions + arg, self.aliases,
+                      self.statements, self.sitelinks)
+        item_out.set_published_settings(published_settings)
+        return item_out
+
+    def __sub__(self, arg):
+        return self.sub(arg)
+
+    @singledispatchmethod
+    def sub(self, arg):
+        raise NotImplementedError(f"Can't subtract {type(arg)} from Lexeme")
+
+    @sub.register
+    def _(self, arg: tfsl.statement.Statement):
+        published_settings = self.get_published_settings()
+        item_out = Item(self.labels, self.descriptions, self.aliases,
+                      self.statements - arg, self.sitelinks)
+        item_out.set_published_settings(published_settings)
+        return item_out
+
+    @sub.register
+    def _(self, arg: tfsl.monolingualtext.MonolingualText):
+        raise NotImplementedError(f"Subtracting MonolingualText from Item is ambiguous")
+
+    def sub_label(self, arg: tfsl.monolingualtextholder.lang_or_mt):
+        published_settings = self.get_published_settings()
+        item_out = Item(self.labels - arg, self.descriptions, self.aliases,
+                      self.statements, self.sitelinks)
+        item_out.set_published_settings(published_settings)
+        return item_out
+
+    def sub_description(self, arg: tfsl.monolingualtextholder.lang_or_mt):
+        published_settings = self.get_published_settings()
+        item_out = Item(self.labels, self.descriptions - arg, self.aliases,
+                      self.statements, self.sitelinks)
+        item_out.set_published_settings(published_settings)
+        return item_out
 
 def build_item(item_in):
     labels = tfsl.monolingualtextholder.build_text_list(item_in["labels"])
