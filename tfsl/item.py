@@ -10,7 +10,9 @@ import tfsl.languages
 import tfsl.lexemeform
 import tfsl.lexemesense
 import tfsl.monolingualtext
+import tfsl.monolingualtextholder
 import tfsl.statement
+import tfsl.statementholder
 import tfsl.utils
 
 default_item_cache_path = os.path.expanduser('~/.cache/tfsl')
@@ -19,29 +21,26 @@ os.makedirs(default_item_cache_path,exist_ok=True)
 class Item:
     # TODO: better processing of labels/descriptions/aliases arguments
     def __init__(self, labels=None, descriptions=None, aliases=None, statements=None, sitelinks=None):
-        if labels is None:
-            self.labels = {}
+        super().__init__()
+        if isinstance(labels, tfsl.monolingualtextholder.MonolingualTextHolder):
+            self.labels = labels
         else:
-            self.labels = labels if isinstance(labels, dict) else dict(labels)
+            self.labels = tfsl.monolingualtextholder.MonolingualTextHolder(labels)
 
-        if descriptions is None:
-            self.descriptions = {}
+        if isinstance(descriptions, tfsl.monolingualtextholder.MonolingualTextHolder):
+            self.descriptions = descriptions
         else:
-            self.descriptions = descriptions if isinstance(descriptions, dict) else dict(descriptions)
+            self.descriptions = tfsl.monolingualtextholder.MonolingualTextHolder(descriptions)
 
         if aliases is None:
             self.aliases = {}
         else:
             self.aliases = aliases if isinstance(aliases, dict) else dict(aliases)
 
-        if statements is None:
-            self.statements = []
-        elif isinstance(statements, list):
-            self.statements = defaultdict(list)
-            for arg in statements:
-                self.statements[arg.property].append(arg)
+        if isinstance(statements, tfsl.statementholder.StatementHolder):
+            self.statements = statements
         else:
-            self.statements = deepcopy(statements)
+            self.statements = tfsl.statementholder.StatementHolder(statements)
 
         if sitelinks is None:
             self.sitelinks = {}
@@ -73,15 +72,9 @@ class Item:
         self.id = item_in["id"]
 
 def build_item(item_in):
-    labels = {}
-    for _, label in item_in["labels"].items():
-        new_label = label["value"]# @ tfsl.languages.get_first_lang(label["language"])
-        labels[label["language"]] = new_label
-
-    descriptions = {}
-    for _, description in item_in["descriptions"].items():
-        new_description = description["value"]# @ tfsl.languages.get_first_lang(description["language"])
-        descriptions[description["language"]] = new_description
+    labels = tfsl.monolingualtextholder.build_text_list(item_in["labels"])
+    descriptions = tfsl.monolingualtextholder.build_text_list(item_in["descriptions"])
+    statements = tfsl.statementholder.build_statement_list(item_in["claims"])
 
     aliases = {}
     for lang, aliaslist in item_in["aliases"].items():
@@ -89,12 +82,6 @@ def build_item(item_in):
         for alias in aliaslist:
             new_alias = alias["value"]# @ tfsl.languages.get_first_lang(alias["language"])
             aliases[lang].add(new_alias)
-
-    statements_in = item_in["claims"]
-    statements = defaultdict(list)
-    for prop in statements_in:
-        for claim in statements_in[prop]:
-            statements[prop].append(tfsl.statement.build_statement(claim))
 
     sitelinks = item_in["sitelinks"]
 
