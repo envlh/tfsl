@@ -7,8 +7,23 @@ Support for manipulating items, as well as claim types other than monolingual te
 
 ## Setup
 
-This was developed using Python 3.8.5 on a Unix system.
-All you need besides that or some other similarly recent version of Python is the 'requests' library ('pip install requests' or something similar).
+Clone this repository. (Depending on which Git host you're reading this from, the URL might vary.)
+
+Now make sure this ends up in your PYTHONPATH. The simplest way to do this below is for a Unix system, where the path must be substituted accordingly:
+
+```
+export PYTHONPATH=$PYTHONPATH:/path/to/tfsl
+```
+
+Now install its dependencies, again substituting the path accordingly:
+
+```
+pip install -r /path/to/tfsl/requirements.txt
+```
+
+Now rename 'config.ini.example' to 'config.ini' and specify
+1) where retrieved lexemes and items should be stored ('CachePath') and
+2) how long (in seconds) these should be stored before regeneration ('TimeToLive').
 
 ## Use
 
