@@ -211,12 +211,7 @@ class Lexeme:
 
     def haswbstatement(self, property_in, value_in=None):
         """Shamelessly named after the keyword used on Wikidata to look for a statement."""
-        if value_in is None:
-            return property_in in self
-        compare = value_in
-        if tfsl.utils.matches_wikibase_object(value_in):
-            compare = tfsl.itemvalue.ItemValue(value_in)
-        return any(map(lambda stmt: stmt.value == compare, self.statements[property_in]))
+        return self.statements.haswbstatement(property_in, value_in)
 
     def __str__(self):
         # TODO: fix indentation of components

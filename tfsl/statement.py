@@ -156,9 +156,9 @@ def build_statement(stmt_in):
     stmt_property = stmt_mainsnak["property"]
     stmt_datatype = stmt_mainsnak["datatype"]
     if stmt_mainsnak["snaktype"] == 'novalue':
-        stmt_value = None
-    elif stmt_mainsnak["snaktype"] == 'somevalue':
         stmt_value = False
+    elif stmt_mainsnak["snaktype"] == 'somevalue':
+        stmt_value = True
     else:
         stmt_value = tfsl.claim.build_value(stmt_mainsnak["datavalue"])
     stmt_quals = build_quals(stmt_in.get("qualifiers", None))

@@ -63,9 +63,9 @@ def build_value(value_in):
 def build_claim(claim_in):
     claim_prop = claim_in["property"]
     if claim_in["snaktype"] == 'novalue':
-        claim_value = None
-    elif claim_in["snaktype"] == 'somevalue':
         claim_value = False
+    elif claim_in["snaktype"] == 'somevalue':
+        claim_value = True
     else:
         claim_value = build_value(claim_in["datavalue"])
 

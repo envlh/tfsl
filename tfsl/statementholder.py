@@ -4,6 +4,7 @@ from functools import singledispatchmethod
 from textwrap import indent
 
 import tfsl.statement
+import tfsl.utils as U
 
 class StatementHolder(object):
     def __init__(self, statements=None):
@@ -21,8 +22,14 @@ class StatementHolder(object):
     def get_statements(self, property_in):
         return self.statements.get(property_in, [])
 
-    def has_property_value_pair(self, property_in, value):
-        return any(statement.value == value for statement in self.statements[property_in])
+    def haswbstatement(self, property_in, value_in=None) -> bool:
+        if U.is_novalue(value_in):
+            return property_in in self.statements
+        elif U.is_somevalue(value_in):
+            compare_function = lambda stmt: U.is_somevalue(stmt.value)
+        else:
+            compare_function = lambda stmt: stmt.value == value_in
+        return any(map(compare_function, self.statements[property_in]))
 
     def __jsonout__(self):
         statement_dict = defaultdict(list)

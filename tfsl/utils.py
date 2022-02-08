@@ -127,5 +127,8 @@ def get_filename(entity_name):
     """
     return os.path.join(cache_path, f"{entity_name}.json")
 
+is_novalue = lambda value: value is False
+is_somevalue = lambda value: value is True
+
 cache_path, time_to_live = read_config()
 os.makedirs(cache_path,exist_ok=True)

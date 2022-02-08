@@ -15,9 +15,9 @@ class TestClaimMethods(unittest.TestCase):
         self.assertEqual(x.value, self.value_mt)
         
     def test_claim_novalue(self):
-        x = Claim(self.property, None)
+        x = Claim(self.property, False)
         self.assertEqual(x.property, self.property)
-        self.assertIsNone(x.value)
+        self.assertFalse(x.value)
     
     def test_claim_somevalue(self):
         x = Claim(self.property, True)
