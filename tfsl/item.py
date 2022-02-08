@@ -2,8 +2,6 @@ import json
 import os
 import os.path
 import time
-from collections import defaultdict
-from copy import deepcopy
 from functools import singledispatchmethod
 
 import tfsl.auth
@@ -57,8 +55,6 @@ class Item:
         self.item_id = None
 
     def __getitem__(self, key):
-        id_matches_key = lambda obj: obj.id == key
-
         if tfsl.utils.matches_property(key):
             return self.statements[key]
         raise KeyError
@@ -106,7 +102,7 @@ class Item:
 
     @add.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        raise NotImplementedError(f"Adding MonolingualText to Item is ambiguous")
+        raise NotImplementedError("Adding MonolingualText to Item is ambiguous")
 
     def add_label(self, arg: tfsl.monolingualtext.MonolingualText):
         published_settings = self.get_published_settings()
@@ -139,7 +135,7 @@ class Item:
 
     @sub.register
     def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        raise NotImplementedError(f"Subtracting MonolingualText from Item is ambiguous")
+        raise NotImplementedError("Subtracting MonolingualText from Item is ambiguous")
 
     def sub_label(self, arg: tfsl.monolingualtextholder.lang_or_mt):
         published_settings = self.get_published_settings()
@@ -194,7 +190,7 @@ def Q(lid):
     item_json = retrieve_item_json(lid)
     return build_item(item_json)
 
-class Q_lazy:
+class Q_:
     """ An Item, but labels/descriptions are not auto-converted to MonolingualTexts
         and statements are only assembled into Statements when accessed.
     """
@@ -213,7 +209,7 @@ class Q_lazy:
         return description_dict["value"] @ lang
 
     def get_stmts(self, prop):
-        return [tfsl.statement.build_statement(stmt) for stmt in self.item_json["claims"][prop]]
+        return [tfsl.statement.build_statement(stmt) for stmt in self.item_json["claims"].get(prop,[])]
 
     def __getitem__(self, prop):
         return self.get_stmts(prop)

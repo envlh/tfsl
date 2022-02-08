@@ -1,7 +1,7 @@
 from tfsl.auth import WikibaseSession
 from tfsl.claim import Claim
 from tfsl.coordinatevalue import CoordinateValue
-from tfsl.item import Item, Q, Q_lazy
+from tfsl.item import Item, Q, Q_
 from tfsl.itemvalue import ItemValue
 from tfsl.languages import Language, langs
 from tfsl.lexeme import Lexeme, L
