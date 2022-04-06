@@ -4,6 +4,7 @@ import os.path
 import time
 from functools import singledispatchmethod
 from textwrap import indent
+from typing import Union
 
 import tfsl.auth
 import tfsl.itemvalue
@@ -261,7 +262,7 @@ class Lexeme:
         return base_dict
 
 
-def build_lexeme(lexeme_in):
+def build_lexeme(lexeme_in: dict) -> Lexeme:
     lemmas = tfsl.monolingualtextholder.build_text_list(lexeme_in["lemmas"])
 
     lexemecat = lexeme_in["lexicalCategory"]
@@ -278,7 +279,7 @@ def build_lexeme(lexeme_in):
 
 # pylint: disable=invalid-name
 
-def L(lid):
+def L(lid: Union[int, str]) -> Lexeme:
     if isinstance(lid, int):
         lid = 'L'+str(lid)
     elif match := tfsl.utils.matches_sense(lid):

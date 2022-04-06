@@ -19,7 +19,7 @@ os.makedirs(default_item_cache_path,exist_ok=True)
 
 class Item:
     # TODO: better processing of labels/descriptions/aliases arguments
-    def __init__(self, labels=None, descriptions=None, aliases=None, statements=None, sitelinks=None):
+    def __init__(self, labels=None, descriptions=None, aliases=None, statements=None, sitelinks=None, **kwargs):
         super().__init__()
         if isinstance(labels, tfsl.monolingualtextholder.MonolingualTextHolder):
             self.labels = labels
@@ -53,6 +53,8 @@ class Item:
         self.modified = None
         self.item_type = None
         self.item_id = None
+        if "id" in kwargs:
+            self.item_id = kwargs["id"]
 
     def __getitem__(self, key):
         if tfsl.utils.matches_property(key):
