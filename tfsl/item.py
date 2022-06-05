@@ -72,6 +72,10 @@ class Item:
             "id": self.item_id
         }
 
+    def haswbstatement(self, property_in, value_in=None):
+        """Shamelessly named after the keyword used on Wikidata to look for a statement."""
+        return self.statements.haswbstatement(property_in, value_in)
+
     def set_published_settings(self, item_in):
         self.pageid = item_in["pageid"]
         self.namespace = item_in["ns"]

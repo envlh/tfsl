@@ -341,6 +341,7 @@ langs.crh_latn_ = Language("crh-latn", "Q33357")  # Crimean Tatar (Latin script)
 langs.csb_ = Language("csb", "Q33690")  # Kashubian
 langs.cu_ = Language("cu", "Q35499")  # Church Slavic
 langs.cv_ = Language("cv", "Q33348")  # Chuvash
+langs.de_1901_ = Language("de-1901", "Q188") # German (1901 to 1996)
 langs.de_formal_ = Language("de-formal", "Q188")  # German (formal address)
 langs.din_ = Language("din", "Q56466")  # Dinka
 langs.diq_ = Language("diq", "Q10199")  # Zazaki
@@ -643,3 +644,9 @@ langs.zh_classical_ = Language("zh-classical", "Q37041")  # Classical Chinese
 langs.zh_min_nan_ = Language("zh-min-nan", "Q36495")  # Chinese (Min Nan)
 langs.zh_yue_ = Language("zh-yue", "Q7033959")  # Cantonese
 langs.zu_ = Language("zu", "Q10179")  # Zulu
+
+langs.bangali_ = Language("bn-x-Q48726740", "Q48726740") # bangali
+langs.varendri_ = Language("bn-x-Q48726757", "Q48726757") # varendri
+langs.manbhumi_ = Language("bn-x-Q6747180", "Q6747180") # manbhumi,
+langs.rarhi_ = Language("bn-x-Q48726759", "Q48726759") # rarhi,
+langs.noakhailla_ = Language("bn-x-Q107548681", "Q107548681") # noakhailla

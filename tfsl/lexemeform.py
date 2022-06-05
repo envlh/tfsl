@@ -54,6 +54,10 @@ class LexemeForm:
     def _(self, arg: tfsl.monolingualtextholder.lang_or_mt):
         return self.representations[arg]
 
+    def haswbstatement(self, property_in, value_in=None):
+        """Shamelessly named after the keyword used on Wikidata to look for a statement."""
+        return self.statements.haswbstatement(property_in, value_in)
+
     def __add__(self, arg):
         return self.add(arg)
 

@@ -23,8 +23,10 @@ class StatementHolder(object):
         return self.statements.get(property_in, [])
 
     def haswbstatement(self, property_in, value_in=None) -> bool:
-        if U.is_novalue(value_in):
+        if value_in is None:
             return property_in in self.statements
+        elif U.is_novalue(value_in):
+            compare_function = lambda stmt: U.is_novalue(stmt.value)
         elif U.is_somevalue(value_in):
             compare_function = lambda stmt: U.is_somevalue(stmt.value)
         else:
