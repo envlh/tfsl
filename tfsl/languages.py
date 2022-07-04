@@ -240,6 +240,7 @@ langs.vo_ = Language("vo", "Q36986")  # Volapuk
 langs.wa_ = Language("wa", "Q34219")  # Walloon
 langs.zxx_ = Language("zxx", "Q22282939")  # no linguistic content
 langs.mis_ = Language("mis", "Q22283016")  # language without a specific language code
+langs.und_ = Language("und", "Q22283016")  # undetermined language
 
 # languages that should be deleted from Wikimedia projects soon
 langs.no_ = Language("no", "Q9043")  # Norwegian
