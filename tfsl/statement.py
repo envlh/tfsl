@@ -3,6 +3,7 @@ from copy import deepcopy
 from enum import Enum
 from functools import singledispatchmethod
 from textwrap import indent
+from typing import DefaultDict
 
 import tfsl.claim
 import tfsl.reference
@@ -28,6 +29,7 @@ class Statement:
         self.value = deepcopy(value_in)
         self.rank = rank
 
+        self.qualifiers: DefaultDict[str, list]
         if qualifiers is None:
             self.qualifiers = defaultdict(list)
         elif isinstance(qualifiers, list):
@@ -90,7 +92,7 @@ class Statement:
         raise NotImplementedError(f"{str(type(arg))} is not a rank")
 
     @matmul.register
-    def matmul(self, arg: Rank):
+    def _(self, arg: Rank):
         if arg == self.rank:
             return self
         return Statement(self.property, self.value, arg, self.qualifiers, self.references)

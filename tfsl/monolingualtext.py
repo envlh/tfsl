@@ -10,7 +10,9 @@ class MonolingualText:
         self.text = text
         self.language = language
 
-    def __eq__(self, rhs: 'tfsl.monolingualtext.MonolingualText'):
+    def __eq__(self, rhs: object) -> bool:
+        if not isinstance(rhs, MonolingualText):
+            return NotImplemented
         return self.text == rhs.text and self.language == rhs.language
 
     def __hash__(self):

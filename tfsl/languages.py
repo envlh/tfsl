@@ -1,5 +1,6 @@
 from collections import defaultdict
 from functools import singledispatchmethod
+from typing import DefaultDict
 
 import tfsl.monolingualtext
 import tfsl.utils
@@ -55,8 +56,8 @@ class Languages:
         or separate lexeme language codes should have entries here.
         (Dashes, if present in a code, should be substituted with underscores here.)
     """
-    __itemlookup__ = defaultdict(list)
-    __codelookup__ = defaultdict(list)
+    __itemlookup__: DefaultDict[str, list] = defaultdict(list)
+    __codelookup__: DefaultDict[str, list] = defaultdict(list)
 
     # TODO: everywhere this method is called, find a way to specify among results if multiple found
     @classmethod
@@ -244,15 +245,23 @@ langs.und_ = Language("und", "Q22283016")  # undetermined language
 
 # languages that should be deleted from Wikimedia projects soon
 langs.no_ = Language("no", "Q9043")  # Norwegian
+langs.zh_classical_ = Language("zh-classical", "Q37041")  # Classical Chinese
+langs.zh_min_nan_ = Language("zh-min-nan", "Q36495")  # Chinese (Min Nan)
+langs.zh_yue_ = Language("zh-yue", "Q7033959")  # Cantonese
 # Lahjas and Darjas
+langs.aeb_ = Language("aeb", "Q56240")  # Tunisian
+langs.aeb_arab_ = Language("aeb-arab", "Q56240")  # Tunisian
+langs.aeb_latn_ = Language("aeb-latn", "Q56240")  # Tunisian
 langs.arq_ = Language("arq", "Q56499")  # Algerian
 langs.ary_ = Language("ary", "Q56426")  # Moroccan
 langs.arz_ = Language("arz", "Q29919")  # Egyptian
 # Shtokavian variants
 langs.bs_ = Language("bs", "Q9303")  # Bosnian
 langs.hr_ = Language("hr", "Q6654")  # Croatian
+langs.sh_ = Language("sh", "Q9301")  # Serbo-Croatian
 langs.sr_ = Language("sr", "Q9299")  # Serbian
 langs.sr_ec_ = Language("sr-ec", "Q9299")  # Serbian written in Cyrillic
+langs.sr_el_ = Language("sr-el", "Q9299")  # Serbian (Latin script)
 # certain languages of Southeast Asia
 langs.id_ = Language("id", "Q9240")  # Indonesian
 # certain languages of East Asia
@@ -272,9 +281,6 @@ langs.abs_ = Language("abs", "Q3124354")  # Ambonese Malay
 langs.ace_ = Language("ace", "Q27683")  # Achinese
 langs.ady_ = Language("ady", "Q27776")  # Adyghe
 langs.ady_cyrl_ = Language("ady-cyrl", "Q27776")  # Adyghe (Cyrillic script)
-langs.aeb_ = Language("aeb", "Q56240")  # Tunisian Arabic
-langs.aeb_arab_ = Language("aeb-arab", "Q56240")  # Tunisian Arabic (Arabic script)
-langs.aeb_latn_ = Language("aeb-latn", "Q56240")  # Tunisian Arabic (Latin script)
 langs.agq_ = Language("agq", "Q34737")  # Aghem
 langs.ak_ = Language("ak", "Q28026")  # Akan
 langs.aln_ = Language("aln", "Q181037")  # Gheg Albanian
@@ -559,7 +565,6 @@ langs.sei_ = Language("sei", "Q36583")  # Seri
 langs.ses_ = Language("ses", "Q35655")  # Koyraboro Senni
 langs.sg_ = Language("sg", "Q33954")  # Sango
 langs.sgs_ = Language("sgs", "Q213434")  # Samogitian
-langs.sh_ = Language("sh", "Q9301")  # Serbo-Croatian
 langs.shi_ = Language("shi", "Q34152")  # Tachelhit
 langs.shi_latn_ = Language("shi-latn", "Q34152")  # Tachelhit (Latin script)
 langs.shi_tfng_ = Language("shi-tfng", "Q34152")  # Tachelhit (Tifinagh script)
@@ -574,7 +579,6 @@ langs.sli_ = Language("sli", "Q152965")  # Lower Silesian
 langs.sm_ = Language("sm", "Q34011")  # Samoan
 langs.sn_ = Language("sn", "Q34004")  # Shona
 langs.so_ = Language("so", "Q13275")  # Somali
-langs.sr_el_ = Language("sr-el", "Q9299")  # Serbian (Latin script)
 langs.srn_ = Language("srn", "Q33989")  # Sranan Tongo
 langs.srq_ = Language("srq", "Q3027953")  # Sirionó
 langs.st_ = Language("st", "Q34340")  # Southern Sotho
@@ -641,13 +645,10 @@ langs.yue_ = Language("yue", "Q7033959")  # Cantonese
 langs.za_ = Language("za", "Q13216")  # Zhuang
 langs.zea_ = Language("zea", "Q237409")  # Zeelandic
 langs.zgh_ = Language("zgh", "Q7598268")  # Standard Moroccan Tamazight
-langs.zh_classical_ = Language("zh-classical", "Q37041")  # Classical Chinese
-langs.zh_min_nan_ = Language("zh-min-nan", "Q36495")  # Chinese (Min Nan)
-langs.zh_yue_ = Language("zh-yue", "Q7033959")  # Cantonese
 langs.zu_ = Language("zu", "Q10179")  # Zulu
 
 langs.bangali_ = Language("bn-x-Q48726740", "Q48726740") # bangali
 langs.varendri_ = Language("bn-x-Q48726757", "Q48726757") # varendri
-langs.manbhumi_ = Language("bn-x-Q6747180", "Q6747180") # manbhumi,
-langs.rarhi_ = Language("bn-x-Q48726759", "Q48726759") # rarhi,
+langs.manbhumi_ = Language("bn-x-Q6747180", "Q6747180") # manbhumi
+langs.rarhi_ = Language("bn-x-Q48726759", "Q48726759") # rarhi
 langs.noakhailla_ = Language("bn-x-Q107548681", "Q107548681") # noakhailla
