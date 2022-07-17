@@ -4,6 +4,7 @@ import re
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
+from typing import Match, Optional
 
 import requests
 
@@ -11,34 +12,34 @@ DEFAULT_INDENT = "    "
 WD_PREFIX = "http://www.wikidata.org/entity/"
 
 # TODO: how best to override these for wikibases with custom prefixes?
-def matches_wikibase_object(arg):
+def matches_wikibase_object(arg: str) -> Optional[Match[str]]:
     return re.match(r"^([QPL]\d+$|^L\d+-[FS]\d+)$", arg)
 
-def matches_item(arg):
+def matches_item(arg: str) -> Optional[Match[str]]:
     return re.match(r"^Q\d+$", arg)
 
-def matches_property(arg):
+def matches_property(arg: str) -> Optional[Match[str]]:
     return re.match(r"^P\d+$", arg)
 
-def matches_lexeme(arg):
+def matches_lexeme(arg: str) -> Optional[Match[str]]:
     return re.match(r"^L\d+$", arg)
 
-def matches_form(arg):
+def matches_form(arg: str) -> Optional[Match[str]]:
     return re.match(r"^(L\d+)-(F\d+)$", arg)
 
-def matches_form_suffix(arg):
+def matches_form_suffix(arg: str) -> Optional[Match[str]]:
     return re.match(r"^F\d+$", arg)
 
-def matches_sense(arg):
+def matches_sense(arg: str) -> Optional[Match[str]]:
     return re.match(r"^(L\d+)-(S\d+)$", arg)
 
-def matches_sense_suffix(arg):
+def matches_sense_suffix(arg: str) -> Optional[Match[str]]:
     return re.match(r"^S\d+$", arg)
 
-def prefix_wd(arg):
+def prefix_wd(arg: str) -> str:
     return WD_PREFIX + arg
 
-def strip_prefix_wd(arg):
+def strip_prefix_wd(arg: str) -> str:
     if arg.startswith(WD_PREFIX):
         return arg[len(WD_PREFIX):]
     return arg
@@ -113,8 +114,7 @@ def values_datatype(prop):
     return prop_data["entities"][prop]["datatype"]
 
 def read_config():
-    """ Reads the config file residing at /path/to/tfsl/config.ini.
-    """
+    """ Reads the config file residing at /path/to/tfsl/config.ini. """
     config = configparser.ConfigParser()
     current_config_path = (Path(__file__).parent / '../config.ini').resolve()
     config.read(current_config_path)
@@ -123,8 +123,7 @@ def read_config():
     return cpath, ttl
 
 def get_filename(entity_name):
-    """ Constructs the name of a text file containing a sense subgraph based on a given property.
-    """
+    """ Constructs the name of a text file containing a sense subgraph based on a given property. """
     return os.path.join(cache_path, f"{entity_name}.json")
 
 is_novalue = lambda value: value is False

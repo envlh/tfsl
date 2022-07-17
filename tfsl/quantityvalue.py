@@ -1,13 +1,14 @@
-from functools import singledispatchmethod
-import json
+from typing_extensions import TypeGuard
 
+import tfsl.interfaces as I
 import tfsl.languages
 import tfsl.utils
 
-
 class QuantityValue:
-    def __init__(self, amount=0, lowerBound=1, upperBound=-1, unit=tfsl.utils.prefix_wd("Q199")):
-        self.amount = amount
+    def __init__(self, amount: float=0, lowerBound: float=1, upperBound: float=-1, unit: str=tfsl.utils.prefix_wd("Q199")):
+        self.amount: float = amount
+        self.lower: float
+        self.upper: float
         if lowerBound >= upperBound:
             self.lower = amount
             self.upper = amount
@@ -16,19 +17,21 @@ class QuantityValue:
             self.upper = upperBound
         if not tfsl.utils.matches_item(unit):
             unit = tfsl.utils.strip_prefix_wd(unit)
-        self.unit = unit
+        self.unit: str = unit
 
-    def __eq__(self, rhs):
+    def __eq__(self, rhs: object) -> bool:
+        if not isinstance(rhs, QuantityValue):
+            return NotImplemented
         amts_equal = self.amount == rhs.amount
         lowers_equal = self.lower == rhs.lower
         uppers_equal = self.upper == rhs.upper
         units_equal = self.unit == rhs.unit
         return amts_equal and lowers_equal and uppers_equal and units_equal
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.amount, self.lower, self.upper, self.unit))
 
-    def __str__(self):
+    def __str__(self) -> str:
         if(self.lower == self.amount and self.upper == self.amount):
             value_string = f'{self.amount}'
         else:
@@ -38,16 +41,18 @@ class QuantityValue:
             unit_string = f' {self.unit}'
         return value_string + unit_string
 
-    def __jsonout__(self):
-        base_dict = {
-                   "amount": self.amount,
-                   "unit": tfsl.utils.prefix_wd(self.unit)
-               }
+    def __jsonout__(self) -> I.QuantityValueDict:
+        base_dict: I.QuantityValueDict = {
+            "amount": self.amount,
+            "unit": tfsl.utils.prefix_wd(self.unit)
+        }
         if(self.lower != self.amount or self.upper != self.amount):
             base_dict["lowerBound"] = self.lower
             base_dict["upperBound"] = self.upper
         return base_dict
 
+def is_quantityvalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.QuantityValueDict]:
+    return all(key in value_in for key in ["amount", "unit"])
 
-def build_quantityvalue(value_in):
+def build_quantityvalue(value_in: I.QuantityValueDict) -> QuantityValue:
     return QuantityValue(**value_in)

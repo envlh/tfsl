@@ -1,5 +1,6 @@
 from copy import deepcopy
 from functools import singledispatchmethod
+from typing import Dict
 
 import tfsl.languages
 import tfsl.monolingualtext
@@ -30,7 +31,7 @@ class LexemeForm:
 
         self.id = None
 
-    def get_published_settings(self):
+    def get_published_settings(self) -> Dict[str, str]:
         return {
             "id": self.id
         }

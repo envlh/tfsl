@@ -1,5 +1,5 @@
 from functools import singledispatchmethod
-from typing import Union
+from typing import Dict, Union
 
 import tfsl.monolingualtext
 import tfsl.monolingualtextholder
@@ -22,7 +22,7 @@ class LexemeSense:
 
         self.id = None
 
-    def get_published_settings(self):
+    def get_published_settings(self) -> Dict[str, str]:
         return {
             "id": self.id
         }

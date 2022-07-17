@@ -4,7 +4,7 @@ import os.path
 import time
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import Union
+from typing import Dict, Optional, Union
 
 import tfsl.auth
 import tfsl.itemvalue
@@ -56,7 +56,7 @@ class Lexeme:
         self.lexeme_type = None
         self.lexeme_id = None
 
-    def get_published_settings(self):
+    def get_published_settings(self) -> Dict[str, Union[str, int]]:
         return {
             "pageid": self.pageid,
             "ns": self.namespace,

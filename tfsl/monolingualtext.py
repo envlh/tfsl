@@ -1,3 +1,8 @@
+""" Holder of the MonolingualText class and a function to build one given a JSON representation of it. """
+
+from typing_extensions import TypeGuard
+
+import tfsl.interfaces as I
 import tfsl.languages
 
 class MonolingualText:
@@ -7,28 +12,32 @@ class MonolingualText:
         such as is useful to determine terms in a termbox or lexeme representations.
     """
     def __init__(self, text: str, language: 'tfsl.languages.Language'):
-        self.text = text
-        self.language = language
+        self.text: str = text
+        self.language: 'tfsl.languages.Language' = language
 
     def __eq__(self, rhs: object) -> bool:
         if not isinstance(rhs, MonolingualText):
             return NotImplemented
         return self.text == rhs.text and self.language == rhs.language
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.text, self.language))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.text}@{self.language.code} ({self.language.item})'
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.text}@{self.language.code} ({self.language.item})'
 
-    def __jsonout__(self):
+    def __jsonout__(self) -> I.MonolingualTextDict:
         return {
-                   "text": self.text,
-                   "language": self.language.code
-               }
+            "text": self.text,
+            "language": self.language.code
+        }
 
-def build_mtvalue(value_in):
+def is_mtvalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.MonolingualTextDict]:
+    return all(key in value_in for key in ["text", "language"])
+
+def build_mtvalue(value_in: I.MonolingualTextDict) -> MonolingualText:
+    """ Builds a MonolingualText given the Wikibase JSON for one. """
     return MonolingualText(value_in["text"], tfsl.languages.get_first_lang(value_in["language"]))

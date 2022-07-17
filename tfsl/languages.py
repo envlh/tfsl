@@ -1,7 +1,8 @@
 from collections import defaultdict
 from functools import singledispatchmethod
-from typing import DefaultDict
+from typing import DefaultDict, List
 
+import tfsl.interfaces as I
 import tfsl.monolingualtext
 import tfsl.utils
 
@@ -12,13 +13,13 @@ class Language:
         the item should remain a string.
     """
     def __init__(self, code: str, item: str):
-        self.code = code
+        self.code = I.LanguageCode(code)
         self.item = item
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'{self.code} ({self.item})'
 
-    def __eq__(self, rhs):
+    def __eq__(self, rhs) -> bool:
         return self.compare_eq(rhs)
 
     def __rmatmul__(self, text):
@@ -37,16 +38,16 @@ class Language:
         return tfsl.monolingualtext.MonolingualText(text.text, self)
 
     @singledispatchmethod
-    def compare_eq(self, rhs):
+    def compare_eq(self, rhs) -> bool:
         return self.item == rhs.item and self.code == rhs.code
 
     @compare_eq.register
-    def _(self, rhs: str):
+    def _(self, rhs: str) -> bool:
         if rhs[0] == "Q":
             return self.item == rhs
         return self.code == rhs
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.code, self.item))
 
 class Languages:
@@ -60,7 +61,7 @@ class Languages:
 
     # TODO: everywhere this method is called, find a way to specify among results if multiple found
     @classmethod
-    def find(cls, string_in):
+    def find(cls, string_in: str) -> List[Language]:
         if tfsl.utils.matches_item(string_in):
             return cls.__itemlookup__[string_in]
         else:
@@ -642,7 +643,7 @@ class Languages:
 
 langs = Languages()
 
-def get_first_lang(arg):
+def get_first_lang(arg) -> Language:
     try:
         return langs.find(arg)[0]
     except IndexError as e:

@@ -3,6 +3,7 @@ import os
 import os.path
 import time
 from functools import singledispatchmethod
+from typing import Dict, Optional, Union
 
 import tfsl.auth
 import tfsl.languages
@@ -61,7 +62,7 @@ class Item:
             return self.statements[key]
         raise KeyError
 
-    def get_published_settings(self):
+    def get_published_settings(self) -> Dict[str, Union[str, int]]:
         return {
             "pageid": self.pageid,
             "ns": self.namespace,
@@ -157,7 +158,7 @@ class Item:
         item_out.set_published_settings(published_settings)
         return item_out
 
-def build_item(item_in):
+def build_item(item_in) -> Item:
     labels = tfsl.monolingualtextholder.build_text_list(item_in["labels"])
     descriptions = tfsl.monolingualtextholder.build_text_list(item_in["descriptions"])
     statements = tfsl.statementholder.build_statement_list(item_in["claims"])
