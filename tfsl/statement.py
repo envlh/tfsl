@@ -3,8 +3,9 @@ from copy import deepcopy
 from enum import Enum
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import DefaultDict
+from typing import DefaultDict, List, Optional, Union
 
+import tfsl.interfaces as I
 import tfsl.claim
 import tfsl.reference
 import tfsl.utils
@@ -20,32 +21,39 @@ class Statement:
     """ Represents a statement, or a claim with accompanying rank, optional qualifiers,
         and optional references.
     """
-    def __init__(self, property_in: str,
-                 value_in,
-                 rank=Rank.Normal,
-                 qualifiers=None,
-                 references=None):
-        self.property = property_in
-        self.value = deepcopy(value_in)
-        self.rank = rank
-
-        self.qualifiers: DefaultDict[str, list]
-        if qualifiers is None:
-            self.qualifiers = defaultdict(list)
-        elif isinstance(qualifiers, list):
-            self.qualifiers = defaultdict(list)
-            for arg in qualifiers:
-                self.qualifiers[arg.property].append(arg)
+    def __init__(self,
+                 property_in: I.Pid,
+                 value_in: I.ClaimValue,
+                 rank: Optional[Rank]=None,
+                 qualifiers: Optional[Union[List[tfsl.claim.Claim], tfsl.reference.ClaimSet]]=None,
+                 references: Optional[List[tfsl.reference.Reference]]=None):
+        self.rank: Rank
+        if rank is None:
+            self.rank = Rank.Normal
         else:
-            self.qualifiers = deepcopy(qualifiers)
+            self.rank = rank
 
+        self.property: I.Pid = property_in
+        self.value: I.ClaimValue = deepcopy(value_in)
+
+        self.qualifiers: tfsl.reference.ClaimSet = tfsl.reference.ClaimSet()
+
+        if isinstance(qualifiers, tfsl.reference.ClaimSet):
+            for prop in qualifiers:
+                for claim in qualifiers[prop]:
+                    self.qualifiers = self.qualifiers.add(claim)
+        elif qualifiers is not None:
+            for arg in qualifiers:
+                self.qualifiers = self.qualifiers.add(arg)
+
+        self.references: List[tfsl.reference.Reference]
         if references is None:
             self.references = []
         else:
             self.references = deepcopy(references)
 
-        self.id = None
-        self.qualifiers_order = None
+        self.id: Optional[str] = None
+        self.qualifiers_order: Optional[List[I.Pid]] = None
 
     def __getitem__(self, key):
         id_matches_key = lambda obj: obj.id == key
@@ -63,7 +71,7 @@ class Statement:
 
     @add.register
     def _(self, arg: tfsl.claim.Claim):
-        return Statement(self.property, self.value, self.rank, tfsl.utils.add_claimlike(self.qualifiers, arg), self.references)
+        return Statement(self.property, self.value, self.rank, self.qualifiers.add(arg), self.references)
 
     @add.register
     def _(self, arg: tfsl.reference.Reference):
@@ -78,7 +86,7 @@ class Statement:
 
     @sub.register
     def _(self, arg: tfsl.claim.Claim):
-        return Statement(self.property, self.value, self.rank, tfsl.utils.sub_claimlike(self.qualifiers, arg), self.references)
+        return Statement(self.property, self.value, self.rank, self.qualifiers.sub(arg), self.references)
 
     @sub.register
     def _(self, arg: tfsl.reference.Reference):

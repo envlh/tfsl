@@ -29,16 +29,10 @@ class TestReferenceMethods(unittest.TestCase):
         self.assertCountEqual(x[self.prop2], [self.claim3])
         self.assertCountEqual(x[self.prop3], [self.claim4])
 
-    def test_list_statement_ref(self):
-        x = Reference([self.claim1, self.claim2, self.claim3, self.claim4])
-        self.assertCountEqual(x[self.prop1], [self.claim1, self.claim2])
-        self.assertCountEqual(x[self.prop2], [self.claim3])
-        self.assertCountEqual(x[self.prop3], [self.claim4])        
-
     def test_ref_add_statement(self):
         newclaim = Claim(self.prop3, self._text3)
 
-        x = Reference([self.claim1, self.claim2, self.claim3, self.claim4])
+        x = Reference(self.claim1, self.claim2, self.claim3, self.claim4)
         y = x + newclaim
         
         self.assertCountEqual(y[self.prop1], [self.claim1, self.claim2])
@@ -47,7 +41,7 @@ class TestReferenceMethods(unittest.TestCase):
         self.assertCountEqual(y[self.prop3], [self.claim4, newclaim])
 
     def test_ref_remove_statement(self):
-        x = Reference([self.claim1, self.claim2, self.claim3, self.claim4])
+        x = Reference(self.claim1, self.claim2, self.claim3, self.claim4)
         y = x - self.claim4
         
         self.assertCountEqual(y[self.prop1], [self.claim1, self.claim2])

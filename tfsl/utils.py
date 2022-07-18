@@ -49,11 +49,6 @@ def remove_replang(list_in, lang_in):
     newlist = [rep for rep in newlist if rep.language != lang_in]
     return newlist
 
-def add_claimlike(qualifiers, arg):
-    newqualifiers = deepcopy(qualifiers)
-    newqualifiers[arg.property].append(arg)
-    return newqualifiers
-
 def add_to_list(references, arg):
     newreferences = deepcopy(references)
     newreferences.append(arg)
@@ -67,13 +62,6 @@ def add_to_mtlist(references, arg):
 def sub_property(qualifiers, arg):
     newqualifiers = deepcopy(qualifiers)
     del newqualifiers[arg]
-    return newqualifiers
-
-def sub_claimlike(qualifiers, arg):
-    newqualifiers = deepcopy(qualifiers)
-    newqualifiers[arg.property] = [claim for claim in newqualifiers[arg.property] if claim != arg]
-    if len(newqualifiers[arg.property]) == 0:
-        return sub_property(newqualifiers, arg.property)
     return newqualifiers
 
 def sub_from_list(references, arg):

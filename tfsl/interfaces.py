@@ -2,7 +2,7 @@
     That this file imports no other (except for type checking purposes) is intentional.
 """
 
-from typing import NewType, Optional, TypedDict, Union, TYPE_CHECKING
+from typing import Dict, List, NewType, Optional, TypedDict, Union, TYPE_CHECKING
 from typing_extensions import NotRequired
 
 if TYPE_CHECKING:
@@ -67,3 +67,7 @@ ClaimValue = Union[
     str,
     'tfsl.timevalue.TimeValue'
 ]
+
+ClaimDictSet = Dict[Pid, List[ClaimDict]]
+
+ReferenceDict = TypedDict('ReferenceDict', {'snaks-order': List[Pid], 'snaks': ClaimDictSet, 'hash': NotRequired[str]}, total=False)
