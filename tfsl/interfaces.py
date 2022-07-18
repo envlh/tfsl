@@ -85,3 +85,34 @@ StatementDict = TypedDict('StatementDict', {
     'rank': str,
     'references': NotRequired[List[ReferenceDict]]
 }, total=False)
+
+class LemmaDict(TypedDict, total=False):
+    language: LanguageCode
+    value: str
+    remove: NotRequired[str]
+
+LemmaDictSet = Dict[LanguageCode, LemmaDict]
+
+class LexemeFormDict(TypedDict):
+    id: Optional[str]
+    representations: LemmaDictSet
+    grammaticalFeatures: List[Qid]
+    claims: ClaimDictSet
+
+class LexemeSenseDict(TypedDict):
+    id: Optional[str]
+    glosses: LemmaDictSet
+    claims: ClaimDictSet
+
+class LexemeDict(TypedDict):
+    pageid: Optional[int]
+    ns: Optional[int]
+    title: Optional[str]
+    lastrevid: Optional[int]
+    modified: Optional[str]
+    type: Optional[str]
+    id: Optional[str]
+    lemmas: LemmaDictSet
+    claims: ClaimDictSet
+    forms: List[LexemeFormDict]
+    senses: List[LexemeSenseDict]

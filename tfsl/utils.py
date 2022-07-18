@@ -44,11 +44,6 @@ def strip_prefix_wd(arg: str) -> str:
         return arg[len(WD_PREFIX):]
     return arg
 
-def remove_replang(list_in, lang_in):
-    newlist = deepcopy(list_in)
-    newlist = [rep for rep in newlist if rep.language != lang_in]
-    return newlist
-
 T = TypeVar('T')
 def add_to_list(references: List[T], arg: T) -> List[T]:
     newreferences = deepcopy(references)
@@ -58,11 +53,6 @@ def add_to_list(references: List[T], arg: T) -> List[T]:
 def sub_from_list(references: List[T], arg: T) -> List[T]:
     newreferences = deepcopy(references)
     newreferences = [reference for reference in newreferences if reference != arg]
-    return newreferences
-
-def add_to_mtlist(references, arg):
-    newreferences = remove_replang(deepcopy(references), arg.language)
-    newreferences.append(arg)
     return newreferences
 
 def sub_property(qualifiers, arg):

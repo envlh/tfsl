@@ -10,7 +10,10 @@ import tfsl.statementholder
 import tfsl.utils
 
 class LexemeForm:
-    def __init__(self, representations, features=None, statements=None):
+    def __init__(self,
+                 representations,
+                 features=None,
+                 statements=None):
         super().__init__()
         if isinstance(representations, tfsl.monolingualtextholder.MonolingualTextHolder):
             self.representations = representations
