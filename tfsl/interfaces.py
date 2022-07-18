@@ -2,7 +2,7 @@
     That this file imports no other (except for type checking purposes) is intentional.
 """
 
-from typing import Dict, List, NewType, Optional, TypedDict, Union, TYPE_CHECKING
+from typing import Dict, List, Literal, NewType, Optional, TypedDict, Union, TYPE_CHECKING
 from typing_extensions import NotRequired
 
 if TYPE_CHECKING:
@@ -70,4 +70,18 @@ ClaimValue = Union[
 
 ClaimDictSet = Dict[Pid, List[ClaimDict]]
 
-ReferenceDict = TypedDict('ReferenceDict', {'snaks-order': List[Pid], 'snaks': ClaimDictSet, 'hash': NotRequired[str]}, total=False)
+ReferenceDict = TypedDict('ReferenceDict', {
+    'snaks-order': List[Pid],
+    'snaks': ClaimDictSet,
+    'hash': NotRequired[str]
+}, total=False)
+
+StatementDict = TypedDict('StatementDict', {
+    'mainsnak': ClaimDict,
+    'type': str,
+    'id': NotRequired[str],
+    'qualifiers': NotRequired[ClaimDictSet],
+    'qualifiers-order': NotRequired[List[Pid]],
+    'rank': str,
+    'references': NotRequired[List[ReferenceDict]]
+}, total=False)

@@ -4,7 +4,7 @@ import re
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
-from typing import Match, Optional
+from typing import List, Match, Optional, TypeVar
 
 import requests
 
@@ -49,9 +49,15 @@ def remove_replang(list_in, lang_in):
     newlist = [rep for rep in newlist if rep.language != lang_in]
     return newlist
 
-def add_to_list(references, arg):
+T = TypeVar('T')
+def add_to_list(references: List[T], arg: T) -> List[T]:
     newreferences = deepcopy(references)
     newreferences.append(arg)
+    return newreferences
+
+def sub_from_list(references: List[T], arg: T) -> List[T]:
+    newreferences = deepcopy(references)
+    newreferences = [reference for reference in newreferences if reference != arg]
     return newreferences
 
 def add_to_mtlist(references, arg):
@@ -63,11 +69,6 @@ def sub_property(qualifiers, arg):
     newqualifiers = deepcopy(qualifiers)
     del newqualifiers[arg]
     return newqualifiers
-
-def sub_from_list(references, arg):
-    newreferences = deepcopy(references)
-    newreferences = [reference for reference in newreferences if reference != arg]
-    return newreferences
 
 @lru_cache
 def values_type(prop):

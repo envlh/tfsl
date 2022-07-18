@@ -56,7 +56,7 @@ class TestReferenceMethods(unittest.TestCase):
         self.assertNotIn(self.claim1, x)
 
         x = Reference(self.claim1, self.claim2)
-        del x[self.prop1, self._text]
+        del x[Claim(self.prop1, self._text)]
         self.assertNotIn(self.claim1, x)
         self.assertIn(self.claim2, x)
 

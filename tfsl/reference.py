@@ -2,13 +2,19 @@ from collections import defaultdict, Counter
 from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import DefaultDict, ItemsView, List, Mapping, Optional, Union
+from typing import Any, DefaultDict, ItemsView, List, Mapping, Optional, Union
 
 import tfsl.interfaces as I
 import tfsl.claim
 import tfsl.utils
 
 class ClaimSet(DefaultDict[I.Pid, List[tfsl.claim.Claim]]):
+    def __init__(self, *args: Any, **kwargs: List[tfsl.claim.Claim]):
+        if args:
+            super(ClaimSet, self).__init__(*args, **kwargs)
+        else:
+            super(ClaimSet, self).__init__(list, **kwargs)
+
     def add(self, arg: tfsl.claim.Claim) -> 'ClaimSet':
         newclaimset = deepcopy(self)
         newclaimset[arg.property].append(arg)

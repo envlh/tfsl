@@ -3,7 +3,7 @@ from copy import deepcopy
 from enum import Enum
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import DefaultDict, List, Optional, Union
+from typing import DefaultDict, List, Optional, TypeVar, Union
 
 import tfsl.interfaces as I
 import tfsl.claim
@@ -16,7 +16,7 @@ class Rank(Enum):
     Normal = 0
     Deprecated = -1
 
-
+StatementT = TypeVar('StatementT', bound='Statement')
 class Statement:
     """ Represents a statement, or a claim with accompanying rank, optional qualifiers,
         and optional references.
@@ -55,64 +55,42 @@ class Statement:
         self.id: Optional[str] = None
         self.qualifiers_order: Optional[List[I.Pid]] = None
 
-    def __getitem__(self, key):
-        id_matches_key = lambda obj: obj.id == key
-
+    def __getitem__(self, key: I.Pid) -> List[tfsl.claim.Claim]:
         if tfsl.utils.matches_property(key):
             return self.qualifiers.get(key, [])
         raise KeyError
 
-    def __add__(self, arg):
-        return self.add(arg)
-
-    @singledispatchmethod
-    def add(self, arg):
+    def __add__(self, arg: object) -> 'Statement':
+        if isinstance(arg, tfsl.claim.Claim):
+            return Statement(self.property, self.value, self.rank, self.qualifiers.add(arg), self.references)
+        elif isinstance(arg, tfsl.reference.Reference):
+            return Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.add_to_list(self.references, arg))
         raise NotImplementedError(f"Can't add {str(type(arg))} to statement")
 
-    @add.register
-    def _(self, arg: tfsl.claim.Claim):
-        return Statement(self.property, self.value, self.rank, self.qualifiers.add(arg), self.references)
-
-    @add.register
-    def _(self, arg: tfsl.reference.Reference):
-        return Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.add_to_list(self.references, arg))
-
-    def __sub__(self, arg):
-        return self.sub(arg)
-
-    @singledispatchmethod
-    def sub(self, arg):
+    def __sub__(self, arg: object) -> 'Statement':
+        if isinstance(arg, tfsl.claim.Claim):
+            return Statement(self.property, self.value, self.rank, self.qualifiers.sub(arg), self.references)
+        elif isinstance(arg, tfsl.reference.Reference):
+            return Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.sub_from_list(self.references, arg))
         raise NotImplementedError(f"Can't subtract {str(type(arg))} from statement")
 
-    @sub.register
-    def _(self, arg: tfsl.claim.Claim):
-        return Statement(self.property, self.value, self.rank, self.qualifiers.sub(arg), self.references)
-
-    @sub.register
-    def _(self, arg: tfsl.reference.Reference):
-        return Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.sub_from_list(self.references, arg))
-
-    def __matmul__(self, arg):
-        return self.matmul(arg)
-
-    @singledispatchmethod
-    def matmul(self, arg):
+    def __matmul__(self, arg: object) -> 'Statement':
+        if isinstance(arg, Rank):
+            if arg == self.rank:
+                return self
+            return Statement(self.property, self.value, arg, self.qualifiers, self.references)
         raise NotImplementedError(f"{str(type(arg))} is not a rank")
 
-    @matmul.register
-    def _(self, arg: Rank):
-        if arg == self.rank:
-            return self
-        return Statement(self.property, self.value, arg, self.qualifiers, self.references)
-
-    def __eq__(self, rhs):
+    def __eq__(self, rhs: object) -> bool:
+        if not isinstance(rhs, Statement):
+            return NotImplemented
         return self.property == rhs.property and self.value == rhs.value and self.rank == rhs.rank and self.qualifiers == rhs.qualifiers and self.references == rhs.references
 
-    def set_published_settings(self, stmt_in):
+    def set_published_settings(self, stmt_in: I.StatementDict) -> None:
         self.id = stmt_in["id"]
         self.qualifiers_order = stmt_in.get("qualifiers-order", None)
 
-    def __str__(self):
+    def __str__(self) -> str:
         # TODO: output everything else
         base_str = f'{self.property}: {self.value} ({self.rank})'
         qualifiers_str = ""
@@ -124,12 +102,10 @@ class Statement:
             references_str = "[\n" + indent("\n".join([str(ref) for ref in self.references]), tfsl.utils.DEFAULT_INDENT) + "\n]"
         return base_str + qualifiers_str + references_str
 
-    def __jsonout__(self):
-        base_dict = {"type": "statement", "mainsnak": tfsl.claim.Claim(self.property, self.value).__jsonout__()}
-        try:
+    def __jsonout__(self) -> I.StatementDict:
+        base_dict: I.StatementDict = {"type": "statement", "mainsnak": tfsl.claim.Claim(self.property, self.value).__jsonout__()}
+        if self.id is not None:
             base_dict["id"] = self.id
-        except AttributeError:
-            pass
         base_dict["rank"] = ["deprecated", "normal", "preferred"][self.rank.value+1]
         base_dict["qualifiers"] = defaultdict(list)
         for stmtprop, stmtval in self.qualifiers.items():
@@ -144,18 +120,15 @@ class Statement:
         base_dict["references"] = [reference.__jsonout__() for reference in self.references]
         return base_dict
 
-
-def build_quals(quals_in):
-    if quals_in is None:
-        return []
-    quals = defaultdict(list)
-    for prop in quals_in:
-        for qual in quals_in[prop]:
-            quals[prop].append(tfsl.claim.build_claim(qual))
+def build_quals(quals_in: Optional[I.ClaimDictSet] = None) -> tfsl.reference.ClaimSet:
+    quals = tfsl.reference.ClaimSet()
+    if quals_in is not None:
+        for prop in quals_in:
+            for qual in quals_in[prop]:
+                quals[prop].append(tfsl.claim.build_claim(qual))
     return quals
 
-
-def build_statement(stmt_in):
+def build_statement(stmt_in: I.StatementDict) -> Statement:
     stmt_rank = Rank.Normal
     if stmt_in["rank"] == 'preferred':
         stmt_rank = Rank.Preferred
@@ -165,6 +138,7 @@ def build_statement(stmt_in):
     stmt_mainsnak = stmt_in["mainsnak"]
     stmt_property = stmt_mainsnak["property"]
     stmt_datatype = stmt_mainsnak["datatype"]
+    stmt_value: I.ClaimValue
     if stmt_mainsnak["snaktype"] == 'novalue':
         stmt_value = False
     elif stmt_mainsnak["snaktype"] == 'somevalue':
