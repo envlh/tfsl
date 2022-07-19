@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import Dict, List, Literal, NewType, Optional, TypedDict, Union, TYPE_CHECKING
+from typing import DefaultDict, Dict, List, Literal, NewType, Optional, TypedDict, Union, TYPE_CHECKING
 from typing_extensions import NotRequired, TypeGuard
 
 if TYPE_CHECKING:
@@ -89,19 +89,24 @@ ReferenceDict = TypedDict('ReferenceDict', {
     'hash': NotRequired[str]
 }, total=False)
 
-StatementDict = TypedDict('StatementDict', {
-    'mainsnak': ClaimDict,
-    'type': str,
+StatementDictPublishedSettings = TypedDict('StatementDictPublishedSettings', {
     'id': NotRequired[str],
-    'qualifiers': NotRequired[ClaimDictSet],
-    'qualifiers-order': NotRequired[List[Pid]],
-    'rank': str,
-    'references': NotRequired[List[ReferenceDict]]
+    'qualifiers-order': NotRequired[List[Pid]]
 }, total=False)
+
+class StatementData(TypedDict, total=False):
+    mainsnak: ClaimDict
+    type: str
+    qualifiers: NotRequired[ClaimDictSet]
+    rank: str
+    references: NotRequired[List[ReferenceDict]]
+
+class StatementDict(StatementData, StatementDictPublishedSettings): # pylint: disable=inherit-non-class
+    pass
 
 StatementDictSet = Dict[Pid, List[StatementDict]]
 
-StatementSet = Dict[Pid, List['tfsl.statement.Statement']]
+StatementSet = DefaultDict[Pid, List['tfsl.statement.Statement']]
 
 class LemmaDict(TypedDict, total=False):
     language: LanguageCode
@@ -110,26 +115,37 @@ class LemmaDict(TypedDict, total=False):
 
 LemmaDictSet = Dict[LanguageCode, LemmaDict]
 
-class LexemeFormDict(TypedDict):
-    id: Optional[str]
+class LexemeFormPublishedSettings(TypedDict, total=False):
+    id: NotRequired[str]
+
+class LexemeFormData(TypedDict):
     representations: LemmaDictSet
     grammaticalFeatures: List[Qid]
-    claims: ClaimDictSet
+    claims: StatementDictSet
 
-class LexemeSenseDict(TypedDict):
-    id: Optional[str]
+class LexemeFormDict(LexemeFormPublishedSettings, LexemeFormData):
+    pass
+
+class LexemeSensePublishedSettings(TypedDict, total=False):
+    id: NotRequired[str]
+
+class LexemeSenseData(TypedDict, total=False):
     glosses: LemmaDictSet
-    claims: ClaimDictSet
+    claims: StatementDictSet
+    add: NotRequired[str]
 
-class LexemeDict(TypedDict):
-    pageid: Optional[int]
-    ns: Optional[int]
-    title: Optional[str]
-    lastrevid: Optional[int]
-    modified: Optional[str]
-    type: Optional[str]
-    id: Optional[str]
+class LexemeSenseDict(LexemeSensePublishedSettings, LexemeSenseData):
+    pass
+
+class LexemeDict(TypedDict, total=False):
+    pageid: NotRequired[int]
+    ns: NotRequired[int]
+    title: NotRequired[str]
+    lastrevid: NotRequired[int]
+    modified: NotRequired[str]
+    type: NotRequired[str]
+    id: NotRequired[str]
     lemmas: LemmaDictSet
-    claims: ClaimDictSet
+    claims: StatementDictSet
     forms: List[LexemeFormDict]
     senses: List[LexemeSenseDict]

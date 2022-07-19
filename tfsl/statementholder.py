@@ -11,7 +11,7 @@ import tfsl.utils as U
 class StatementHolder(object):
     def __init__(self,
                  statements: Optional[Union[
-                    DefaultDict[I.Pid, List[tfsl.statement.Statement]],
+                    I.StatementSet,
                     List[tfsl.statement.Statement]
                  ]]=None):
         super().__init__()

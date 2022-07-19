@@ -1,9 +1,8 @@
 from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
-from functools import singledispatchmethod
 from textwrap import indent
-from typing import DefaultDict, List, Optional, TypeVar, Union
+from typing import List, Optional, TypeVar, Union
 
 import tfsl.interfaces as I
 import tfsl.claim
@@ -53,7 +52,7 @@ class Statement:
             self.references = deepcopy(references)
 
         self.id: Optional[str] = None
-        self.qualifiers_order: Optional[List[I.Pid]] = None
+        self.qualifiers_order: List[I.Pid] = []
 
     def __getitem__(self, key: I.Pid) -> List[tfsl.claim.Claim]:
         if tfsl.utils.matches_property(key):
@@ -88,9 +87,17 @@ class Statement:
             return self.property == rhs.property and self.value == rhs.value and self.rank == rhs.rank and self.qualifiers == rhs.qualifiers and self.references == rhs.references
         return NotImplemented
 
-    def set_published_settings(self, stmt_in: I.StatementDict) -> None:
+    def get_published_settings(self) -> I.StatementDictPublishedSettings:
+        if self.id is not None:
+            return {
+                "id": self.id,
+                "qualifiers-order": self.qualifiers_order
+            }
+        return {}
+
+    def set_published_settings(self, stmt_in: I.StatementDictPublishedSettings) -> None:
         self.id = stmt_in["id"]
-        self.qualifiers_order = stmt_in.get("qualifiers-order", None)
+        self.qualifiers_order = stmt_in.get("qualifiers-order", [])
 
     def __str__(self) -> str:
         # TODO: output everything else
