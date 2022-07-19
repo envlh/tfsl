@@ -1,6 +1,5 @@
 """ Holder of the ItemValue class and a function to build one given a JSON representation of it. """
 
-from typing import Dict, Union
 from typing_extensions import TypeGuard
 
 import tfsl.interfaces as I

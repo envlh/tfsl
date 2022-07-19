@@ -39,7 +39,8 @@ class LexemeSense:
         return {}
 
     def set_published_settings(self, sense_in: I.LexemeSensePublishedSettings) -> None:
-        self.id = sense_in["id"]
+        if "id" in sense_in:
+            self.id = sense_in["id"]
 
     def __getitem__(self, arg: object) -> Union[tfsl.monolingualtext.MonolingualText,
                                     List[tfsl.statement.Statement]]:

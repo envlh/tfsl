@@ -14,7 +14,10 @@ class Language:
     """
     def __init__(self, code: str, item: str):
         self.code = I.LanguageCode(code)
-        self.item = item
+        if I.is_Qid(item):
+            self.item = item
+        else:
+            raise ValueError(f"{item} is not a Qid")
 
     def __repr__(self) -> str:
         return f'{self.code} ({self.item})'

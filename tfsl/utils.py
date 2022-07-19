@@ -101,7 +101,7 @@ def read_config():
     ttl = float(config['Tfsl']['TimeToLive'])
     return cpath, ttl
 
-def get_filename(entity_name):
+def get_filename(entity_name: str) -> str:
     """ Constructs the name of a text file containing a sense subgraph based on a given property. """
     return os.path.join(cache_path, f"{entity_name}.json")
 

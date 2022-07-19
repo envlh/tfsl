@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import DefaultDict, Dict, List, Literal, NewType, Optional, TypedDict, Union, TYPE_CHECKING
+from typing import DefaultDict, Dict, List, NewType, Optional, Tuple, TypedDict, Union, TYPE_CHECKING
 from typing_extensions import NotRequired, TypeGuard
 
 if TYPE_CHECKING:
@@ -27,6 +27,40 @@ def is_Pid(arg: str) -> TypeGuard[Pid]:
 Lid = NewType('Lid', str)
 def is_Lid(arg: str) -> TypeGuard[Lid]:
     return re.match(r"^L\d+$", arg) is not None
+
+Fid = NewType('Fid', str)
+def is_Fid(arg: str) -> TypeGuard[Fid]:
+    return re.match(r"^F\d+$", arg) is not None
+
+Sid = NewType('Sid', str)
+def is_Sid(arg: str) -> TypeGuard[Sid]:
+    return re.match(r"^S\d+$", arg) is not None
+
+LFid = NewType('LFid', str)
+def is_LFid(arg: str) -> TypeGuard[LFid]:
+    return re.match(r"^(L\d+)-(F\d+)$", arg) is not None
+
+def split_LFid(arg: LFid) -> Optional[Tuple[Lid, Fid]]:
+    if matched_parts := re.match(r"^(L\d+)-(F\d+)$", arg):
+        lid_part: Optional[str] = matched_parts.group(1)
+        fid_part: Optional[str] = matched_parts.group(2)
+        if lid_part is not None and fid_part is not None:
+            if is_Lid(lid_part) and is_Fid(fid_part):
+                return lid_part, fid_part
+    return None
+
+LSid = NewType('LSid', str)
+def is_LSid(arg: str) -> TypeGuard[LSid]:
+    return re.match(r"^(L\d+)-(S\d+)$", arg) is not None
+
+def split_LSid(arg: LSid) -> Optional[Tuple[Lid, Sid]]:
+    if matched_parts := re.match(r"^(L\d+)-(S\d+)$", arg):
+        lid_part: Optional[str] = matched_parts.group(1)
+        sid_part: Optional[str] = matched_parts.group(2)
+        if lid_part is not None and sid_part is not None:
+            if is_Lid(lid_part) and is_Sid(sid_part):
+                return lid_part, sid_part
+    return None
 
 class MonolingualTextDict(TypedDict):
     text: str
@@ -138,7 +172,7 @@ class LexemeSenseData(TypedDict, total=False):
 class LexemeSenseDict(LexemeSensePublishedSettings, LexemeSenseData):
     pass
 
-class LexemeDict(TypedDict, total=False):
+class LexemePublishedSettings(TypedDict, total=False):
     pageid: NotRequired[int]
     ns: NotRequired[int]
     title: NotRequired[str]
@@ -146,7 +180,14 @@ class LexemeDict(TypedDict, total=False):
     modified: NotRequired[str]
     type: NotRequired[str]
     id: NotRequired[str]
+
+class LexemeData(TypedDict):
+    lexicalCategory: Qid
+    language: Qid
     lemmas: LemmaDictSet
     claims: StatementDictSet
     forms: List[LexemeFormDict]
     senses: List[LexemeSenseDict]
+
+class LexemeDict(LexemePublishedSettings, LexemeData):
+    pass

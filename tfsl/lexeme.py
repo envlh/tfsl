@@ -4,8 +4,9 @@ import os.path
 import time
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import Dict, Optional, Union
+from typing import Optional, List, Union
 
+import tfsl.interfaces as I
 import tfsl.auth
 import tfsl.itemvalue
 import tfsl.languages
@@ -21,8 +22,17 @@ default_lexeme_cache_path = os.path.expanduser('~/.cache/tfsl')
 os.makedirs(default_lexeme_cache_path,exist_ok=True)
 
 class Lexeme:
-    def __init__(self, lemmata, lang_in, cat_in,
-                 statements=None, senses=None, forms=None):
+    def __init__(self,
+                lemmata: Union[tfsl.monolingualtextholder.MonolingualTextHolder, List[tfsl.monolingualtext.MonolingualText]],
+                lang_in: tfsl.languages.Language,
+                cat_in: I.Qid,
+                statements: Optional[Union[
+                    tfsl.statementholder.StatementHolder,
+                    I.StatementSet,
+                    List[tfsl.statement.Statement]
+                 ]]=None,
+                senses: Optional[List[tfsl.lexemesense.LexemeSense]]=None,
+                forms: Optional[List[tfsl.lexemeform.LexemeForm]]=None):
         # TODO: better validation/type hinting and argument fallbacks
         super().__init__()
         if isinstance(lemmata, tfsl.monolingualtextholder.MonolingualTextHolder):
@@ -41,129 +51,108 @@ class Lexeme:
         if senses is None:
             self.senses = []
         else:
-            self.senses = senses if isinstance(senses, list) else [senses]
+            self.senses = senses
 
         if forms is None:
             self.forms = []
         else:
-            self.forms = forms if isinstance(forms, list) else [forms]
+            self.forms = forms
 
-        self.pageid = None
-        self.namespace = None
-        self.title = None
-        self.lastrevid = None
-        self.modified = None
-        self.lexeme_type = None
-        self.lexeme_id = None
+        self.pageid: Optional[int] = None
+        self.namespace: Optional[int] = None
+        self.title: Optional[str] = None
+        self.lastrevid: Optional[int] = None
+        self.modified: Optional[str] = None
+        self.lexeme_type: Optional[str] = None
+        self.lexeme_id: Optional[str] = None
 
-    def get_published_settings(self) -> Dict[str, Union[str, int]]:
-        return {
-            "pageid": self.pageid,
-            "ns": self.namespace,
-            "title": self.title,
-            "lastrevid": self.lastrevid,
-            "modified": self.modified,
-            "type": self.lexeme_type,
-            "id": self.lexeme_id
-        }
+    def get_published_settings(self) -> I.LexemePublishedSettings:
+        if self.pageid is not None and self.namespace is not None and self.title is not None and self.lastrevid is not None and self.modified is not None and self.lexeme_type is not None and self.lexeme_id is not None:
+            return {
+                "pageid": self.pageid,
+                "ns": self.namespace,
+                "title": self.title,
+                "lastrevid": self.lastrevid,
+                "modified": self.modified,
+                "type": self.lexeme_type,
+                "id": self.lexeme_id
+            }
+        return {}
 
-    def set_published_settings(self, lexeme_in):
-        self.pageid = lexeme_in["pageid"]
-        self.namespace = lexeme_in["ns"]
-        self.title = lexeme_in["title"]
-        self.lastrevid = lexeme_in["lastrevid"]
-        self.modified = lexeme_in["modified"]
-        self.lexeme_type = lexeme_in["type"]
-        self.lexeme_id = lexeme_in["id"]
+    def set_published_settings(self, lexeme_in: I.LexemePublishedSettings) -> None:
+        if "pageid" in lexeme_in:
+            self.pageid = lexeme_in["pageid"]
+            self.namespace = lexeme_in["ns"]
+            self.title = lexeme_in["title"]
+            self.lastrevid = lexeme_in["lastrevid"]
+            self.modified = lexeme_in["modified"]
+            self.lexeme_type = lexeme_in["type"]
+            self.lexeme_id = lexeme_in["id"]
 
-    def __add__(self, arg):
-        return self.add(arg)
-
-    @singledispatchmethod
-    def add(self, arg):
+    def __add__(self, arg: object) -> 'Lexeme':
+        if isinstance(arg, tfsl.statement.Statement):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata, self.language, self.category,
+                        self.statements + arg,
+                        self.senses, self.forms)
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
+        elif isinstance(arg, tfsl.lexemesense.LexemeSense):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata, self.language, self.category,
+                        self.statements, tfsl.utils.add_to_list(self.senses, arg),
+                        self.forms)
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
+        elif isinstance(arg, tfsl.lexemeform.LexemeForm):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata, self.language, self.category,
+                        self.statements, self.senses,
+                        tfsl.utils.add_to_list(self.forms, arg))
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
+        elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata + arg,
+                        self.language, self.category, self.statements,
+                        self.senses, self.forms)
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
         raise NotImplementedError(f"Can't add {type(arg)} to Lexeme")
 
-    @add.register
-    def _(self, arg: tfsl.statement.Statement):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
-                      self.statements + arg,
-                      self.senses, self.forms)
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    @add.register
-    def _(self, arg: tfsl.lexemesense.LexemeSense):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
-                      self.statements, tfsl.utils.add_to_list(self.senses, arg),
-                      self.forms)
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    @add.register
-    def _(self, arg: tfsl.lexemeform.LexemeForm):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
-                      self.statements, self.senses,
-                      tfsl.utils.add_to_list(self.forms, arg))
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    @add.register
-    def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata + arg,
-                      self.language, self.category, self.statements,
-                      self.senses, self.forms)
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    def __sub__(self, arg):
-        return self.sub(arg)
-
-    @singledispatchmethod
-    def sub(self, arg):
+    def __sub__(self, arg: object) -> 'Lexeme':
+        if isinstance(arg, tfsl.statement.Statement):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata, self.language, self.category,
+                        self.statements - arg,
+                        self.senses, self.forms)
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
+        elif isinstance(arg, tfsl.lexemesense.LexemeSense):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata, self.language, self.category,
+                        self.statements,
+                        tfsl.utils.sub_from_list(self.senses, arg),
+                        self.forms)
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
+        elif isinstance(arg, tfsl.lexemeform.LexemeForm):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata, self.language, self.category,
+                        self.statements, self.senses,
+                        tfsl.utils.sub_from_list(self.forms, arg))
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
+        elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
+            published_settings = self.get_published_settings()
+            lexeme_out = Lexeme(self.lemmata - arg,
+                        self.language, self.category, self.statements,
+                        self.senses, self.forms)
+            lexeme_out.set_published_settings(published_settings)
+            return lexeme_out
         raise NotImplementedError(f"Can't subtract {type(arg)} from Lexeme")
 
-    @sub.register
-    def _(self, arg: tfsl.statement.Statement):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
-                      self.statements - arg,
-                      self.senses, self.forms)
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    @sub.register
-    def _(self, arg: tfsl.lexemesense.LexemeSense):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
-                      self.statements,
-                      tfsl.utils.sub_from_list(self.senses, arg),
-                      self.forms)
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    @sub.register
-    def _(self, arg: tfsl.lexemeform.LexemeForm):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata, self.language, self.category,
-                      self.statements, self.senses,
-                      tfsl.utils.sub_from_list(self.forms, arg))
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    @sub.register
-    def _(self, arg: tfsl.monolingualtext.MonolingualText):
-        published_settings = self.get_published_settings()
-        lexeme_out = Lexeme(self.lemmata - arg,
-                      self.language, self.category, self.statements,
-                      self.senses, self.forms)
-        lexeme_out.set_published_settings(published_settings)
-        return lexeme_out
-
-    def get_forms(self, inflections=None, exclusions=None):
+    def get_forms(self, inflections: Optional[List[I.Qid]]=None, exclusions: Optional[List[I.Qid]]=None) -> List[tfsl.lexemeform.LexemeForm]:
         if inflections is None:
             return self.forms
         initial_form_list = [form for form in self.forms
@@ -173,44 +162,47 @@ class Lexeme:
         return [form for form in initial_form_list
                 if all(i not in form.features for i in exclusions)]
 
-    def get_senses(self, specifiers=None):
-        # TODO: handle specifiers argument
-        if specifiers is None:
-            return self.senses
+    def get_senses(self) -> List[tfsl.lexemesense.LexemeSense]:
+        return self.senses
 
-    def get_language(self):
+    def get_language(self) -> tfsl.languages.Language:
         return self.language
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: object) -> Union[List[tfsl.statement.Statement], tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
         return self.getitem(key)
 
     @singledispatchmethod
-    def getitem(self, key):
+    def getitem(self, key: object) -> Union[List[tfsl.statement.Statement], tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
         raise TypeError(f"Can't get {type(key)} from Lexeme")
 
     @getitem.register(tfsl.languages.Language)
     @getitem.register(tfsl.monolingualtext.MonolingualText)
-    def _(self, key: tfsl.monolingualtextholder.lang_or_mt):
+    def _(self, key: tfsl.monolingualtextholder.lang_or_mt) -> tfsl.monolingualtext.MonolingualText:
         return self.lemmata[key]
 
     @getitem.register
-    def _(self, key: str):
-        id_matches_key = lambda obj: obj.id == key
-        id_matches_key_suffix = lambda obj: obj.id == '-'.join([self.lexeme_id, key])
+    def _(self, key: str) -> Union[List[tfsl.statement.Statement], tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]:
+        def id_matches_key(obj: Union[tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]) -> bool:
+            return obj.id == key
 
-        if tfsl.utils.matches_property(key):
+        if I.is_Pid(key):
             return self.statements[key]
-        if tfsl.utils.matches_form(key):
+        if I.is_LFid(key):
             return next(filter(id_matches_key, self.forms))
-        if tfsl.utils.matches_form_suffix(key):
-            return next(filter(id_matches_key_suffix, self.forms))
-        if tfsl.utils.matches_sense(key):
+        if I.is_LSid(key):
             return next(filter(id_matches_key, self.senses))
-        if tfsl.utils.matches_sense_suffix(key):
-            return next(filter(id_matches_key_suffix, self.senses))
+
+        if self.lexeme_id is not None:
+            thing = self.lexeme_id
+            def id_matches_key_suffix(obj: Union[tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]) -> bool:
+                return obj.id == '-'.join([thing, key])
+            if I.is_Fid(key):
+                return next(filter(id_matches_key_suffix, self.forms))
+            if I.is_Sid(key):
+                return next(filter(id_matches_key_suffix, self.senses))
         raise KeyError
 
-    def haswbstatement(self, property_in, value_in=None) -> bool:
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
         """Shamelessly named after the keyword used on Wikidata to look for a statement."""
         return self.statements.haswbstatement(property_in, value_in)
 
@@ -239,30 +231,33 @@ class Lexeme:
 
         return "\n".join([lemma_str + base_str, stmts_str, senses_str, forms_str])
 
-    def __jsonout__(self):
-        base_dict = {"lexicalCategory": self.category,
-                     "language": self.language.item,
-                     "type": "lexeme"}
+    def __jsonout__(self) -> I.LexemeDict:
+        lemma_dict: I.LemmaDictSet = self.lemmata.__jsonout__()
 
-        base_dict["lemmas"] = self.lemmata.__jsonout__()
+        statement_dict: I.StatementDictSet = self.statements.__jsonout__()
 
-        if (statement_dict := self.statements.__jsonout__()):
-            base_dict["claims"] = statement_dict
+        form_list: List[I.LexemeFormDict] = [form.__jsonout__() for form in self.forms]
 
-        if (form_list := [form.__jsonout__() for form in self.forms]):
-            base_dict["forms"] = form_list
+        sense_list: List[I.LexemeSenseDict] = [sense.__jsonout__() for sense in self.senses]
 
-        if (sense_list := [sense.__jsonout__() for sense in self.senses]):
-            base_dict["senses"] = sense_list
+        base_dict: I.LexemeDict = {
+            "lexicalCategory": self.category,
+            "language": self.language.item,
+            "type": "lexeme",
+            "lemmas": lemma_dict,
+            "claims": statement_dict,
+            "forms": form_list,
+            "senses": sense_list
+        }
 
-        if self.lexeme_id is not None:
+        if self.lexeme_id is not None and self.lastrevid is not None:
             base_dict["id"] = self.lexeme_id
             base_dict["lastrevid"] = self.lastrevid
 
         return base_dict
 
 
-def build_lexeme(lexeme_in: dict) -> Lexeme:
+def build_lexeme(lexeme_in: I.LexemeDict) -> Lexeme:
     lemmas = tfsl.monolingualtextholder.build_text_list(lexeme_in["lemmas"])
 
     lexemecat = lexeme_in["lexicalCategory"]
@@ -279,13 +274,18 @@ def build_lexeme(lexeme_in: dict) -> Lexeme:
 
 # pylint: disable=invalid-name
 
-def L(lid: Union[int, str]) -> Lexeme:
-    if isinstance(lid, int):
-        lid = 'L'+str(lid)
-    elif match := tfsl.utils.matches_sense(lid):
-        lid = match.group(1)
-    elif match := tfsl.utils.matches_form(lid):
-        lid = match.group(1)
+def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid]) -> Lexeme:
+    lid: I.Lid
+    if isinstance(lid_in, int):
+        lid = I.Lid('L'+str(lid_in))
+    elif I.is_LSid(lid_in):
+        if split_lsid := I.split_LSid(lid_in):
+            lid, _ = split_lsid
+    elif I.is_LFid(lid_in):
+        if split_lfid := I.split_LFid(lid_in):
+            lid, _ = split_lfid
+    elif I.is_Lid(lid_in):
+        lid = lid_in
     filename = tfsl.utils.get_filename(lid)
     try:
         assert time.time() - os.path.getmtime(filename) < tfsl.utils.time_to_live

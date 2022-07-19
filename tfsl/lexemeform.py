@@ -1,6 +1,5 @@
-from copy import deepcopy
 from functools import singledispatchmethod
-from typing import Dict, List, Optional, Sequence, Set, Union
+from typing import List, Optional, Set, Union
 
 import tfsl.interfaces as I
 import tfsl.languages
@@ -51,7 +50,8 @@ class LexemeForm:
         return {}
 
     def set_published_settings(self, form_in: I.LexemeFormPublishedSettings) -> None:
-        self.id = form_in["id"]
+        if "id" in form_in:
+            self.id = form_in["id"]
 
     def __getitem__(self, arg: object) -> Union[List[tfsl.statement.Statement], tfsl.monolingualtext.MonolingualText]:
         return self.getitem(arg)

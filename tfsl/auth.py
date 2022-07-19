@@ -1,11 +1,12 @@
 from getpass import getpass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import json
 import logging
 import time
 import requests
 
+import tfsl.interfaces as I
 
 maxlag: int = 5
 
@@ -27,8 +28,7 @@ DEFAULT_USER_AGENT = 'tfsl 0.0.1'
 
 
 class WikibaseSession:
-    """Auth library for Wikibases.
-    """
+    """ Auth library for Wikibases. """
     def __init__(self,
                  username,
                  password: Optional[str] = None,
@@ -219,7 +219,7 @@ class WikibaseSession:
             bindings_out.append(binding["i"]["value"].replace(entity_prefix, ''))
         return bindings_out
 
-def get_lexemes(lids, user_agent=DEFAULT_USER_AGENT):
+def get_lexemes(lids: List[str], user_agent=DEFAULT_USER_AGENT) -> Dict[I.Lid, I.LexemeDict]:
     query_parameters = {
         "action": "wbgetentities",
         "format": "json",
