@@ -2,20 +2,31 @@
     That this file imports no other (except for type checking purposes) is intentional.
 """
 
+import re
 from typing import Dict, List, Literal, NewType, Optional, TypedDict, Union, TYPE_CHECKING
-from typing_extensions import NotRequired
+from typing_extensions import NotRequired, TypeGuard
 
 if TYPE_CHECKING:
+    import tfsl.claim
     import tfsl.coordinatevalue
     import tfsl.itemvalue
     import tfsl.monolingualtext
     import tfsl.quantityvalue
+    import tfsl.statement
     import tfsl.timevalue
 
 LanguageCode = NewType('LanguageCode', str)
 Qid = NewType('Qid', str)
+def is_Qid(arg: str) -> TypeGuard[Qid]:
+    return re.match(r"^Q\d+$", arg) is not None
+
 Pid = NewType('Pid', str)
+def is_Pid(arg: str) -> TypeGuard[Pid]:
+    return re.match(r"^P\d+$", arg) is not None
+
 Lid = NewType('Lid', str)
+def is_Lid(arg: str) -> TypeGuard[Lid]:
+    return re.match(r"^L\d+$", arg) is not None
 
 class MonolingualTextDict(TypedDict):
     text: str
@@ -70,6 +81,8 @@ ClaimValue = Union[
 
 ClaimDictSet = Dict[Pid, List[ClaimDict]]
 
+ClaimSet = Dict[Pid, List['tfsl.claim.Claim']]
+
 ReferenceDict = TypedDict('ReferenceDict', {
     'snaks-order': List[Pid],
     'snaks': ClaimDictSet,
@@ -85,6 +98,10 @@ StatementDict = TypedDict('StatementDict', {
     'rank': str,
     'references': NotRequired[List[ReferenceDict]]
 }, total=False)
+
+StatementDictSet = Dict[Pid, List[StatementDict]]
+
+StatementSet = Dict[Pid, List['tfsl.statement.Statement']]
 
 class LemmaDict(TypedDict, total=False):
     language: LanguageCode

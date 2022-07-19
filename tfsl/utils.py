@@ -4,7 +4,7 @@ import re
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Match, Optional, TypeVar
+from typing import Any, List, Match, Optional, TypeVar
 
 import requests
 
@@ -105,8 +105,11 @@ def get_filename(entity_name):
     """ Constructs the name of a text file containing a sense subgraph based on a given property. """
     return os.path.join(cache_path, f"{entity_name}.json")
 
-is_novalue = lambda value: value is False
-is_somevalue = lambda value: value is True
+def is_novalue(value: Any) -> bool:
+    return value is False
+
+def is_somevalue(value: Any) -> bool:
+    return value is True
 
 cache_path, time_to_live = read_config()
 os.makedirs(cache_path,exist_ok=True)

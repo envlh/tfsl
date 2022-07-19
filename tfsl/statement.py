@@ -82,9 +82,11 @@ class Statement:
         raise NotImplementedError(f"{str(type(arg))} is not a rank")
 
     def __eq__(self, rhs: object) -> bool:
-        if not isinstance(rhs, Statement):
-            return NotImplemented
-        return self.property == rhs.property and self.value == rhs.value and self.rank == rhs.rank and self.qualifiers == rhs.qualifiers and self.references == rhs.references
+        if isinstance(rhs, tfsl.claim.Claim):
+            return self.property == rhs.property and self.value == rhs.value
+        elif isinstance(rhs, Statement):
+            return self.property == rhs.property and self.value == rhs.value and self.rank == rhs.rank and self.qualifiers == rhs.qualifiers and self.references == rhs.references
+        return NotImplemented
 
     def set_published_settings(self, stmt_in: I.StatementDict) -> None:
         self.id = stmt_in["id"]

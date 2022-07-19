@@ -2,27 +2,33 @@ from collections import defaultdict
 from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
+from typing import DefaultDict, List, Optional, Union
 
+import tfsl.interfaces as I
 import tfsl.statement
 import tfsl.utils as U
 
 class StatementHolder(object):
-    def __init__(self, statements=None):
+    def __init__(self,
+                 statements: Optional[Union[
+                    DefaultDict[I.Pid, List[tfsl.statement.Statement]],
+                    List[tfsl.statement.Statement]
+                 ]]=None):
         super().__init__()
 
-        if statements is None:
-            self.statements = defaultdict(list)
+        self.statements = defaultdict(list)
+        if isinstance(statements, defaultdict):
+            for prop in statements:
+                for arg in statements[prop]:
+                    self.statements[arg.property].append(arg)
         elif isinstance(statements, list):
-            self.statements = defaultdict(list)
             for arg in statements:
                 self.statements[arg.property].append(arg)
-        else:
-            self.statements = deepcopy(statements)
 
-    def get_statements(self, property_in):
+    def get_statements(self, property_in: I.Pid) -> List[tfsl.statement.Statement]:
         return self.statements.get(property_in, [])
 
-    def haswbstatement(self, property_in, value_in=None) -> bool:
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
         if value_in is None:
             return property_in in self.statements
         elif U.is_novalue(value_in):
@@ -30,106 +36,84 @@ class StatementHolder(object):
         elif U.is_somevalue(value_in):
             compare_function = lambda stmt: U.is_somevalue(stmt.value)
         else:
-            compare_function = lambda stmt: stmt.value == value_in
+            def compare_function(stmt: tfsl.statement.Statement) -> bool:
+                return stmt.value == value_in
         return any(map(compare_function, self.statements[property_in]))
 
-    def __jsonout__(self):
+    def __jsonout__(self) -> I.StatementDictSet:
         statement_dict = defaultdict(list)
         for stmtprop, stmtval in self.statements.items():
             statement_dict[stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
         return dict(statement_dict)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.statements)
 
-    def __eq__(self, rhs):
-        return self.eq(rhs)
+    def __eq__(self, rhs: object) -> bool:
+        if isinstance(rhs, StatementHolder):
+            return self.statements == rhs.statements
+        elif isinstance(rhs, dict):
+            return self.statements == rhs
+        return NotImplemented
 
-    @singledispatchmethod
-    def eq(self, rhs):
-        return self.statements == rhs.statements
-
-    @eq.register
-    def _(self, rhs: dict):
-        return self.statements == rhs
-
-    def __contains__(self, arg):
-        return self.contains(arg)
-
-    @singledispatchmethod
-    def contains(self, arg):
+    def __contains__(self, arg: object) -> bool:
+        if isinstance(arg, str):
+            if tfsl.utils.matches_property(arg):
+                return arg in self.statements
+            raise TypeError(f"String {arg} is not a property")
+        elif isinstance(arg, tfsl.claim.Claim):
+            for prop in self.statements:
+                for stmt in self.statements[prop]:
+                    if stmt == arg:
+                        return True
+        elif isinstance(arg, tfsl.statement.Statement):
+            return arg in self.statements[arg.property]
         raise TypeError(f"Can't check for {type(arg)} in StatementHolder")
 
-    @contains.register
-    def _(self, arg: str):
-        if tfsl.utils.matches_property(arg):
-            return arg in self.statements
-        raise TypeError(f"String {arg} is not a property")
-
-    @contains.register
-    def _(self, arg: tfsl.claim.Claim):
-        return any((arg in self.statements[prop]) for prop in self.statements)
-
-    @contains.register
-    def _(self, arg: tfsl.statement.Statement):
-        return arg in self.statements[arg.property]
-
-    def __getitem__(self, arg):
+    def __getitem__(self, arg: object) -> List[tfsl.statement.Statement]:
         return self.get_st(arg)
 
     @singledispatchmethod
-    def get_st(self, arg):
+    def get_st(self, arg: object) -> List[tfsl.statement.Statement]:
         raise TypeError(f"Can't get {type(arg)} from StatementHolder")
 
     @get_st.register
-    def _(self, arg: str):
-        if tfsl.utils.matches_property(arg):
-            return self.statements.get(arg, [])
+    def _(self, arg: str) -> List[tfsl.statement.Statement]:
+        if I.is_Pid(arg):
+            return self.statements[arg]
         raise KeyError(f"String {arg} is not a property")
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.statements:
             stmt_list = [str(stmt) for prop in self.statements for stmt in self.statements[prop]]
             return "<\n"+indent("\n".join(stmt_list), tfsl.utils.DEFAULT_INDENT)+"\n>"
         return ""
 
-    def __add__(self, rhs):
-        return self.add(rhs)
-
-    @singledispatchmethod
-    def add(self, rhs):
-        raise TypeError(f"Can't add {type(rhs)} to StatementHolder")
-
-    @add.register
-    def _(self, rhs: tfsl.statement.Statement):
+    def __add__(self, rhs: object) -> 'StatementHolder':
+        if not isinstance(rhs, tfsl.statement.Statement):
+            raise TypeError(f"Can't add {type(rhs)} to StatementHolder")
         newstmts = deepcopy(self.statements)
         newstmts[rhs.property].append(rhs)
-        return newstmts
+        return StatementHolder(newstmts)
 
-    def __sub__(self, rhs):
-        return self.sub(rhs)
-
-    @singledispatchmethod
-    def sub(self, rhs):
+    def __sub__(self, rhs: object) -> 'StatementHolder':
+        if isinstance(rhs, str):
+            if I.is_Pid(rhs):
+                newstmts = deepcopy(self.statements)
+                if rhs in newstmts:
+                    del newstmts[rhs]
+                return StatementHolder(newstmts)
+            raise TypeError(f"String {rhs} is not a property")
+        elif isinstance(rhs, tfsl.statement.Statement):
+            newstmts = deepcopy(self.statements)
+            newstmts[rhs.property] = [stmt for stmt in newstmts[rhs.property] if stmt != rhs]
+            if not newstmts[rhs.property]:
+                del newstmts[rhs.property]
+            return StatementHolder(newstmts)
         raise TypeError(f"Can't subtract {type(rhs)} from StatementHolder")
 
-    @sub.register
-    def _(self, rhs: str):
-        newstmts = deepcopy(self.statements)
-        if rhs in newstmts:
-            del newstmts[rhs]
-        return newstmts
-
-    @sub.register
-    def _(self, rhs: tfsl.statement.Statement):
-        newstmts = deepcopy(self.statements)
-        newstmts[rhs.property] = [stmt for stmt in newstmts[rhs.property] if stmt != rhs]
-        if not newstmts[rhs.property]:
-            del newstmts[rhs.property]
-        return newstmts
-
-def build_statement_list(claims_dict):
-    claims = defaultdict(list)
+def build_statement_list(claims_dict: I.StatementDictSet) -> I.StatementSet:
+    claims: I.StatementSet = defaultdict(list)
     for prop in claims_dict:
         for claim in claims_dict[prop]:
             claims[prop].append(tfsl.statement.build_statement(claim))
