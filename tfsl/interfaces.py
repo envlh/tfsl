@@ -118,10 +118,11 @@ LemmaDictSet = Dict[LanguageCode, LemmaDict]
 class LexemeFormPublishedSettings(TypedDict, total=False):
     id: NotRequired[str]
 
-class LexemeFormData(TypedDict):
+class LexemeFormData(TypedDict, total=False):
     representations: LemmaDictSet
     grammaticalFeatures: List[Qid]
     claims: StatementDictSet
+    add: NotRequired[str]
 
 class LexemeFormDict(LexemeFormPublishedSettings, LexemeFormData):
     pass

@@ -210,11 +210,11 @@ class Lexeme:
             return next(filter(id_matches_key_suffix, self.senses))
         raise KeyError
 
-    def haswbstatement(self, property_in, value_in=None):
+    def haswbstatement(self, property_in, value_in=None) -> bool:
         """Shamelessly named after the keyword used on Wikidata to look for a statement."""
         return self.statements.haswbstatement(property_in, value_in)
 
-    def __str__(self):
+    def __str__(self) -> str:
         # TODO: fix indentation of components
         lemma_str = str(self.lemmata)
         base_str = f': {self.category} in {self.language.item}'
