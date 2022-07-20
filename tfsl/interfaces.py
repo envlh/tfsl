@@ -9,7 +9,11 @@ from typing_extensions import NotRequired, TypeGuard
 if TYPE_CHECKING:
     import tfsl.claim
     import tfsl.coordinatevalue
+    import tfsl.item
     import tfsl.itemvalue
+    import tfsl.lexeme
+    import tfsl.lexemeform
+    import tfsl.lexemesense
     import tfsl.monolingualtext
     import tfsl.quantityvalue
     import tfsl.statement
@@ -202,6 +206,13 @@ class SitelinkDict(TypedDict):
     badges: List[Qid]
     url: str
 
+class PropertyData(TypedDict):
+    datatype: str
+    labels: LemmaDictSet
+    descriptions: LemmaDictSet
+    aliases: Dict[LanguageCode, List[LemmaDict]]
+    claims: StatementDictSet
+
 class ItemData(TypedDict):
     labels: LemmaDictSet
     descriptions: LemmaDictSet
@@ -212,8 +223,18 @@ class ItemData(TypedDict):
 class ItemPublishedSettings(EntityPublishedSettings, total=False):
     type: NotRequired[str]
 
+class PropertyDict(ItemPublishedSettings, PropertyData):
+    pass
+
 class ItemDict(ItemPublishedSettings, ItemData):
     pass
 
 def is_ItemDict(arg: EntityPublishedSettings) -> TypeGuard[ItemDict]:
     return all(x in arg for x in ["labels", "descriptions", "aliases", "claims", "sitelinks"])
+
+Entity = Union[
+    'tfsl.lexeme.Lexeme',
+    'tfsl.lexemeform.LexemeForm',
+    'tfsl.lexemesense.LexemeSense'
+]
+EntityDict = Union[LexemeDict, LexemeFormDict, LexemeSenseDict]

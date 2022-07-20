@@ -26,20 +26,17 @@ csrf_token_params = {
 WIKIDATA_API_URL = "https://www.wikidata.org/w/api.php"
 DEFAULT_USER_AGENT = 'tfsl 0.0.1'
 
-
 class WikibaseSession:
     """ Auth library for Wikibases. """
     def __init__(self,
-                 username,
+                 username: str,
                  password: Optional[str] = None,
                  token: Optional[str] = None,
-                 auth: Optional[str] = None,
                  user_agent: str = DEFAULT_USER_AGENT,
                  URL: str = WIKIDATA_API_URL
                  ):
         self.url = URL
         self.user_agent = user_agent
-        self.auth = auth
         self.headers = {"User-Agent": user_agent}
         self.session = requests.Session()
 
@@ -77,9 +74,8 @@ class WikibaseSession:
             # truncate bot name if a "bot password" is used
             self.assert_user = username.split("@")[0]
 
-    def push(self, obj_in, summary=None, maxlag_in=maxlag) -> Any:
-        """Post data to Wikibase.
-        """
+    def push(self, obj_in: I.Entity, summary: Optional[str]=None, maxlag_in: int=maxlag) -> Any:
+        """ Post data to Wikibase. """
         data = obj_in.__jsonout__()
         requestjson = {"action": "wbeditentity", "format": "json"}
 
@@ -99,18 +95,15 @@ class WikibaseSession:
 
         if summary is not None:
             requestjson["summary"] = summary
+        if self.assert_user is not None:
+            requestjson["assertuser"] = self.assert_user
 
         requestjson["token"] = self.csrf_token
-
-        data = obj_in.__jsonout__()
         requestjson["data"] = json.dumps(data)
-
-        requestjson["assertuser"] = self.assert_user
-
         requestjson["maxlag"] = str(maxlag_in)
 
         push_response = self.session.post(self.url,
-            data=requestjson, headers=self.headers, auth=self.auth)
+            data=requestjson, headers=self.headers, auth=None)
         if push_response.status_code != 200:
             error_msg = f"POST unsuccessful ({push_response.status_code}): {push_response.text}"
             raise Exception(error_msg)
@@ -121,15 +114,15 @@ class WikibaseSession:
                 sleepfor = float(push_response.headers.get("retry-after", 5))
                 logging.info("Maxlag hit, waiting for %.1f seconds", sleepfor)
                 time.sleep(sleepfor)
-                return self.push(data)
+                return self.push(obj_in)
             else:
                 raise PermissionError("API returned error: " + str(push_response_data["error"]))
 
         logging.debug("Post request succeed")
         return push_response_data
 
-    def post(self, data: Dict[str, str], maxlag_in=maxlag) -> Any:
-        """Post data to Wikibase. The CSRF token is automatically
+    def post(self, data: Dict[str, str], maxlag_in: int=maxlag) -> Any:
+        """ Post data to Wikibase. The CSRF token is automatically
         filled in if __AUTO__ is given instead.
 
         :param data: Parameters to send via POST
@@ -144,7 +137,7 @@ class WikibaseSession:
             data["assertuser"] = self.assert_user
         data["maxlag"] = str(maxlag_in)
 
-        post_response = self.session.post(self.url, data=data, headers=self.headers, auth=self.auth)
+        post_response = self.session.post(self.url, data=data, headers=self.headers, auth=None)
         if post_response.status_code != 200:
             error_msg = f"POST unsuccessful ({post_response.status_code}): {post_response.text}"
             raise Exception(error_msg)
@@ -188,37 +181,6 @@ class WikibaseSession:
         logging.debug("Get request succeed")
         return get_response_data
 
-    def find_lexeme(self, lemma, language, category,
-        entity_prefix='http://www.wikidata.org/entity/',
-        query_url="https://query.wikidata.org/sparql"):
-        # TODO: have a method in lexeme.py that returns each lexeme from the result list?
-        # TODO: handle multiple combos of one of these inputs?
-        # TODO: make the query customizable?
-        query_in = f"""
-        SELECT ?i {{
-            ?i dct:language wd:{language.item} ;
-               wikibase:lemma '{lemma.text}'@{lemma.language.code} ;
-               wikibase:lexicalCategory wd:{category}
-        }}
-        """
-        query_parameters = {
-            "query": query_in
-        }
-        query_headers = {
-            "Accept": "application/sparql-results+json",
-            "User-Agent": self.user_agent
-        }
-        find_response = requests.post(query_url, data=query_parameters, headers=query_headers)
-        if find_response.status_code != 200:
-            error_msg = f"POST unsuccessful ({find_response.status_code}): {find_response.text}"
-            raise Exception(error_msg)
-
-        query_out = find_response.json()
-        bindings_out = []
-        for binding in query_out["results"]["bindings"]:
-            bindings_out.append(binding["i"]["value"].replace(entity_prefix, ''))
-        return bindings_out
-
 def get_lexemes(lids: List[I.EntityId], user_agent: str=DEFAULT_USER_AGENT) -> Dict[I.EntityId, I.EntityPublishedSettings]:
     query_parameters = {
         "action": "wbgetentities",
@@ -232,5 +194,8 @@ def get_lexemes(lids: List[I.EntityId], user_agent: str=DEFAULT_USER_AGENT) -> D
     data_output = get_response.json()
     if get_response.status_code != 200 or "error" in data_output:
         raise PermissionError("API returned error: " + str(data_output["error"]))
+    if isinstance(data_output, dict):
+        returned_entities: Dict[I.EntityId, I.EntityPublishedSettings] = data_output["entities"]
+        return returned_entities
+    raise ValueError(f"Response from retrieving {lids} not valid JSON")
 
-    return data_output["entities"]

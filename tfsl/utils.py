@@ -4,9 +4,11 @@ import re
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, List, Match, Optional, TypeVar
+from typing import Any, List, Match, Optional, Tuple, TypeVar
 
 import requests
+
+import tfsl.interfaces as I
 
 DEFAULT_INDENT = "    "
 WD_PREFIX = "http://www.wikidata.org/entity/"
@@ -44,55 +46,53 @@ def strip_prefix_wd(arg: str) -> str:
         return arg[len(WD_PREFIX):]
     return arg
 
-T = TypeVar('T')
-def add_to_list(references: List[T], arg: T) -> List[T]:
+ListT = TypeVar('ListT')
+def add_to_list(references: List[ListT], arg: ListT) -> List[ListT]:
     newreferences = deepcopy(references)
     newreferences.append(arg)
     return newreferences
 
-def sub_from_list(references: List[T], arg: T) -> List[T]:
+def sub_from_list(references: List[ListT], arg: ListT) -> List[ListT]:
     newreferences = deepcopy(references)
     newreferences = [reference for reference in newreferences if reference != arg]
     return newreferences
 
-def sub_property(qualifiers, arg):
-    newqualifiers = deepcopy(qualifiers)
-    del newqualifiers[arg]
-    return newqualifiers
-
 @lru_cache
-def values_type(prop):
+def values_type(prop: str) -> str:
     # TODO: rewrite better and make extensible
     mapping = {
-                "commonsMedia": "string",
-                "entity-schema": "string",
-                "external-id": "string",
-                "geo-shape": "string",
-                "globe-coordinate": "globecoordinate",
-                "monolingualtext": "monolingualtext",
-                "quantity": "quantity",
-                "string": "string",
-                "tabular-data": "string",
-                "time": "time",
-                "url": "string",
-                "wikibase-item": "wikibase-entityid",
-                "wikibase-property": "wikibase-entityid",
-                "math": "string",
-                "wikibase-lexeme": "wikibase-entityid",
-                "wikibase-form": "wikibase-entityid",
-                "wikibase-sense": "wikibase-entityid",
-                "musical-notation": "string"
+        "commonsMedia": "string",
+        "entity-schema": "string",
+        "external-id": "string",
+        "geo-shape": "string",
+        "globe-coordinate": "globecoordinate",
+        "monolingualtext": "monolingualtext",
+        "quantity": "quantity",
+        "string": "string",
+        "tabular-data": "string",
+        "time": "time",
+        "url": "string",
+        "wikibase-item": "wikibase-entityid",
+        "wikibase-property": "wikibase-entityid",
+        "math": "string",
+        "wikibase-lexeme": "wikibase-entityid",
+        "wikibase-form": "wikibase-entityid",
+        "wikibase-sense": "wikibase-entityid",
+        "musical-notation": "string"
     }
     return mapping[values_datatype(prop)]
 
 @lru_cache
-def values_datatype(prop):
+def values_datatype(prop: str) -> str:
     # TODO: rewrite better
-    prop_data = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
-    prop_data = prop_data.json()
-    return prop_data["entities"][prop]["datatype"]
+    prop_response = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
+    prop_response_json = prop_response.json()
+    if isinstance(prop_response_json, dict):
+        prop_data: I.PropertyDict = prop_response_json["entities"][prop]
+        return prop_data["datatype"]
+    raise ValueError(f"Response from retrieving {prop} not valid JSON")
 
-def read_config():
+def read_config() -> Tuple[str, float]:
     """ Reads the config file residing at /path/to/tfsl/config.ini. """
     config = configparser.ConfigParser()
     current_config_path = (Path(__file__).parent / '../config.ini').resolve()
