@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import singledispatchmethod
-from typing import DefaultDict, List
+from typing import Any, DefaultDict, List
 
 import tfsl.interfaces as I
 import tfsl.monolingualtext
@@ -22,10 +22,10 @@ class Language:
     def __repr__(self) -> str:
         return f'{self.code} ({self.item})'
 
-    def __eq__(self, rhs) -> bool:
+    def __eq__(self, rhs: object) -> bool:
         return self.compare_eq(rhs)
 
-    def __rmatmul__(self, arg) -> 'tfsl.monolingualtext.MonolingualText':
+    def __rmatmul__(self, arg: object) -> 'tfsl.monolingualtext.MonolingualText':
         if isinstance(arg, str):
             return tfsl.monolingualtext.MonolingualText(arg, self)
         elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
@@ -33,7 +33,9 @@ class Language:
         raise NotImplementedError(f"Can't apply language to {type(arg)}")
 
     @singledispatchmethod
-    def compare_eq(self, rhs) -> bool:
+    def compare_eq(self, rhs: object) -> bool:
+        if not isinstance(rhs, Language):
+            return NotImplemented
         return self.item == rhs.item and self.code == rhs.code
 
     @compare_eq.register
@@ -51,24 +53,24 @@ class Languages:
         or separate lexeme language codes should have entries here.
         (Dashes, if present in a code, should be substituted with underscores here.)
     """
-    __itemlookup__: DefaultDict[str, list] = defaultdict(list)
-    __codelookup__: DefaultDict[str, list] = defaultdict(list)
+    __itemlookup__: DefaultDict[I.Qid, List[Language]] = defaultdict(list)
+    __codelookup__: DefaultDict[str, List[Language]] = defaultdict(list)
 
     # TODO: everywhere this method is called, find a way to specify among results if multiple found
     @classmethod
     def find(cls, string_in: str) -> List[Language]:
-        if tfsl.utils.matches_item(string_in):
+        if I.is_Qid(string_in):
             return cls.__itemlookup__[string_in]
         else:
             return cls.__codelookup__[string_in]
 
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         super().__setattr__(name, value)
         if isinstance(value, Language):
             self.__itemlookup__[value.item].append(value)
             self.__codelookup__[value.code].append(value)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.mul_ = Language("mul", "Q20923490")  #! multiple languages -- export using this to Wikidata might fail
         self.zxx_ = Language("zxx", "Q22282939")  #! no linguistic content
         self.mis_ = Language("mis", "Q22283016")  #! language without a specific language code
@@ -636,9 +638,9 @@ class Languages:
         self.rarhi_ = Language("bn-x-Q48726759", "Q48726759") # rarhi
         self.noakhailla_ = Language("bn-x-Q107548681", "Q107548681") # noakhailla
 
-langs = Languages()
+langs: Languages = Languages()
 
-def get_first_lang(arg) -> Language:
+def get_first_lang(arg: str) -> Language:
     try:
         return langs.find(arg)[0]
     except IndexError as e:
