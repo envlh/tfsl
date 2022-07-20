@@ -29,7 +29,7 @@ tfsl.langs.sms_ # maps "sms" to "Q13271"
 Note that the mapping to items in this list typically prefers the language item over an item combining a language and anything else.
 There are also other changes that a visit to `tfsl/languages.py' and looking for your desired code might inform you of:
 
-```
+```python
 tfsl.langs.be_tarask_ # maps "be-tarask" to "Q9091" and NOT "Q2087886"!
 tfsl.langs.ms_arab_ # maps "ms-arab" to "Q9237" and NOT "Q107526440"!
 ```
@@ -38,7 +38,7 @@ You can make your own `Language` objects for custom code-item pairs, and you can
 but in order for these to be automatically resolved the next time a lexeme is retrieved,
 you must assign them to an attribute in `tfsl.langs_`:
 
-```
+```python
 my_custom_language = tfsl.Language("gsg", "Q33282")
 gsg_lexeme = tfsl.L(29237) # will error here as gsg is not part of tfsl.langs
 tfsl.langs.gsg_ = my_custom_language
@@ -90,7 +90,7 @@ dog_lemma_fro = dog_lexeme[dog_lemma_fr]
 The lexeme language is a `Language`, and the lexeme category is just a Qid string:
 
 ```python
-print(dog_lexeme.language) # should print something like 'Language("fr", "Q150")
+print(dog_lexeme.language) # should print something like 'Language("fro", "Q35222")
 print(dog_lexeme.category) # should print "Q1084"
 ```
 
@@ -132,7 +132,7 @@ first_usage_example_references = first_usage_example.references
 Any property whose value is underlyingly a string type will have a string value for `tfsl.Statement.value`:
 
 ```python
-saob_id = klimatforandring["P9963"]
+saob_id = klimatforandring["P9963"][0]
 print(type(saob_id.value)) # should be "str"
 ```
 
@@ -156,15 +156,16 @@ Any property whose value is some Wikibase entity (be it an item, property, lexem
 will have a `tfsl.ItemValue` as the value for `tfsl.Statement.value`:
 
 ```python
-sv_noun_gender = klimatforandring["P5185"]
+sv_noun_gender = klimatforandring["P5185"][0]
 print(sv_noun_gender.id) # should be "Q1305037"
 print(sv_noun_gender.type) # should be "item"
 ```
 
 #### Value types: novalue and somevalue
 
-Note that "novalue" values are stored as the boolean `False`,
-and "somevalue" ("unknown value") values are stored as the boolean `True`.
+"novalue" values are stored as the boolean `False`.
+
+"somevalue" ("unknown value") values are stored as the boolean `True`.
 
 #### Qualifiers
 
@@ -182,7 +183,7 @@ language_styles_of_example = first_usage_example["P6191"] # should be an empty l
 Each `Claim`, like each `Statement`, has a property and a value
 (but unlike a `Statement` lack a rank, qualifiers, or references themselves):
 
-```
+```python
 first_subject_form = subject_forms_of_example[0]
 print(first_subject_form.property) # should be "P5830"
 print(first_subject_form.value) # should be something like 'ItemValue("L242121-F1")'
@@ -213,7 +214,7 @@ print(first_sense[tfsl.langs.en_])
 print(first_sense[tfsl.langs.sv_])
 ```
 
-The same statement indexing behavior that applies to `Lexeme`s also applies to `Form`s.
+The same statement indexing behavior that applies to `Lexeme`s also applies to `Sense`s.
 
 ### Forms
 
@@ -247,7 +248,7 @@ To create a `Lexeme`, only the lemma, language, and lexical category are require
 newlexeme = tfsl.Lexeme("hello" @ tfsl.langs.en_, tfsl.langs.en_, "Q83034")
 ```
 
-If you have a list of statements, forms, or senses to add, you can also optionally add any of those:
+If you have a list of statements, forms, or senses to add, you can also optionally add any of those after the other arguments:
 
 ```python
 newlexeme = tfsl.Lexeme("hello" @ tfsl.langs.en_, tfsl.langs.en_, "Q83034",
