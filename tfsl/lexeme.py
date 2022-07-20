@@ -277,7 +277,7 @@ def build_lexeme(lexeme_in: I.LexemeDict) -> Lexeme:
 def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid]) -> Lexeme:
     lid: I.Lid
     if isinstance(lid_in, int):
-        lid = I.Lid('L'+str(lid_in))
+        lid = I.Lid(I.EntityId('L'+str(lid_in)))
     elif I.is_LSid(lid_in):
         if split_lsid := I.split_LSid(lid_in):
             lid, _ = split_lsid
@@ -289,11 +289,11 @@ def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid]) -> Lexeme:
     filename = tfsl.utils.get_filename(lid)
     try:
         assert time.time() - os.path.getmtime(filename) < tfsl.utils.time_to_live
-        with open(filename) as fileptr:
+        with open(filename, encoding="utf-8") as fileptr:
             lexeme_json = json.load(fileptr)
     except (FileNotFoundError, OSError, AssertionError):
         current_lexeme = tfsl.auth.get_lexemes([lid])
         lexeme_json = current_lexeme[lid]
-        with open(filename, "w") as fileptr:
+        with open(filename, "w", encoding="utf-8") as fileptr:
             json.dump(lexeme_json, fileptr)
     return build_lexeme(lexeme_json)

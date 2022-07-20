@@ -1,5 +1,5 @@
 from getpass import getpass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 import json
 import logging
@@ -219,7 +219,7 @@ class WikibaseSession:
             bindings_out.append(binding["i"]["value"].replace(entity_prefix, ''))
         return bindings_out
 
-def get_lexemes(lids: List[str], user_agent=DEFAULT_USER_AGENT) -> Dict[I.Lid, I.LexemeDict]:
+def get_lexemes(lids: List[I.EntityId], user_agent: str=DEFAULT_USER_AGENT) -> Dict[I.EntityId, I.EntityPublishedSettings]:
     query_parameters = {
         "action": "wbgetentities",
         "format": "json",

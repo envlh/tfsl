@@ -15,16 +15,18 @@ if TYPE_CHECKING:
     import tfsl.statement
     import tfsl.timevalue
 
+EntityId = NewType('EntityId', str)
+
 LanguageCode = NewType('LanguageCode', str)
-Qid = NewType('Qid', str)
+Qid = NewType('Qid', EntityId)
 def is_Qid(arg: str) -> TypeGuard[Qid]:
     return re.match(r"^Q\d+$", arg) is not None
 
-Pid = NewType('Pid', str)
+Pid = NewType('Pid', EntityId)
 def is_Pid(arg: str) -> TypeGuard[Pid]:
     return re.match(r"^P\d+$", arg) is not None
 
-Lid = NewType('Lid', str)
+Lid = NewType('Lid', EntityId)
 def is_Lid(arg: str) -> TypeGuard[Lid]:
     return re.match(r"^L\d+$", arg) is not None
 
@@ -172,13 +174,12 @@ class LexemeSenseData(TypedDict, total=False):
 class LexemeSenseDict(LexemeSensePublishedSettings, LexemeSenseData):
     pass
 
-class LexemePublishedSettings(TypedDict, total=False):
+class EntityPublishedSettings(TypedDict, total=False):
     pageid: NotRequired[int]
     ns: NotRequired[int]
     title: NotRequired[str]
     lastrevid: NotRequired[int]
     modified: NotRequired[str]
-    type: NotRequired[str]
     id: NotRequired[str]
 
 class LexemeData(TypedDict):
@@ -189,5 +190,30 @@ class LexemeData(TypedDict):
     forms: List[LexemeFormDict]
     senses: List[LexemeSenseDict]
 
+class LexemePublishedSettings(EntityPublishedSettings, total=False):
+    type: NotRequired[str]
+
 class LexemeDict(LexemePublishedSettings, LexemeData):
     pass
+
+class SitelinkDict(TypedDict):
+    site: str
+    title: str
+    badges: List[Qid]
+    url: str
+
+class ItemData(TypedDict):
+    labels: LemmaDictSet
+    descriptions: LemmaDictSet
+    aliases: Dict[LanguageCode, List[LemmaDict]]
+    claims: StatementDictSet
+    sitelinks: Dict[str, SitelinkDict]
+
+class ItemPublishedSettings(EntityPublishedSettings, total=False):
+    type: NotRequired[str]
+
+class ItemDict(ItemPublishedSettings, ItemData):
+    pass
+
+def is_ItemDict(arg: EntityPublishedSettings) -> TypeGuard[ItemDict]:
+    return all(x in arg for x in ["labels", "descriptions", "aliases", "claims", "sitelinks"])

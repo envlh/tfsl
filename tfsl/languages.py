@@ -25,20 +25,12 @@ class Language:
     def __eq__(self, rhs) -> bool:
         return self.compare_eq(rhs)
 
-    def __rmatmul__(self, text):
-        return self.rmatmul(text)
-
-    @singledispatchmethod
-    def rmatmul(self, arg):
+    def __rmatmul__(self, arg) -> 'tfsl.monolingualtext.MonolingualText':
+        if isinstance(arg, str):
+            return tfsl.monolingualtext.MonolingualText(arg, self)
+        elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
+            return tfsl.monolingualtext.MonolingualText(arg.text, self)
         raise NotImplementedError(f"Can't apply language to {type(arg)}")
-
-    @rmatmul.register
-    def _(self, text: str):
-        return tfsl.monolingualtext.MonolingualText(text, self)
-
-    @rmatmul.register
-    def _(self, text: tfsl.monolingualtext.MonolingualText):
-        return tfsl.monolingualtext.MonolingualText(text.text, self)
 
     @singledispatchmethod
     def compare_eq(self, rhs) -> bool:
