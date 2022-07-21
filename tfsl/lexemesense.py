@@ -1,5 +1,7 @@
+""" Holds the LexemeSense class and a function to build one given a JSON representation of it. """
+
 from functools import singledispatchmethod
-from typing import DefaultDict, Dict, List, Optional, Union
+from typing import Optional, Union
 
 import tfsl.interfaces as I
 import tfsl.monolingualtext
@@ -9,21 +11,18 @@ import tfsl.statementholder
 import tfsl.utils
 
 class LexemeSense:
+    """ Container for a Wikidata lexeme sense. """
     def __init__(self,
                  glosses: Union[tfsl.monolingualtextholder.MonolingualTextHolder,
                                 tfsl.monolingualtext.MonolingualText,
-                                List[tfsl.monolingualtext.MonolingualText]],
-                 statements: Optional[Union[
-                    tfsl.statementholder.StatementHolder,
-                    I.StatementSet,
-                    List[tfsl.statement.Statement]
-                 ]]=None):
+                                I.MonolingualTextList],
+                 statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None):
         super().__init__()
         if isinstance(glosses, tfsl.monolingualtextholder.MonolingualTextHolder):
             self.glosses = glosses
         else:
             self.glosses = tfsl.monolingualtextholder.MonolingualTextHolder(glosses)
-        
+
         if isinstance(statements, tfsl.statementholder.StatementHolder):
             self.statements = statements
         else:
@@ -32,6 +31,9 @@ class LexemeSense:
         self.id: Optional[str] = None
 
     def get_published_settings(self) -> I.LexemeSensePublishedSettings:
+        """ Returns a dictionary containing those portions of the LexemeSense JSON dictionary
+            which are only significant at editing time for existing lexeme senses.
+        """
         if self.id is not None:
             return {
                 "id": self.id
@@ -39,25 +41,29 @@ class LexemeSense:
         return {}
 
     def set_published_settings(self, sense_in: I.LexemeSensePublishedSettings) -> None:
+        """ Sets based on a LexemeSense JSON dictionary those variables
+            which are only significant at editing time for existing lexeme senses.
+        """
         if "id" in sense_in:
             self.id = sense_in["id"]
 
     def __getitem__(self, arg: object) -> Union[tfsl.monolingualtext.MonolingualText,
-                                    List[tfsl.statement.Statement]]:
+                                    I.StatementList]:
         return self.getitem(arg)
 
     @singledispatchmethod
     def getitem(self, arg: object) -> Union[tfsl.monolingualtext.MonolingualText,
-                                    List[tfsl.statement.Statement]]:
+                                    I.StatementList]:
+        """ Dispatches __getitem__. """
         raise KeyError(f"Can't get {type(arg)} from LexemeSense")
 
     @getitem.register
-    def _(self, arg: str) -> List[tfsl.statement.Statement]:
+    def _(self, arg: str) -> I.StatementList:
         return self.statements[arg]
 
     @getitem.register(tfsl.monolingualtext.MonolingualText)
     @getitem.register(tfsl.languages.Language)
-    def _(self, arg: tfsl.monolingualtextholder.lang_or_mt) -> tfsl.monolingualtext.MonolingualText:
+    def _(self, arg: I.LanguageOrMT) -> tfsl.monolingualtext.MonolingualText:
         return self.glosses[arg]
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
@@ -85,7 +91,7 @@ class LexemeSense:
             return sense_out
         elif isinstance(arg, str):
             published_settings = self.get_published_settings()
-            if tfsl.utils.matches_property(arg):
+            if I.is_Pid(arg):
                 sense_out = LexemeSense(self.glosses, self.statements - arg)
             sense_out.set_published_settings(published_settings)
             return sense_out
@@ -101,11 +107,12 @@ class LexemeSense:
 
     @singledispatchmethod
     def contains(self, arg: object) -> bool:
+        """ Dispatches __contains__. """
         raise KeyError(f"Can't check for {type(arg)} in LexemeSense")
 
     @contains.register(tfsl.languages.Language)
     @contains.register(tfsl.monolingualtext.MonolingualText)
-    def _(self, arg: tfsl.monolingualtextholder.lang_or_mt) -> bool:
+    def _(self, arg: I.LanguageOrMT) -> bool:
         return arg in self.glosses
 
     @contains.register(tfsl.statement.Statement)
@@ -142,6 +149,7 @@ class LexemeSense:
         return base_dict
 
 def build_sense(sense_in: I.LexemeSenseDict) -> LexemeSense:
+    """ Builds a LexemeSense from the JSON dictionary describing it. """
     glosses = tfsl.monolingualtextholder.build_text_list(sense_in["glosses"])
     statements = tfsl.statementholder.build_statement_list(sense_in["claims"])
 

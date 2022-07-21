@@ -1,22 +1,44 @@
-from typing import Optional
+""" Holder of the Claim class and a function to build one given a JSON representation of it. """
+
+from typing import Dict, Optional
 
 import tfsl.interfaces as I
+import tfsl.coordinatevalue
+import tfsl.itemvalue
+import tfsl.monolingualtext
+import tfsl.quantityvalue
+import tfsl.timevalue
 import tfsl.utils
+
+type_string_to_type: Dict[str, type] = {
+    'string': str,
+    'globecoordinate': tfsl.coordinatevalue.CoordinateValue,
+    'monolingualtext': tfsl.monolingualtext.MonolingualText,
+    'quantity': tfsl.quantityvalue.QuantityValue,
+    'time': tfsl.timevalue.TimeValue,
+    'wikibase-entityid': tfsl.itemvalue.ItemValue
+}
 
 class Claim:
     """ Representation of a claim, or a property-predicate pair.
         These may be added to statements directly, as qualifiers, or as parts of references.
-
-        CHECKS THAT THE VALUE MATCHES THE PROPERTY'S TYPE ARE NOT PERFORMED!
-        YOU ARE RESPONSIBLE FOR ENSURING THAT THESE MATCH!
     """
     def __init__(self, property_in: I.Pid, value: I.ClaimValue):
         self.property: I.Pid = property_in
-        self.value: I.ClaimValue = value
+        self.value: I.ClaimValue
+        self.datatype: str = tfsl.utils.values_datatype(self.property)
+        if tfsl.utils.is_novalue(value) or tfsl.utils.is_somevalue(value):
+            self.value = value
+        else:
+            value_type = type(value)
+            property_type = type_string_to_type[tfsl.utils.external_to_internal_type_mapping[self.datatype]]
+            if property_type == value_type:
+                self.value = value
+            else:
+                raise TypeError(f"Providing {value_type} as {property_in} value where {property_type} expected")
 
         self.snaktype: Optional[str] = None
         self.hash: Optional[str] = None
-        self.datatype: str = tfsl.utils.values_datatype(self.property)
 
     def __eq__(self, rhs: object) -> bool:
         if not isinstance(rhs, Claim):
@@ -59,6 +81,7 @@ class Claim:
         return claimdict_out
 
 def build_value(value_in: I.ClaimDictDatavalue) -> I.ClaimValue:
+    """ Builds a ClaimValue given the Wikibase JSON for one. """
     value_type = value_in["type"]
     actual_value = value_in["value"]
     if isinstance(actual_value, str):
@@ -77,6 +100,7 @@ def build_value(value_in: I.ClaimDictDatavalue) -> I.ClaimValue:
         raise ValueError(f"Type {value_type} is not supported yet!")
 
 def build_claim(claim_in: I.ClaimDict) -> Claim:
+    """ Builds a Claim given the Wikibase JSON for one. """
     claim_prop: I.Pid
     claim_value: I.ClaimValue
 

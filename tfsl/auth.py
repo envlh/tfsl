@@ -1,5 +1,7 @@
+""" Holds the WikibaseSession class and other functionality related to network accesses. """
+
 from getpass import getpass
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, Dict, List, Optional
 
 import json
 import logging
@@ -175,13 +177,12 @@ class WikibaseSession:
                 time.sleep(sleepfor)
                 return self.get(data)
             else:
-                raise Exception(
-                    "GET unsuccessful ({}): {}".format(get_response.status_code, get_response.text)
-                )
+                raise Exception(f"GET unsuccessful ({get_response.status_code}): {get_response.text}")
         logging.debug("Get request succeed")
         return get_response_data
 
 def get_lexemes(lids: List[I.EntityId], user_agent: str=DEFAULT_USER_AGENT) -> Dict[I.EntityId, I.EntityPublishedSettings]:
+    """ Retrieves a list of lexemes using the Wikidata API. """
     query_parameters = {
         "action": "wbgetentities",
         "format": "json",
@@ -198,4 +199,3 @@ def get_lexemes(lids: List[I.EntityId], user_agent: str=DEFAULT_USER_AGENT) -> D
         returned_entities: Dict[I.EntityId, I.EntityPublishedSettings] = data_output["entities"]
         return returned_entities
     raise ValueError(f"Response from retrieving {lids} not valid JSON")
-

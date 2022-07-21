@@ -1,3 +1,5 @@
+""" twofivesixlex -- a library to use and edit Wikidata items and lexemes """
+
 # pylint: disable=useless-import-alias
 
 from tfsl.auth import WikibaseSession as WikibaseSession

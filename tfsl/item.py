@@ -1,9 +1,10 @@
+""" Holds the Item class and a function to build one given a JSON representation of it. """
+
 import json
 import os
 import os.path
 import time
-from functools import singledispatchmethod
-from typing import Dict, List, Optional, Set, Union
+from typing import Dict, Optional, Set, Union
 
 import tfsl.interfaces as I
 import tfsl.auth
@@ -20,16 +21,12 @@ default_item_cache_path = os.path.expanduser('~/.cache/tfsl')
 os.makedirs(default_item_cache_path,exist_ok=True)
 
 class Item:
-    # TODO: better processing of labels/descriptions/aliases arguments
+    """ Container for a Wikidata item. """
     def __init__(self,
-                 labels: Optional[Union[tfsl.monolingualtextholder.MonolingualTextHolder, List[tfsl.monolingualtext.MonolingualText]]]=None,
-                 descriptions: Optional[Union[tfsl.monolingualtextholder.MonolingualTextHolder, List[tfsl.monolingualtext.MonolingualText]]]=None,
+                 labels: Optional[Union[tfsl.monolingualtextholder.MonolingualTextHolder, I.MonolingualTextList]]=None,
+                 descriptions: Optional[Union[tfsl.monolingualtextholder.MonolingualTextHolder, I.MonolingualTextList]]=None,
                  aliases: Optional[Dict[I.LanguageCode, Set[str]]]=None,
-                 statements: Optional[Union[
-                    tfsl.statementholder.StatementHolder,
-                    I.StatementSet,
-                    List[tfsl.statement.Statement]
-                 ]]=None,
+                 statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None,
                  sitelinks: Optional[Dict[str, I.SitelinkDict]]=None):
         super().__init__()
         if isinstance(labels, tfsl.monolingualtextholder.MonolingualTextHolder):
@@ -66,6 +63,9 @@ class Item:
         self.item_id: Optional[str] = None
 
     def get_published_settings(self) -> I.LexemePublishedSettings:
+        """ Returns a dictionary containing those portions of the Item JSON dictionary
+            which are only significant at editing time for existing items.
+        """
         if self.pageid is not None and self.namespace is not None and self.title is not None and self.lastrevid is not None and self.modified is not None and self.item_type is not None and self.item_id is not None:
             return {
                 "pageid": self.pageid,
@@ -79,6 +79,9 @@ class Item:
         return {}
 
     def set_published_settings(self, item_in: I.LexemePublishedSettings) -> None:
+        """ Sets based on an Item JSON dictionary those variables
+            which are only significant at editing time for existing items.
+        """
         if "pageid" in item_in:
             self.pageid = item_in["pageid"]
             self.namespace = item_in["ns"]
@@ -88,7 +91,7 @@ class Item:
             self.item_type = item_in["type"]
             self.item_id = item_in["id"]
 
-    def __getitem__(self, key: object) -> List[tfsl.statement.Statement]:
+    def __getitem__(self, key: object) -> I.StatementList:
         if isinstance(key, str):
             if I.is_Pid(key):
                 return self.statements[key]
@@ -101,9 +104,11 @@ class Item:
         return self.statements.haswbstatement(property_in, value_in)
 
     def get_label(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText:
+        """ Returns the label on the Item with the provided language. """
         return self.labels[arg]
 
     def get_description(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText:
+        """ Returns the description on the Item with the provided language. """
         return self.descriptions[arg]
 
     def __add__(self, arg: object) -> 'Item':
@@ -118,6 +123,9 @@ class Item:
         raise NotImplementedError(f"Can't add {type(arg)} to Item")
 
     def add_label(self, arg: tfsl.monolingualtext.MonolingualText) -> 'Item':
+        """ Adds the provided MonolingualText as a label to the Item,
+            overwriting any existing label in that MonolingualText's language.
+        """
         published_settings = self.get_published_settings()
         item_out = Item(self.labels + arg, self.descriptions, self.aliases,
                       self.statements, self.sitelinks)
@@ -125,6 +133,9 @@ class Item:
         return item_out
 
     def add_description(self, arg: tfsl.monolingualtext.MonolingualText) -> 'Item':
+        """ Adds the provided MonolingualText as a description to the Item,
+            overwriting any existing description in that MonolingualText's language.
+        """
         published_settings = self.get_published_settings()
         item_out = Item(self.labels, self.descriptions + arg, self.aliases,
                       self.statements, self.sitelinks)
@@ -142,14 +153,20 @@ class Item:
             raise NotImplementedError("Subtracting MonolingualText from Item is ambiguous")
         raise NotImplementedError(f"Can't subtract {type(arg)} from Lexeme")
 
-    def sub_label(self, arg: tfsl.monolingualtextholder.lang_or_mt) -> 'Item':
+    def sub_label(self, arg: I.LanguageOrMT) -> 'Item':
+        """ Removes the label with the provided language (or the language of the provided
+            MonolingualText) from the Item.
+        """
         published_settings = self.get_published_settings()
         item_out = Item(self.labels - arg, self.descriptions, self.aliases,
                       self.statements, self.sitelinks)
         item_out.set_published_settings(published_settings)
         return item_out
 
-    def sub_description(self, arg: tfsl.monolingualtextholder.lang_or_mt) -> 'Item':
+    def sub_description(self, arg: I.LanguageOrMT) -> 'Item':
+        """ Removes the description with the provided language (or the language of the provided
+            MonolingualText) from the Item.
+        """
         published_settings = self.get_published_settings()
         item_out = Item(self.labels, self.descriptions - arg, self.aliases,
                       self.statements, self.sitelinks)
@@ -157,6 +174,7 @@ class Item:
         return item_out
 
 def build_item(item_in: I.ItemDict) -> Item:
+    """ Builds an Item from the JSON dictionary describing it. """
     labels = tfsl.monolingualtextholder.build_text_list(item_in["labels"])
     descriptions = tfsl.monolingualtextholder.build_text_list(item_in["descriptions"])
     statements = tfsl.statementholder.build_statement_list(item_in["claims"])
@@ -177,6 +195,7 @@ def build_item(item_in: I.ItemDict) -> Item:
 # pylint: disable=invalid-name
 
 def retrieve_item_json(lid_in: Union[int, I.Qid]) -> I.ItemDict:
+    """ Retrieves the JSON for the item with the given Qid. """
     lid: I.Qid
     if isinstance(lid_in, int):
         lid = I.Qid(I.EntityId('Q'+str(lid_in)))
@@ -199,8 +218,9 @@ def retrieve_item_json(lid_in: Union[int, I.Qid]) -> I.ItemDict:
             json.dump(item_json, fileptr)
     return item_json
 
-def Q(lid: Union[int, I.Qid]) -> Item:
-    item_json = retrieve_item_json(lid)
+def Q(qid: Union[int, I.Qid]) -> Item:
+    """ Retrieves and returns the item with the provided Qid. """
+    item_json = retrieve_item_json(qid)
     return build_item(item_json)
 
 class Q_:
@@ -211,15 +231,18 @@ class Q_:
         self.item_json: I.ItemDict = retrieve_item_json(input_arg)
 
     def get_label(self, lang: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText:
+        """ Assembles a MonolingualText containing the label with the given language code. """
         label_dict: I.LemmaDict = self.item_json["labels"][lang.code]
         return label_dict["value"] @ lang
 
     def get_description(self, lang: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText:
+        """ Assembles a MonolingualText containing the description with the given language code. """
         description_dict: I.LemmaDict = self.item_json["descriptions"][lang.code]
         return description_dict["value"] @ lang
 
-    def get_stmts(self, prop: I.Pid) -> List[tfsl.statement.Statement]:
+    def get_stmts(self, prop: I.Pid) -> I.StatementList:
+        """ Assembles a list of Statements present on the item with the given property. """
         return [tfsl.statement.build_statement(stmt) for stmt in self.item_json["claims"].get(prop,[])]
 
-    def __getitem__(self, prop: I.Pid) -> List[tfsl.statement.Statement]:
+    def __getitem__(self, prop: I.Pid) -> I.StatementList:
         return self.get_stmts(prop)

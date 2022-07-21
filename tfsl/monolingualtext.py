@@ -1,4 +1,4 @@
-""" Holder of the MonolingualText class and a function to build one given a JSON representation of it. """
+""" Holds the MonolingualText class and a function to build one given a JSON representation of it. """
 
 from typing_extensions import TypeGuard
 
@@ -36,6 +36,7 @@ class MonolingualText:
         }
 
 def is_mtvalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.MonolingualTextDict]:
+    """ Checks that the keys expected for a MonolingualText exist. """
     return all(key in value_in for key in ["text", "language"])
 
 def build_mtvalue(value_in: I.MonolingualTextDict) -> MonolingualText:

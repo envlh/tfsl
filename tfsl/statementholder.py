@@ -1,19 +1,18 @@
+""" Holds the StatementHolder class and a function to build one given a JSON representation of it. """
+
 from collections import defaultdict
 from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import DefaultDict, List, Optional, Union
+from typing import Optional
 
 import tfsl.interfaces as I
 import tfsl.statement
 import tfsl.utils as U
 
 class StatementHolder(object):
-    def __init__(self,
-                 statements: Optional[Union[
-                    I.StatementSet,
-                    List[tfsl.statement.Statement]
-                 ]]=None):
+    """ Holds a set of statements. """
+    def __init__(self, statements: Optional[I.StatementHolderInput]=None):
         super().__init__()
 
         self.statements = defaultdict(list)
@@ -25,16 +24,20 @@ class StatementHolder(object):
             for arg in statements:
                 self.statements[arg.property].append(arg)
 
-    def get_statements(self, property_in: I.Pid) -> List[tfsl.statement.Statement]:
+    def get_statements(self, property_in: I.Pid) -> I.StatementList:
+        """ Returns a list of statements with the provided property. """
         return self.statements.get(property_in, [])
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+        """Shamelessly named after the keyword used on Wikidata to look for a statement."""
         if value_in is None:
             return property_in in self.statements
         elif U.is_novalue(value_in):
-            compare_function = lambda stmt: U.is_novalue(stmt.value)
+            def compare_function(stmt: tfsl.Statement) -> bool:
+                return U.is_novalue(stmt.value)
         elif U.is_somevalue(value_in):
-            compare_function = lambda stmt: U.is_somevalue(stmt.value)
+            def compare_function(stmt: tfsl.Statement) -> bool:
+                return U.is_somevalue(stmt.value)
         else:
             def compare_function(stmt: tfsl.statement.Statement) -> bool:
                 return stmt.value == value_in
@@ -58,7 +61,7 @@ class StatementHolder(object):
 
     def __contains__(self, arg: object) -> bool:
         if isinstance(arg, str):
-            if tfsl.utils.matches_property(arg):
+            if I.is_Pid(arg):
                 return arg in self.statements
             raise TypeError(f"String {arg} is not a property")
         elif isinstance(arg, tfsl.claim.Claim):
@@ -70,15 +73,16 @@ class StatementHolder(object):
             return arg in self.statements[arg.property]
         raise TypeError(f"Can't check for {type(arg)} in StatementHolder")
 
-    def __getitem__(self, arg: object) -> List[tfsl.statement.Statement]:
+    def __getitem__(self, arg: object) -> I.StatementList:
         return self.get_st(arg)
 
     @singledispatchmethod
-    def get_st(self, arg: object) -> List[tfsl.statement.Statement]:
+    def get_st(self, arg: object) -> I.StatementList:
+        """ Dispatches __getitem__. """
         raise TypeError(f"Can't get {type(arg)} from StatementHolder")
 
     @get_st.register
-    def _(self, arg: str) -> List[tfsl.statement.Statement]:
+    def _(self, arg: str) -> I.StatementList:
         if I.is_Pid(arg):
             return self.statements[arg]
         raise KeyError(f"String {arg} is not a property")
@@ -113,6 +117,7 @@ class StatementHolder(object):
         raise TypeError(f"Can't subtract {type(rhs)} from StatementHolder")
 
 def build_statement_list(claims_dict: I.StatementDictSet) -> I.StatementSet:
+    """ Builds a statement set from a JSON dictionary of statements. """
     claims: I.StatementSet = defaultdict(list)
     for prop in claims_dict:
         for claim in claims_dict[prop]:

@@ -10,9 +10,9 @@ class TestStatementMethods(unittest.TestCase):
         self.property = "P1476"
         self.value_mt = "টাকা" @ langs.bn_
         self.value_mt2 = "রূপী" @ langs.bn_
-        self.value_q1 = "পয়সা"
-        self.value_q2 = "মুদ্রা"
-        self.value_r1 = "ব্যাংক"
+        self.value_q1 = "পয়সা" @ langs.bn_
+        self.value_q2 = "মুদ্রা" @ langs.bn_
+        self.value_r1 = "ব্যাংক" @ langs.bn_
 
     def test_statement_basic(self):
         x = Statement(self.property, self.value_mt)

@@ -1,3 +1,5 @@
+""" Holds the LexemeForm class and a function to build one given a JSON representation of it. """
+
 from functools import singledispatchmethod
 from typing import List, Optional, Set, Union
 
@@ -10,16 +12,13 @@ import tfsl.statementholder
 import tfsl.utils
 
 class LexemeForm:
+    """ Container for a Wikidata lexeme form. """
     def __init__(self,
                  representations: Union[tfsl.monolingualtextholder.MonolingualTextHolder,
                                         tfsl.monolingualtext.MonolingualText,
-                                        List[tfsl.monolingualtext.MonolingualText]],
+                                        I.MonolingualTextList],
                  features: Optional[Union[List[I.Qid], Set[I.Qid]]]=None,
-                 statements: Optional[Union[
-                    tfsl.statementholder.StatementHolder,
-                    I.StatementSet,
-                    List[tfsl.statement.Statement]
-                 ]]=None):
+                 statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None):
         super().__init__()
 
         self.representations: tfsl.monolingualtextholder.MonolingualTextHolder
@@ -27,8 +26,7 @@ class LexemeForm:
             self.representations = representations
         else:
             self.representations = tfsl.monolingualtextholder.MonolingualTextHolder(representations)
-        
-        self.statements: tfsl.statementholder.StatementHolder
+
         if isinstance(statements, tfsl.statementholder.StatementHolder):
             self.statements = statements
         else:
@@ -43,6 +41,9 @@ class LexemeForm:
         self.id: Optional[str] = None
 
     def get_published_settings(self) -> I.LexemeFormPublishedSettings:
+        """ Returns a dictionary containing those portions of the LexemeForm JSON dictionary
+            which are only significant at editing time for existing lexeme forms.
+        """
         if self.id is not None:
             return {
                 "id": self.id
@@ -50,23 +51,27 @@ class LexemeForm:
         return {}
 
     def set_published_settings(self, form_in: I.LexemeFormPublishedSettings) -> None:
+        """ Sets based on a LexemeForm JSON dictionary those variables
+            which are only significant at editing time for existing lexeme forms.
+        """
         if "id" in form_in:
             self.id = form_in["id"]
 
-    def __getitem__(self, arg: object) -> Union[List[tfsl.statement.Statement], tfsl.monolingualtext.MonolingualText]:
+    def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
         return self.getitem(arg)
 
     @singledispatchmethod
-    def getitem(self, arg: object) -> Union[List[tfsl.statement.Statement], tfsl.monolingualtext.MonolingualText]:
+    def getitem(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
+        """ Dispatches __getitem__. """
         raise KeyError(f"Can't get {type(arg)} from LexemeForm")
 
     @getitem.register
-    def _(self, arg: str) -> List[tfsl.statement.Statement]:
+    def _(self, arg: str) -> I.StatementList:
         return self.statements[arg]
 
     @getitem.register(tfsl.monolingualtext.MonolingualText)
     @getitem.register(tfsl.languages.Language)
-    def _(self, arg: tfsl.monolingualtextholder.lang_or_mt) -> tfsl.monolingualtext.MonolingualText:
+    def _(self, arg: I.LanguageOrMT) -> tfsl.monolingualtext.MonolingualText:
         return self.representations[arg]
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
@@ -118,11 +123,12 @@ class LexemeForm:
 
     @singledispatchmethod
     def contains(self, arg: object) -> bool:
+        """ Dispatches __contains__. """
         raise KeyError(f"Can't check for {type(arg)} in LexemeForm")
 
     @contains.register(tfsl.languages.Language)
     @contains.register(tfsl.monolingualtext.MonolingualText)
-    def _(self, arg: tfsl.monolingualtextholder.lang_or_mt) -> bool:
+    def _(self, arg: I.LanguageOrMT) -> bool:
         return arg in self.representations
 
     @contains.register
@@ -133,10 +139,10 @@ class LexemeForm:
     def _(self, arg: str) -> bool:
         try:
             return arg in self.statements
-        except TypeError as e:
-            if tfsl.utils.matches_item(arg):
+        except TypeError as exception:
+            if I.is_Qid(arg):
                 return arg in self.features
-            raise e
+            raise exception
 
     def __eq__(self, rhs: object) -> bool:
         if not isinstance(rhs, LexemeForm):
@@ -167,6 +173,7 @@ class LexemeForm:
         return base_dict
 
 def build_form(form_in: I.LexemeFormDict) -> LexemeForm:
+    """ Builds a LexemeForm from the JSON dictionary describing it. """
     reps = tfsl.monolingualtextholder.build_text_list(form_in["representations"])
     feats = form_in["grammaticalFeatures"]
     claims = tfsl.statementholder.build_statement_list(form_in["claims"])

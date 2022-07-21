@@ -1,3 +1,5 @@
+""" Holds the Language class and a Languages class with some language objects already defined within. """
+
 from collections import defaultdict
 from functools import singledispatchmethod
 from typing import Any, DefaultDict, List
@@ -5,7 +7,6 @@ from typing import Any, DefaultDict, List
 import tfsl.interfaces as I
 import tfsl.monolingualtext
 import tfsl.utils
-
 
 class Language:
     """ Container for languages.
@@ -34,6 +35,7 @@ class Language:
 
     @singledispatchmethod
     def compare_eq(self, rhs: object) -> bool:
+        """ Equality comparison between this Language and something else. """
         if not isinstance(rhs, Language):
             return NotImplemented
         return self.item == rhs.item and self.code == rhs.code
@@ -59,6 +61,9 @@ class Languages:
     # TODO: everywhere this method is called, find a way to specify among results if multiple found
     @classmethod
     def find(cls, string_in: str) -> List[Language]:
+        """ If the input is a Qid, finds the languages with that Qid as the item;
+            otherwise finds the languages with the input as the language code.
+        """
         if I.is_Qid(string_in):
             return cls.__itemlookup__[string_in]
         else:
@@ -174,7 +179,7 @@ class Languages:
         self.dag_ = Language("dag", "Q32238")  # Dagbani
         self.dsb_ = Language("dsb", "Q13286")  # Lower Sorbian
         self.de_at_ = Language("de-at", "Q306626")  # Austrian German
-        self.de_ch_ = Language("de-ch", "Q387066")  # Austrian German
+        self.de_ch_ = Language("de-ch", "Q387066")  # Swiss German
         self.en_gb_ = Language("en-gb", "Q7979")  # British English
         self.eo_ = Language("eo", "Q143")  # Esperanto
         self.eu_ = Language("eu", "Q8752")  # Basque
@@ -641,6 +646,7 @@ class Languages:
 langs: Languages = Languages()
 
 def get_first_lang(arg: str) -> Language:
+    """ Obtains the first language in tfsl.langs with the given language code. """
     try:
         return langs.find(arg)[0]
     except IndexError as e:

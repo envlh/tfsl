@@ -1,26 +1,31 @@
+""" Holds the Reference class and a function to build one given a JSON representation of it. """
+
 from collections import defaultdict, Counter
 from copy import deepcopy
 from functools import singledispatchmethod
 from textwrap import indent
-from typing import Any, DefaultDict, ItemsView, List, Mapping, Optional, Union
+from typing import Any, DefaultDict, List, Optional, Union
 
 import tfsl.interfaces as I
 import tfsl.claim
 import tfsl.utils
 
-class ClaimSet(DefaultDict[I.Pid, List[tfsl.claim.Claim]]):
-    def __init__(self, *args: Any, **kwargs: List[tfsl.claim.Claim]):
+class ClaimSet(DefaultDict[I.Pid, I.ClaimList]):
+    """ Representation of a set of Claims. """
+    def __init__(self, *args: Any, **kwargs: I.ClaimList):
         if args:
             super(ClaimSet, self).__init__(*args, **kwargs)
         else:
             super(ClaimSet, self).__init__(list, **kwargs)
 
     def add(self, arg: tfsl.claim.Claim) -> 'ClaimSet':
+        """ Adds a claim to a ClaimSet. """
         newclaimset = deepcopy(self)
         newclaimset[arg.property].append(arg)
         return newclaimset
 
     def sub(self, arg: tfsl.claim.Claim) -> 'ClaimSet':
+        """ Removes a claim from a ClaimSet. """
         newclaimset = deepcopy(self)
         newclaimset[arg.property] = [claim for claim in newclaimset[arg.property] if claim != arg]
         if len(newclaimset[arg.property]) == 0:
@@ -29,8 +34,6 @@ class ClaimSet(DefaultDict[I.Pid, List[tfsl.claim.Claim]]):
 
 class Reference:
     """ Representation of a reference. """
-    # TODO: define __setitem__
-
     def __init__(self, *args: Union[tfsl.claim.Claim, ClaimSet]):
         self._claims = ClaimSet()
         for arg in args:
@@ -44,7 +47,7 @@ class Reference:
         self.snaks_order: Optional[List[I.Pid]] = None
         self.hash: Optional[str] = None
 
-    def __getitem__(self, property_in: I.Pid) -> List[tfsl.claim.Claim]:
+    def __getitem__(self, property_in: I.Pid) -> I.ClaimList:
         return self._claims[property_in]
 
     def __delitem__(self, arg: Union[I.Pid, tfsl.claim.Claim]) -> None:
@@ -59,6 +62,7 @@ class Reference:
 
     @singledispatchmethod
     def add(self, arg: object) -> ClaimSet:
+        """ Dispatches __add__. """
         raise ValueError(f"Cannot add {type(arg)} to Reference")
 
     @add.register
@@ -71,6 +75,7 @@ class Reference:
 
     @singledispatchmethod
     def sub(self, arg: object) -> ClaimSet:
+        """ Dispatches __sub__. """
         raise ValueError(f"Cannot subtract {type(arg)} from Reference")
 
     @sub.register
@@ -82,7 +87,8 @@ class Reference:
 
     @singledispatchmethod
     def contains(self, arg: object) -> bool:
-        return False
+        """ Dispatches __contains__. """
+        raise KeyError(f"Can't check for {type(arg)} in Reference")
 
     @contains.register
     def _(self, arg: tfsl.claim.Claim) -> bool:
@@ -119,8 +125,9 @@ class Reference:
 
 
 def build_ref(ref_in: I.ReferenceDict) -> Reference:
+    """ Builds a Reference from the JSON dictionary describing it. """
     claim_dict: I.ClaimDictSet = ref_in["snaks"]
-    ref_claims: List[tfsl.claim.Claim] = []
+    ref_claims: I.ClaimList = []
     for prop in claim_dict:
         for claim in claim_dict[prop]:
             ref_claims.append(tfsl.claim.build_claim(claim))

@@ -3,23 +3,21 @@
 from typing_extensions import TypeGuard
 
 import tfsl.interfaces as I
-import tfsl.languages
-import tfsl.utils
 
 class ItemValue:
     """ Representation of a Wikibase entity of some sort. """
-    def __init__(self, item_id: str):
-        self.id: str = item_id
+    def __init__(self, item_id: I.EntityId):
+        self.id = item_id
         self.type: str
-        if tfsl.utils.matches_item(item_id):
+        if I.is_Qid(item_id):
             self.type = 'item'
-        elif tfsl.utils.matches_property(item_id):
+        elif I.is_Pid(item_id):
             self.type = 'property'
-        elif tfsl.utils.matches_lexeme(item_id):
+        elif I.is_Lid(item_id):
             self.type = 'lexeme'
-        elif tfsl.utils.matches_form(item_id):
+        elif I.is_LFid(item_id):
             self.type = 'form'
-        elif tfsl.utils.matches_sense(item_id):
+        elif I.is_LSid(item_id):
             self.type = 'sense'
 
     def __eq__(self, rhs: object) -> bool:
@@ -45,6 +43,7 @@ class ItemValue:
         return base_dict
 
 def is_itemvalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.ItemValueDict]:
+    """ Checks that the keys expected for an ItemValue exist. """
     return all(key in value_in for key in ["entity-type", "id"])
 
 def build_itemvalue(value_in: I.ItemValueDict) -> ItemValue:

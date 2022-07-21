@@ -1,3 +1,5 @@
+""" Holds the Lexeme class and a function to build one given a JSON representation of it. """
+
 import json
 import os
 import os.path
@@ -22,24 +24,21 @@ default_lexeme_cache_path = os.path.expanduser('~/.cache/tfsl')
 os.makedirs(default_lexeme_cache_path,exist_ok=True)
 
 class Lexeme:
+    """ Container for a Wikidata lexeme. """
     def __init__(self,
-                lemmata: Union[tfsl.monolingualtextholder.MonolingualTextHolder, List[tfsl.monolingualtext.MonolingualText]],
+                lemmata: Union[tfsl.monolingualtextholder.MonolingualTextHolder, I.MonolingualTextList],
                 lang_in: tfsl.languages.Language,
                 cat_in: I.Qid,
-                statements: Optional[Union[
-                    tfsl.statementholder.StatementHolder,
-                    I.StatementSet,
-                    List[tfsl.statement.Statement]
-                 ]]=None,
-                senses: Optional[List[tfsl.lexemesense.LexemeSense]]=None,
-                forms: Optional[List[tfsl.lexemeform.LexemeForm]]=None):
+                statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None,
+                senses: Optional[I.LexemeSenseList]=None,
+                forms: Optional[I.LexemeFormList]=None):
         # TODO: better validation/type hinting and argument fallbacks
         super().__init__()
         if isinstance(lemmata, tfsl.monolingualtextholder.MonolingualTextHolder):
             self.lemmata = lemmata
         else:
             self.lemmata = tfsl.monolingualtextholder.MonolingualTextHolder(lemmata)
-        
+
         if isinstance(statements, tfsl.statementholder.StatementHolder):
             self.statements = statements
         else:
@@ -67,6 +66,9 @@ class Lexeme:
         self.lexeme_id: Optional[str] = None
 
     def get_published_settings(self) -> I.LexemePublishedSettings:
+        """ Returns a dictionary containing those portions of the Lexeme JSON dictionary
+            which are only significant at editing time for existing lexemes.
+        """
         if self.pageid is not None and self.namespace is not None and self.title is not None and self.lastrevid is not None and self.modified is not None and self.lexeme_type is not None and self.lexeme_id is not None:
             return {
                 "pageid": self.pageid,
@@ -80,6 +82,9 @@ class Lexeme:
         return {}
 
     def set_published_settings(self, lexeme_in: I.LexemePublishedSettings) -> None:
+        """ Sets based on a Lexeme JSON dictionary those variables
+            which are only significant at editing time for existing lexemes.
+        """
         if "pageid" in lexeme_in:
             self.pageid = lexeme_in["pageid"]
             self.namespace = lexeme_in["ns"]
@@ -152,7 +157,10 @@ class Lexeme:
             return lexeme_out
         raise NotImplementedError(f"Can't subtract {type(arg)} from Lexeme")
 
-    def get_forms(self, inflections: Optional[List[I.Qid]]=None, exclusions: Optional[List[I.Qid]]=None) -> List[tfsl.lexemeform.LexemeForm]:
+    def get_forms(self, inflections: Optional[List[I.Qid]]=None, exclusions: Optional[List[I.Qid]]=None) -> I.LexemeFormList:
+        """ Returns those forms on the lexeme with the provided inflectional features,
+            excluding those listed in the exclusions list.
+        """
         if inflections is None:
             return self.forms
         initial_form_list = [form for form in self.forms
@@ -162,26 +170,29 @@ class Lexeme:
         return [form for form in initial_form_list
                 if all(i not in form.features for i in exclusions)]
 
-    def get_senses(self) -> List[tfsl.lexemesense.LexemeSense]:
+    def get_senses(self) -> I.LexemeSenseList:
+        """ Returns the list of senses on the lexeme. """
         return self.senses
 
     def get_language(self) -> tfsl.languages.Language:
+        """ Returns the language of the lexeme. """
         return self.language
 
-    def __getitem__(self, key: object) -> Union[List[tfsl.statement.Statement], tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
+    def __getitem__(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
         return self.getitem(key)
 
     @singledispatchmethod
-    def getitem(self, key: object) -> Union[List[tfsl.statement.Statement], tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
+    def getitem(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
+        """ Dispatches __getitem__. """
         raise TypeError(f"Can't get {type(key)} from Lexeme")
 
     @getitem.register(tfsl.languages.Language)
     @getitem.register(tfsl.monolingualtext.MonolingualText)
-    def _(self, key: tfsl.monolingualtextholder.lang_or_mt) -> tfsl.monolingualtext.MonolingualText:
+    def _(self, key: I.LanguageOrMT) -> tfsl.monolingualtext.MonolingualText:
         return self.lemmata[key]
 
     @getitem.register
-    def _(self, key: str) -> Union[List[tfsl.statement.Statement], tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]:
+    def _(self, key: str) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]:
         def id_matches_key(obj: Union[tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]) -> bool:
             return obj.id == key
 
@@ -258,6 +269,7 @@ class Lexeme:
 
 
 def build_lexeme(lexeme_in: I.LexemeDict) -> Lexeme:
+    """ Builds a Lexeme from the JSON dictionary describing it. """
     lemmas = tfsl.monolingualtextholder.build_text_list(lexeme_in["lemmas"])
 
     lexemecat = lexeme_in["lexicalCategory"]
@@ -275,6 +287,7 @@ def build_lexeme(lexeme_in: I.LexemeDict) -> Lexeme:
 # pylint: disable=invalid-name
 
 def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid]) -> Lexeme:
+    """ Retrieves and returns the lexeme with the provided Lid. """
     lid: I.Lid
     if isinstance(lid_in, int):
         lid = I.Lid(I.EntityId('L'+str(lid_in)))

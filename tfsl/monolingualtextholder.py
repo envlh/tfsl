@@ -1,25 +1,27 @@
+""" Holds the StatementHolder class and a function to build one given a JSON representation of it. """
+
 from copy import deepcopy
 from functools import singledispatchmethod
-from typing import Callable, List, Optional, Union
+from typing import Callable, Optional, Union
 
 import tfsl.interfaces as I
 import tfsl.languages
 import tfsl.monolingualtext
 
-lang_or_mt = Union[tfsl.languages.Language, tfsl.monolingualtext.MonolingualText]
-
 def rep_language_is(desired_language: tfsl.languages.Language) -> Callable[[tfsl.monolingualtext.MonolingualText], bool]:
+    """ Returns a function checking that the provided MonolingualText is in a certain language. """
     def is_desired_language(text: tfsl.monolingualtext.MonolingualText) -> bool:
         return text.language == desired_language
     return is_desired_language
 
 class MonolingualTextHolder(object):
+    """ Holds a set of strings with languages attached to them. """
     def __init__(self,
-                 texts: Optional[Union[tfsl.monolingualtext.MonolingualText, List[tfsl.monolingualtext.MonolingualText]]]=None,
-                 removed_texts: Optional[List[tfsl.monolingualtext.MonolingualText]]=None):
+                 texts: Optional[Union[tfsl.monolingualtext.MonolingualText, I.MonolingualTextList]]=None,
+                 removed_texts: Optional[I.MonolingualTextList]=None):
         super().__init__()
 
-        self.texts: List[tfsl.monolingualtext.MonolingualText]
+        self.texts: I.MonolingualTextList
         if isinstance(texts, tfsl.monolingualtext.MonolingualText):
             self.texts = [texts.text @ texts.language]
         elif texts is None:
@@ -28,7 +30,7 @@ class MonolingualTextHolder(object):
             self.texts = texts
 
         if removed_texts is None:
-            self.removed_texts: List[tfsl.monolingualtext.MonolingualText] = []
+            self.removed_texts: I.MonolingualTextList = []
         else:
             self.removed_texts = removed_texts
 
@@ -53,6 +55,7 @@ class MonolingualTextHolder(object):
 
     @singledispatchmethod
     def contains(self, arg: object) -> bool:
+        """ Dispatches __contains__. """
         raise TypeError(f"Can't check for {type(arg)} in MonolingualTextHolder")
 
     @contains.register
@@ -68,6 +71,7 @@ class MonolingualTextHolder(object):
 
     @singledispatchmethod
     def get_mt(self, arg: object) -> tfsl.monolingualtext.MonolingualText:
+        """ Dispatches __getitem__. """
         raise TypeError(f"Can't get {type(arg)} from MonolingualTextHolder")
 
     @get_mt.register
@@ -105,8 +109,9 @@ class MonolingualTextHolder(object):
             return MonolingualTextHolder(newtexts)
         raise TypeError(f"Can't subtract {type(rhs)} from MonolingualTextHolder")
 
-def build_text_list(text_dict: I.LemmaDictSet) -> List[tfsl.monolingualtext.MonolingualText]:
-    texts: List[tfsl.monolingualtext.MonolingualText] = []
+def build_text_list(text_dict: I.LemmaDictSet) -> I.MonolingualTextList:
+    """ Builds a statement set from a JSON dictionary of statements. """
+    texts: I.MonolingualTextList = []
     for _, text in text_dict.items():
         new_text = text["value"] @ tfsl.languages.get_first_lang(text["language"])
         texts.append(new_text)

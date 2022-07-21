@@ -24,29 +24,36 @@ EntityId = NewType('EntityId', str)
 LanguageCode = NewType('LanguageCode', str)
 Qid = NewType('Qid', EntityId)
 def is_Qid(arg: str) -> TypeGuard[Qid]:
+    """ Checks that a string is a Qid. """
     return re.match(r"^Q\d+$", arg) is not None
 
 Pid = NewType('Pid', EntityId)
 def is_Pid(arg: str) -> TypeGuard[Pid]:
+    """ Checks that a string is a Pid. """
     return re.match(r"^P\d+$", arg) is not None
 
 Lid = NewType('Lid', EntityId)
 def is_Lid(arg: str) -> TypeGuard[Lid]:
+    """ Checks that a string is an Lid. """
     return re.match(r"^L\d+$", arg) is not None
 
 Fid = NewType('Fid', str)
 def is_Fid(arg: str) -> TypeGuard[Fid]:
+    """ Checks that a string is an Fid. """
     return re.match(r"^F\d+$", arg) is not None
 
 Sid = NewType('Sid', str)
 def is_Sid(arg: str) -> TypeGuard[Sid]:
+    """ Checks that a string is an Sid. """
     return re.match(r"^S\d+$", arg) is not None
 
-LFid = NewType('LFid', str)
+LFid = NewType('LFid', EntityId)
 def is_LFid(arg: str) -> TypeGuard[LFid]:
+    """ Checks that a string is an LFid. """
     return re.match(r"^(L\d+)-(F\d+)$", arg) is not None
 
 def split_LFid(arg: LFid) -> Optional[Tuple[Lid, Fid]]:
+    """ Splits an LFid into the Lid part and the Fid part. """
     if matched_parts := re.match(r"^(L\d+)-(F\d+)$", arg):
         lid_part: Optional[str] = matched_parts.group(1)
         fid_part: Optional[str] = matched_parts.group(2)
@@ -55,11 +62,13 @@ def split_LFid(arg: LFid) -> Optional[Tuple[Lid, Fid]]:
                 return lid_part, fid_part
     return None
 
-LSid = NewType('LSid', str)
+LSid = NewType('LSid', EntityId)
 def is_LSid(arg: str) -> TypeGuard[LSid]:
+    """ Checks that a string is an LSid. """
     return re.match(r"^(L\d+)-(S\d+)$", arg) is not None
 
 def split_LSid(arg: LSid) -> Optional[Tuple[Lid, Sid]]:
+    """ Splits an LSid into the Lid part and the Sid part. """
     if matched_parts := re.match(r"^(L\d+)-(S\d+)$", arg):
         lid_part: Optional[str] = matched_parts.group(1)
         sid_part: Optional[str] = matched_parts.group(2)
@@ -69,10 +78,12 @@ def split_LSid(arg: LSid) -> Optional[Tuple[Lid, Sid]]:
     return None
 
 class MonolingualTextDict(TypedDict):
+    """ Representation of the Wikibase 'monolingualtext' datatype. """
     text: str
     language: LanguageCode
 
 class CoordinateValueDict(TypedDict):
+    """ Representation of the Wikibase 'globecoordinate' datatype. """
     latitude: float
     longitude: float
     altitude: Optional[float]
@@ -80,12 +91,14 @@ class CoordinateValueDict(TypedDict):
     globe: str
 
 class QuantityValueDict(TypedDict, total=False):
+    """ Representation of the Wikibase 'quantity' datatype. """
     amount: float
     unit: str
     upperBound: NotRequired[float]
     lowerBound: NotRequired[float]
 
 class TimeValueDict(TypedDict):
+    """ Representation of the Wikibase 'time' datatype. """
     time: str
     timezone: int
     before: int
@@ -93,16 +106,20 @@ class TimeValueDict(TypedDict):
     precision: int
     calendarmodel: str
 
-ItemValueDict = TypedDict('ItemValueDict', {'entity-type': str, 'id': str, 'numeric-id': NotRequired[int]}, total=False)
+ItemValueDict = TypedDict('ItemValueDict', {'entity-type': str, 'id': EntityId, 'numeric-id': NotRequired[int]}, total=False)
 
 ClaimDictValueDictionary = Union[CoordinateValueDict, MonolingualTextDict, ItemValueDict, QuantityValueDict, TimeValueDict]
 ClaimDictValue = Union[str, ClaimDictValueDictionary]
 
 class ClaimDictDatavalue(TypedDict):
+    """ The actual value of a Claim or of a Statement. """
     value: ClaimDictValue
     type: str
 
 class ClaimDict(TypedDict, total=False):
+    """ A property-value pairing in places other than the main portion of a statement,
+        such as a qualifier or a reference.
+    """
     property: Pid
     snaktype: str
     hash: str
@@ -118,6 +135,13 @@ ClaimValue = Union[
     str,
     'tfsl.timevalue.TimeValue'
 ]
+
+ClaimList = List['tfsl.claim.Claim']
+StatementList = List['tfsl.statement.Statement']
+MonolingualTextList = List['tfsl.monolingualtext.MonolingualText']
+LexemeSenseList = List['tfsl.lexemesense.LexemeSense']
+LexemeFormList = List['tfsl.lexemeform.LexemeForm']
+ReferenceList = List['tfsl.reference.Reference']
 
 ClaimDictSet = Dict[Pid, List[ClaimDict]]
 
@@ -135,6 +159,7 @@ StatementDictPublishedSettings = TypedDict('StatementDictPublishedSettings', {
 }, total=False)
 
 class StatementData(TypedDict, total=False):
+    """ Those entries in a StatementDict which pertain to informational content. """
     mainsnak: ClaimDict
     type: str
     qualifiers: NotRequired[ClaimDictSet]
@@ -142,13 +167,19 @@ class StatementData(TypedDict, total=False):
     references: NotRequired[List[ReferenceDict]]
 
 class StatementDict(StatementData, StatementDictPublishedSettings): # pylint: disable=inherit-non-class
-    pass
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993.json,
+        the dictionaries in the arrays represented by the XPath "/entities/L301993/claims/*".
+    """
 
 StatementDictSet = Dict[Pid, List[StatementDict]]
 
 StatementSet = DefaultDict[Pid, List['tfsl.statement.Statement']]
 
 class LemmaDict(TypedDict, total=False):
+    """ Pairings of a language with a string value, such as, among others,
+        in the output of wikidata.org/wiki/Special:EntityData/L301993.json,
+        the dictionaries represented by the XPath "/entities/L301993/lemmas/*".
+    """
     language: LanguageCode
     value: str
     remove: NotRequired[str]
@@ -156,29 +187,60 @@ class LemmaDict(TypedDict, total=False):
 LemmaDictSet = Dict[LanguageCode, LemmaDict]
 
 class LexemeFormPublishedSettings(TypedDict, total=False):
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993-F1.json,
+        those entries in the dictionary represented by the XPath "/entities/L301993-F1"
+        which are only relevant at editing time and not otherwise in EntityPublishedSettings.
+    """
     id: NotRequired[str]
 
 class LexemeFormData(TypedDict, total=False):
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993-F1.json,
+        those entries in the dictionary represented by the XPath "/entities/L301993-F1"
+        which pertain to informational content.
+    """
     representations: LemmaDictSet
     grammaticalFeatures: List[Qid]
     claims: StatementDictSet
     add: NotRequired[str]
 
 class LexemeFormDict(LexemeFormPublishedSettings, LexemeFormData):
-    pass
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993.json,
+        the entries in the array represented by the XPath "/entities/L301993/forms".
+
+        Alternatively, in the output of wikidata.org/wiki/Special:EntityData/L301993-F1.json,
+        the dictionary represented by the XPath "/entities/L301993-F1".
+    """
 
 class LexemeSensePublishedSettings(TypedDict, total=False):
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993-S1.json,
+        those entries in the dictionary represented by the XPath "/entities/L301993-S1"
+        which are only relevant at editing time and not otherwise in EntityPublishedSettings.
+    """
     id: NotRequired[str]
 
 class LexemeSenseData(TypedDict, total=False):
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993-S1.json,
+        those entries in the dictionary represented by the XPath "/entities/L301993-S1"
+        which pertain to informational content.
+    """
     glosses: LemmaDictSet
     claims: StatementDictSet
     add: NotRequired[str]
 
 class LexemeSenseDict(LexemeSensePublishedSettings, LexemeSenseData):
-    pass
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993.json,
+        the entries in the array represented by the XPath "/entities/L301993/senses".
+
+        Alternatively, in the output of wikidata.org/wiki/Special:EntityData/L301993-S1.json,
+        the dictionary represented by the XPath "/entities/L301993-S1".
+    """
 
 class EntityPublishedSettings(TypedDict, total=False):
+    """ In the output of wikidata.org/wiki/Special:EntityData/Q1356.json,
+        those entries in the dictionary represented by the XPath "/entities/Q1356"
+        which are only relevant at editing time
+        and are common to all entities returned by Special:EntityData.
+    """
     pageid: NotRequired[int]
     ns: NotRequired[int]
     title: NotRequired[str]
@@ -187,6 +249,10 @@ class EntityPublishedSettings(TypedDict, total=False):
     id: NotRequired[str]
 
 class LexemeData(TypedDict):
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993.json,
+        those entries in the dictionary represented by the XPath "/entities/L301993"
+        which pertain to informational content.
+    """
     lexicalCategory: Qid
     language: Qid
     lemmas: LemmaDictSet
@@ -195,18 +261,31 @@ class LexemeData(TypedDict):
     senses: List[LexemeSenseDict]
 
 class LexemePublishedSettings(EntityPublishedSettings, total=False):
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993.json,
+        those entries in the dictionary represented by the XPath "/entities/L301993"
+        which are only relevant at editing time and not otherwise in EntityPublishedSettings.
+    """
     type: NotRequired[str]
 
 class LexemeDict(LexemePublishedSettings, LexemeData):
-    pass
+    """ In the output of wikidata.org/wiki/Special:EntityData/L301993.json,
+        the dictionary represented by the XPath "/entities/L301993".
+    """
 
 class SitelinkDict(TypedDict):
+    """ In the output of wikidata.org/wiki/Special:EntityData/Q1356.json,
+        the dictionaries represented by the XPath "/entities/Q1356/sitelinks/*".
+    """
     site: str
     title: str
     badges: List[Qid]
     url: str
 
 class PropertyData(TypedDict):
+    """ In the output of wikidata.org/wiki/Special:EntityData/P5578.json,
+        those entries in the dictionary represented by the XPath "/entities/P5578"
+        which pertain to informational content.
+    """
     datatype: str
     labels: LemmaDictSet
     descriptions: LemmaDictSet
@@ -214,6 +293,10 @@ class PropertyData(TypedDict):
     claims: StatementDictSet
 
 class ItemData(TypedDict):
+    """ In the output of wikidata.org/wiki/Special:EntityData/Q1356.json,
+        those entries in the dictionary represented by the XPath "/entities/Q1356"
+        which pertain to informational content.
+    """
     labels: LemmaDictSet
     descriptions: LemmaDictSet
     aliases: Dict[LanguageCode, List[LemmaDict]]
@@ -221,15 +304,24 @@ class ItemData(TypedDict):
     sitelinks: Dict[str, SitelinkDict]
 
 class ItemPublishedSettings(EntityPublishedSettings, total=False):
+    """ In the output of wikidata.org/wiki/Special:EntityData/Q1356.json,
+        those entries in the dictionary represented by the XPath "/entities/Q1356"
+        which are only relevant at editing time and not otherwise in EntityPublishedSettings.
+    """
     type: NotRequired[str]
 
 class PropertyDict(ItemPublishedSettings, PropertyData):
-    pass
+    """ In the output of wikidata.org/wiki/Special:EntityData/P5578.json,
+        the dictionary represented by the XPath "/entities/P5578".
+    """
 
 class ItemDict(ItemPublishedSettings, ItemData):
-    pass
+    """ In the output of wikidata.org/wiki/Special:EntityData/Q1356.json,
+        the dictionary represented by the XPath "/entities/Q1356".
+    """
 
 def is_ItemDict(arg: EntityPublishedSettings) -> TypeGuard[ItemDict]:
+    """ Checks that the keys expected for an Item exist. """
     return all(x in arg for x in ["labels", "descriptions", "aliases", "claims", "sitelinks"])
 
 Entity = Union[
@@ -238,3 +330,7 @@ Entity = Union[
     'tfsl.lexemesense.LexemeSense'
 ]
 EntityDict = Union[LexemeDict, LexemeFormDict, LexemeSenseDict]
+
+StatementHolderInput = Union[StatementSet, StatementList]
+
+LanguageOrMT = Union['tfsl.languages.Language', 'tfsl.monolingualtext.MonolingualText']

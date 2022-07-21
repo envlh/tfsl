@@ -1,21 +1,22 @@
+""" Holds the Statement class and a function to build one given a JSON representation of it. """
+
 from collections import defaultdict
 from copy import deepcopy
 from enum import Enum
 from textwrap import indent
-from typing import List, Optional, TypeVar, Union
+from typing import List, Optional, Union
 
 import tfsl.interfaces as I
 import tfsl.claim
 import tfsl.reference
 import tfsl.utils
 
-
 class Rank(Enum):
+    """ Represents the rank of a given statement. """
     Preferred = 1
     Normal = 0
     Deprecated = -1
 
-StatementT = TypeVar('StatementT', bound='Statement')
 class Statement:
     """ Represents a statement, or a claim with accompanying rank, optional qualifiers,
         and optional references.
@@ -24,8 +25,8 @@ class Statement:
                  property_in: I.Pid,
                  value_in: I.ClaimValue,
                  rank: Optional[Rank]=None,
-                 qualifiers: Optional[Union[List[tfsl.claim.Claim], tfsl.reference.ClaimSet]]=None,
-                 references: Optional[List[tfsl.reference.Reference]]=None):
+                 qualifiers: Optional[Union[I.ClaimList, tfsl.reference.ClaimSet]]=None,
+                 references: Optional[I.ReferenceList]=None):
         self.rank: Rank
         if rank is None:
             self.rank = Rank.Normal
@@ -45,7 +46,7 @@ class Statement:
             for arg in qualifiers:
                 self.qualifiers = self.qualifiers.add(arg)
 
-        self.references: List[tfsl.reference.Reference]
+        self.references: I.ReferenceList
         if references is None:
             self.references = []
         else:
@@ -54,8 +55,8 @@ class Statement:
         self.id: Optional[str] = None
         self.qualifiers_order: List[I.Pid] = []
 
-    def __getitem__(self, key: I.Pid) -> List[tfsl.claim.Claim]:
-        if tfsl.utils.matches_property(key):
+    def __getitem__(self, key: str) -> I.ClaimList:
+        if I.is_Pid(key):
             return self.qualifiers.get(key, [])
         raise KeyError
 
@@ -88,6 +89,9 @@ class Statement:
         return NotImplemented
 
     def get_published_settings(self) -> I.StatementDictPublishedSettings:
+        """ Returns a dictionary containing those portions of the Statement JSON dictionary
+            which are only significant at editing time for existing statements.
+        """
         if self.id is not None:
             return {
                 "id": self.id,
@@ -96,6 +100,9 @@ class Statement:
         return {}
 
     def set_published_settings(self, stmt_in: I.StatementDictPublishedSettings) -> None:
+        """ Sets based on a Statement JSON dictionary those variables
+            which are only significant at editing time for existing statements.
+        """
         self.id = stmt_in["id"]
         self.qualifiers_order = stmt_in.get("qualifiers-order", [])
 
@@ -130,6 +137,7 @@ class Statement:
         return base_dict
 
 def build_quals(quals_in: Optional[I.ClaimDictSet] = None) -> tfsl.reference.ClaimSet:
+    """ Builds a set of qualifiers given a JSON dictionary representing it. """
     quals = tfsl.reference.ClaimSet()
     if quals_in is not None:
         for prop in quals_in:
@@ -138,6 +146,7 @@ def build_quals(quals_in: Optional[I.ClaimDictSet] = None) -> tfsl.reference.Cla
     return quals
 
 def build_statement(stmt_in: I.StatementDict) -> Statement:
+    """ Builds a LexemeSense from the JSON dictionary describing it. """
     stmt_rank = Rank.Normal
     if stmt_in["rank"] == 'preferred':
         stmt_rank = Rank.Preferred

@@ -1,3 +1,5 @@
+""" Miscellaneous utility functions. """
+
 import configparser
 import os
 import re
@@ -13,77 +15,79 @@ import tfsl.interfaces as I
 DEFAULT_INDENT = "    "
 WD_PREFIX = "http://www.wikidata.org/entity/"
 
-# TODO: how best to override these for wikibases with custom prefixes?
-def matches_wikibase_object(arg: str) -> Optional[Match[str]]:
-    return re.match(r"^([QPL]\d+$|^L\d+-[FS]\d+)$", arg)
-
 def matches_item(arg: str) -> Optional[Match[str]]:
+    """ TODO: remove in favor of I.is_Qid """
     return re.match(r"^Q\d+$", arg)
 
 def matches_property(arg: str) -> Optional[Match[str]]:
+    """ TODO: remove in favor of I.is_Pid """
     return re.match(r"^P\d+$", arg)
 
 def matches_lexeme(arg: str) -> Optional[Match[str]]:
+    """ TODO: remove in favor of I.is_Lid """
     return re.match(r"^L\d+$", arg)
 
 def matches_form(arg: str) -> Optional[Match[str]]:
+    """ TODO: remove in favor of I.is_LFid """
     return re.match(r"^(L\d+)-(F\d+)$", arg)
 
-def matches_form_suffix(arg: str) -> Optional[Match[str]]:
-    return re.match(r"^F\d+$", arg)
-
 def matches_sense(arg: str) -> Optional[Match[str]]:
+    """ TODO: remove in favor of I.is_LSid """
     return re.match(r"^(L\d+)-(S\d+)$", arg)
 
-def matches_sense_suffix(arg: str) -> Optional[Match[str]]:
-    return re.match(r"^S\d+$", arg)
-
 def prefix_wd(arg: str) -> str:
+    """ Removes the entity prefix from the provided string. """
     return WD_PREFIX + arg
 
 def strip_prefix_wd(arg: str) -> str:
+    """ Removes the entity prefix from the provided string. """
     if arg.startswith(WD_PREFIX):
         return arg[len(WD_PREFIX):]
     return arg
 
 ListT = TypeVar('ListT')
 def add_to_list(references: List[ListT], arg: ListT) -> List[ListT]:
+    """ Adds a ListT to a list of ListTs. """
     newreferences = deepcopy(references)
     newreferences.append(arg)
     return newreferences
 
 def sub_from_list(references: List[ListT], arg: ListT) -> List[ListT]:
+    """ Removes a ListT from a list of ListTs. """
     newreferences = deepcopy(references)
     newreferences = [reference for reference in newreferences if reference != arg]
     return newreferences
 
+external_to_internal_type_mapping = {
+    "commonsMedia": "string",
+    "entity-schema": "string",
+    "external-id": "string",
+    "geo-shape": "string",
+    "globe-coordinate": "globecoordinate",
+    "monolingualtext": "monolingualtext",
+    "quantity": "quantity",
+    "string": "string",
+    "tabular-data": "string",
+    "time": "time",
+    "url": "string",
+    "wikibase-item": "wikibase-entityid",
+    "wikibase-property": "wikibase-entityid",
+    "math": "string",
+    "wikibase-lexeme": "wikibase-entityid",
+    "wikibase-form": "wikibase-entityid",
+    "wikibase-sense": "wikibase-entityid",
+    "musical-notation": "string"
+}
+
 @lru_cache
 def values_type(prop: str) -> str:
     # TODO: rewrite better and make extensible
-    mapping = {
-        "commonsMedia": "string",
-        "entity-schema": "string",
-        "external-id": "string",
-        "geo-shape": "string",
-        "globe-coordinate": "globecoordinate",
-        "monolingualtext": "monolingualtext",
-        "quantity": "quantity",
-        "string": "string",
-        "tabular-data": "string",
-        "time": "time",
-        "url": "string",
-        "wikibase-item": "wikibase-entityid",
-        "wikibase-property": "wikibase-entityid",
-        "math": "string",
-        "wikibase-lexeme": "wikibase-entityid",
-        "wikibase-form": "wikibase-entityid",
-        "wikibase-sense": "wikibase-entityid",
-        "musical-notation": "string"
-    }
-    return mapping[values_datatype(prop)]
+    """ Returns the internal datatype of the provided property. """
+    return external_to_internal_type_mapping[values_datatype(prop)]
 
 @lru_cache
 def values_datatype(prop: str) -> str:
+    """ Returns the outward-facing datatype of the provided property. """
     # TODO: rewrite better
     prop_response = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
     prop_response_json = prop_response.json()
@@ -106,9 +110,11 @@ def get_filename(entity_name: str) -> str:
     return os.path.join(cache_path, f"{entity_name}.json")
 
 def is_novalue(value: Any) -> bool:
+    """ Checks that a value is a novalue. """
     return value is False
 
 def is_somevalue(value: Any) -> bool:
+    """ Checks that a value is a somevalue. """
     return value is True
 
 cache_path, time_to_live = read_config()
