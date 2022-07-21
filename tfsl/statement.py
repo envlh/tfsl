@@ -34,7 +34,16 @@ class Statement:
             self.rank = rank
 
         self.property: I.Pid = property_in
-        self.value: I.ClaimValue = deepcopy(value_in)
+        self.value: I.ClaimValue
+        if tfsl.utils.is_novalue(value_in) or tfsl.utils.is_somevalue(value_in):
+            self.value = value_in
+        else:
+            value_type = type(value_in)
+            property_type = tfsl.claim.type_string_to_type[tfsl.utils.values_type(self.property)]
+            if property_type == value_type:
+                self.value = value_in
+            else:
+                raise TypeError(f"Providing {value_type} as {self.property} value where {property_type} expected")
 
         self.qualifiers: tfsl.reference.ClaimSet = tfsl.reference.ClaimSet()
 
@@ -155,7 +164,6 @@ def build_statement(stmt_in: I.StatementDict) -> Statement:
 
     stmt_mainsnak = stmt_in["mainsnak"]
     stmt_property = stmt_mainsnak["property"]
-    stmt_datatype = stmt_mainsnak["datatype"]
     stmt_value: I.ClaimValue
     if stmt_mainsnak["snaktype"] == 'novalue':
         stmt_value = False
