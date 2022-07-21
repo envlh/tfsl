@@ -2,6 +2,7 @@
 
 import datetime
 from functools import singledispatch
+from typing import Union
 from typing_extensions import TypeGuard
 
 import tfsl.interfaces as I
@@ -32,17 +33,17 @@ class TimeValue:
         return base_dict
 
 @singledispatch
-def toTimeValue(obj_in: object) -> TimeValue:
+def toTimeValue(obj_in: object, precision: int=11) -> TimeValue:
     """ Intended to convert arbitrary objects to TimeValues. """
     raise ValueError("Can't convert " + str(type(obj_in)) + " to TimeValue")
 
-@toTimeValue.register
-def _(obj_in: datetime.datetime) -> TimeValue:
-    raise NotImplementedError
-
-@toTimeValue.register
-def _(obj_in: datetime.date) -> TimeValue:
-    raise NotImplementedError
+@toTimeValue.register(datetime.date)
+@toTimeValue.register(datetime.datetime)
+def _(obj_in: Union[datetime.datetime, datetime.date], precision: int=11) -> TimeValue:
+    if precision > 11:
+        raise ValueError("Precisions smaller than day are not supported")
+    timestr = obj_in.strftime("+%Y-%m-%dT00:00:00Z") + '/' + str(precision)
+    return TimeValue(timestr, precision=precision)
 
 def is_timevalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.TimeValueDict]:
     """ Checks that the keys expected for a TimeValue exist. """
