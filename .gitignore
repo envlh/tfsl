@@ -139,3 +139,7 @@ cython_debug/
 
 .vscode
 config.ini
+
+.idea
+data
+account.json
