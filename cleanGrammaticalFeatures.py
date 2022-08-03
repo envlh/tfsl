@@ -25,7 +25,7 @@ def apply_changes(lexemes):
     account = utils.load_json_file('account.json')
     session = tfsl.WikibaseSession(account['username'], account['password'])
     for lexeme in lexemes:
-        session.push(lexeme, "cleaning grammatical features")
+        session.push(lexeme, "cleaning grammatical features", 5)
         print('Lexeme {} edited!'.format(lexeme.lexeme_id))
 
 
