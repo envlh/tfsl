@@ -19,7 +19,7 @@ def load_json_file(filename):
 
 
 def fetch_url(url):
-    return requests.get(url, headers={'User-Agent': 'elise/0.1'}, allow_redirects=False)
+    return requests.get(url, headers={'User-Agent': 'envlh/0.1'}, allow_redirects=False)
 
 
 def fetch_url_json(url):
