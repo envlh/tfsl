@@ -38,7 +38,11 @@ def main():
         lexeme = tfsl.L(lexeme_id)
         if clean_lexeme(lexeme, replacements):
             changed_lexemes.append(lexeme)
-    apply_changes(changed_lexemes)
+    if changed_lexemes:
+        print('{} lexemes to clean...'.format(len(changed_lexemes)))
+        apply_changes(changed_lexemes)
+    else:
+        print('No lexeme to clean!')
 
 
 if __name__ == '__main__':
