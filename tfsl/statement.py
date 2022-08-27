@@ -145,6 +145,39 @@ class Statement:
         base_dict["references"] = [reference.__jsonout__() for reference in self.references]
         return base_dict
 
+    def get_ItemValue(self,
+                      novalue: Optional[tfsl.itemvalue.ItemValue]=None,
+                      somevalue: Optional[tfsl.itemvalue.ItemValue]=None) -> tfsl.itemvalue.ItemValue:
+        if isinstance(self.value, tfsl.itemvalue.ItemValue):
+            return self.value
+        if self.value is True and somevalue is not None:
+            return somevalue
+        if self.value is False and novalue is not None:
+            return novalue
+        raise TypeError(f"{self.property} statement did not yield an ItemValue")
+
+    def get_MonolingualText(self,
+                      novalue: Optional[tfsl.monolingualtext.MonolingualText]=None,
+                      somevalue: Optional[tfsl.monolingualtext.MonolingualText]=None) -> tfsl.monolingualtext.MonolingualText:
+        if isinstance(self.value, tfsl.monolingualtext.MonolingualText):
+            return self.value
+        if self.value is True and somevalue is not None:
+            return somevalue
+        if self.value is False and novalue is not None:
+            return novalue
+        raise TypeError(f"{self.property} statement did not yield a MonolingualText")
+
+    def get_str(self,
+                      novalue: Optional[str]=None,
+                      somevalue: Optional[str]=None) -> str:
+        if isinstance(self.value, str):
+            return self.value
+        if self.value is True and somevalue is not None:
+            return somevalue
+        if self.value is False and novalue is not None:
+            return novalue
+        raise TypeError(f"{self.property} statement did not yield a string")
+
 def build_quals(quals_in: Optional[I.ClaimDictSet] = None) -> tfsl.reference.ClaimSet:
     """ Builds a set of qualifiers given a JSON dictionary representing it. """
     quals = tfsl.reference.ClaimSet()
@@ -170,7 +203,8 @@ def build_statement(stmt_in: I.StatementDict) -> Statement:
     elif stmt_mainsnak["snaktype"] == 'somevalue':
         stmt_value = True
     else:
-        stmt_value = tfsl.claim.build_value(stmt_mainsnak["datavalue"])
+        stmt_datavalue = stmt_mainsnak["datavalue"]
+        stmt_value = tfsl.claim.build_value(stmt_datavalue["value"])
     stmt_quals = build_quals(stmt_in.get("qualifiers", None))
     stmt_refs = []
     if stmt_in.get("references", False):

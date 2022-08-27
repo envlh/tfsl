@@ -60,9 +60,9 @@ class Item:
         self.lastrevid: Optional[int] = None
         self.modified: Optional[str] = None
         self.item_type: Optional[str] = None
-        self.item_id: Optional[str] = None
+        self.item_id: Optional[I.Qid] = None
 
-    def get_published_settings(self) -> I.LexemePublishedSettings:
+    def get_published_settings(self) -> I.ItemPublishedSettings:
         """ Returns a dictionary containing those portions of the Item JSON dictionary
             which are only significant at editing time for existing items.
         """
@@ -78,7 +78,7 @@ class Item:
             }
         return {}
 
-    def set_published_settings(self, item_in: I.LexemePublishedSettings) -> None:
+    def set_published_settings(self, item_in: I.ItemPublishedSettings) -> None:
         """ Sets based on an Item JSON dictionary those variables
             which are only significant at editing time for existing items.
         """
@@ -198,7 +198,7 @@ def retrieve_item_json(lid_in: Union[int, I.Qid]) -> I.ItemDict:
     """ Retrieves the JSON for the item with the given Qid. """
     lid: I.Qid
     if isinstance(lid_in, int):
-        lid = I.Qid(I.EntityId('Q'+str(lid_in)))
+        lid = I.Qid('Q'+str(lid_in))
     elif I.is_Qid(lid_in):
         lid = lid_in
     filename = tfsl.utils.get_filename(lid)

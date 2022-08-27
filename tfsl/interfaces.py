@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import DefaultDict, Dict, List, NewType, Optional, Tuple, TypedDict, Union, TYPE_CHECKING
+from typing import Any, DefaultDict, Dict, List, NewType, Optional, Tuple, TypedDict, Union, TYPE_CHECKING
 from typing_extensions import NotRequired, TypeGuard
 
 if TYPE_CHECKING:
@@ -19,42 +19,54 @@ if TYPE_CHECKING:
     import tfsl.statement
     import tfsl.timevalue
 
-EntityId = NewType('EntityId', str)
+Qid_regex = re.compile(r"^Q\d+$")
+Pid_regex = re.compile(r"^P\d+$")
+Lid_regex = re.compile(r"^L\d+$")
+Fid_regex = re.compile(r"^F\d+$")
+Sid_regex = re.compile(r"^S\d+$")
+LFid_regex = re.compile(r"^(L\d+)-(F\d+)$")
+LSid_regex = re.compile(r"^(L\d+)-(S\d+)$")
 
 LanguageCode = NewType('LanguageCode', str)
-Qid = NewType('Qid', EntityId)
+
+Qid = NewType('Qid', str)
 def is_Qid(arg: str) -> TypeGuard[Qid]:
     """ Checks that a string is a Qid. """
-    return re.match(r"^Q\d+$", arg) is not None
+    return Qid_regex.match(arg) is not None
+def isinstance_Qid(arg: Any) -> TypeGuard[Qid]:
+    """ The above, but with an instance check beforehand.
+        Use only when the arg is not guaranteed to be a str.
+    """
+    return isinstance(arg, str) and is_Qid(arg)
 
-Pid = NewType('Pid', EntityId)
+Pid = NewType('Pid', str)
 def is_Pid(arg: str) -> TypeGuard[Pid]:
     """ Checks that a string is a Pid. """
-    return re.match(r"^P\d+$", arg) is not None
+    return Pid_regex.match(arg) is not None
 
-Lid = NewType('Lid', EntityId)
+Lid = NewType('Lid', str)
 def is_Lid(arg: str) -> TypeGuard[Lid]:
     """ Checks that a string is an Lid. """
-    return re.match(r"^L\d+$", arg) is not None
+    return Lid_regex.match(arg) is not None
 
 Fid = NewType('Fid', str)
 def is_Fid(arg: str) -> TypeGuard[Fid]:
     """ Checks that a string is an Fid. """
-    return re.match(r"^F\d+$", arg) is not None
+    return Fid_regex.match(arg) is not None
 
 Sid = NewType('Sid', str)
 def is_Sid(arg: str) -> TypeGuard[Sid]:
     """ Checks that a string is an Sid. """
-    return re.match(r"^S\d+$", arg) is not None
+    return Sid_regex.match(arg) is not None
 
-LFid = NewType('LFid', EntityId)
+LFid = NewType('LFid', str)
 def is_LFid(arg: str) -> TypeGuard[LFid]:
     """ Checks that a string is an LFid. """
-    return re.match(r"^(L\d+)-(F\d+)$", arg) is not None
+    return LFid_regex.match(arg) is not None
 
 def split_LFid(arg: LFid) -> Optional[Tuple[Lid, Fid]]:
     """ Splits an LFid into the Lid part and the Fid part. """
-    if matched_parts := re.match(r"^(L\d+)-(F\d+)$", arg):
+    if matched_parts := LFid_regex.match(arg):
         lid_part: Optional[str] = matched_parts.group(1)
         fid_part: Optional[str] = matched_parts.group(2)
         if lid_part is not None and fid_part is not None:
@@ -62,20 +74,24 @@ def split_LFid(arg: LFid) -> Optional[Tuple[Lid, Fid]]:
                 return lid_part, fid_part
     return None
 
-LSid = NewType('LSid', EntityId)
+LSid = NewType('LSid', str)
 def is_LSid(arg: str) -> TypeGuard[LSid]:
     """ Checks that a string is an LSid. """
-    return re.match(r"^(L\d+)-(S\d+)$", arg) is not None
+    return LSid_regex.match(arg) is not None
 
 def split_LSid(arg: LSid) -> Optional[Tuple[Lid, Sid]]:
     """ Splits an LSid into the Lid part and the Sid part. """
-    if matched_parts := re.match(r"^(L\d+)-(S\d+)$", arg):
+    if matched_parts := LSid_regex.match(arg):
         lid_part: Optional[str] = matched_parts.group(1)
         sid_part: Optional[str] = matched_parts.group(2)
         if lid_part is not None and sid_part is not None:
             if is_Lid(lid_part) and is_Sid(sid_part):
                 return lid_part, sid_part
     return None
+
+EntityId = Union[Qid, Pid, Lid, LFid, LSid]
+def is_EntityId(arg: str) -> TypeGuard[EntityId]:
+    return is_Qid(arg) or is_Lid(arg) or is_LSid(arg) or is_LFid(arg) or is_Pid(arg)
 
 class MonolingualTextDict(TypedDict):
     """ Representation of the Wikibase 'monolingualtext' datatype. """
@@ -90,7 +106,7 @@ class CoordinateValueDict(TypedDict):
     precision: float
     globe: str
 
-class QuantityValueDict(TypedDict, total=False):
+class QuantityValueDict(TypedDict):
     """ Representation of the Wikibase 'quantity' datatype. """
     amount: float
     unit: str
@@ -106,7 +122,7 @@ class TimeValueDict(TypedDict):
     precision: int
     calendarmodel: str
 
-ItemValueDict = TypedDict('ItemValueDict', {'entity-type': str, 'id': EntityId, 'numeric-id': NotRequired[int]}, total=False)
+ItemValueDict = TypedDict('ItemValueDict', {'entity-type': str, 'id': EntityId, 'numeric-id': NotRequired[int]})
 
 ClaimDictValueDictionary = Union[CoordinateValueDict, MonolingualTextDict, ItemValueDict, QuantityValueDict, TimeValueDict]
 ClaimDictValue = Union[str, ClaimDictValueDictionary]
@@ -246,7 +262,6 @@ class EntityPublishedSettings(TypedDict, total=False):
     title: NotRequired[str]
     lastrevid: NotRequired[int]
     modified: NotRequired[str]
-    id: NotRequired[str]
 
 class LexemeData(TypedDict):
     """ In the output of wikidata.org/wiki/Special:EntityData/L301993.json,
@@ -265,6 +280,7 @@ class LexemePublishedSettings(EntityPublishedSettings, total=False):
         those entries in the dictionary represented by the XPath "/entities/L301993"
         which are only relevant at editing time and not otherwise in EntityPublishedSettings.
     """
+    id: NotRequired[Lid]
     type: NotRequired[str]
 
 class LexemeDict(LexemePublishedSettings, LexemeData):
@@ -308,6 +324,7 @@ class ItemPublishedSettings(EntityPublishedSettings, total=False):
         those entries in the dictionary represented by the XPath "/entities/Q1356"
         which are only relevant at editing time and not otherwise in EntityPublishedSettings.
     """
+    id: NotRequired[Qid]
     type: NotRequired[str]
 
 class PropertyDict(ItemPublishedSettings, PropertyData):
@@ -332,5 +349,7 @@ Entity = Union[
 EntityDict = Union[LexemeDict, LexemeFormDict, LexemeSenseDict]
 
 StatementHolderInput = Union[StatementSet, StatementList]
+
+MonolingualTextHolderInput = Union['tfsl.monolingualtext.MonolingualText', MonolingualTextList]
 
 LanguageOrMT = Union['tfsl.languages.Language', 'tfsl.monolingualtext.MonolingualText']

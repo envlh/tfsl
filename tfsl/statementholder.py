@@ -2,7 +2,6 @@
 
 from collections import defaultdict
 from copy import deepcopy
-from functools import singledispatchmethod
 from textwrap import indent
 from typing import Optional
 
@@ -74,17 +73,9 @@ class StatementHolder(object):
         raise TypeError(f"Can't check for {type(arg)} in StatementHolder")
 
     def __getitem__(self, arg: object) -> I.StatementList:
-        return self.get_st(arg)
-
-    @singledispatchmethod
-    def get_st(self, arg: object) -> I.StatementList:
-        """ Dispatches __getitem__. """
-        raise TypeError(f"Can't get {type(arg)} from StatementHolder")
-
-    @get_st.register
-    def _(self, arg: str) -> I.StatementList:
-        if I.is_Pid(arg):
-            return self.statements[arg]
+        if isinstance(arg, str):
+            if I.is_Pid(arg):
+                return self.statements[arg]
         raise KeyError(f"String {arg} is not a property")
 
     def __str__(self) -> str:

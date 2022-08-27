@@ -1,7 +1,7 @@
 """ Holds the LexemeForm class and a function to build one given a JSON representation of it. """
 
 from functools import singledispatchmethod
-from typing import List, Optional, Set, Union
+from typing import List, Optional, Set, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.languages
@@ -57,22 +57,19 @@ class LexemeForm:
         if "id" in form_in:
             self.id = form_in["id"]
 
+    @overload
+    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+
     def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
-        return self.getitem(arg)
-
-    @singledispatchmethod
-    def getitem(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
-        """ Dispatches __getitem__. """
+        if isinstance(arg, str):
+            return self.statements[arg]
+        elif isinstance(arg, tfsl.languages.Language) or isinstance(arg, tfsl.monolingualtext.MonolingualText):
+            return self.representations[arg]
         raise KeyError(f"Can't get {type(arg)} from LexemeForm")
-
-    @getitem.register
-    def _(self, arg: str) -> I.StatementList:
-        return self.statements[arg]
-
-    @getitem.register(tfsl.monolingualtext.MonolingualText)
-    @getitem.register(tfsl.languages.Language)
-    def _(self, arg: I.LanguageOrMT) -> tfsl.monolingualtext.MonolingualText:
-        return self.representations[arg]
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
         """Shamelessly named after the keyword used on Wikidata to look for a statement."""

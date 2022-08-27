@@ -17,7 +17,7 @@ def rep_language_is(desired_language: tfsl.languages.Language) -> Callable[[tfsl
 class MonolingualTextHolder(object):
     """ Holds a set of strings with languages attached to them. """
     def __init__(self,
-                 texts: Optional[Union[tfsl.monolingualtext.MonolingualText, I.MonolingualTextList]]=None,
+                 texts: Optional[I.MonolingualTextHolderInput]=None,
                  removed_texts: Optional[I.MonolingualTextList]=None):
         super().__init__()
 

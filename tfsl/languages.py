@@ -16,7 +16,7 @@ class Language:
     def __init__(self, code: str, item: str):
         self.code = I.LanguageCode(code)
         if I.is_Qid(item):
-            self.item = item
+            self.item: I.Qid = item
         else:
             raise ValueError(f"{item} is not a Qid")
 

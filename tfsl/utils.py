@@ -2,7 +2,6 @@
 
 import configparser
 import os
-import re
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
@@ -14,26 +13,6 @@ import tfsl.interfaces as I
 
 DEFAULT_INDENT = "    "
 WD_PREFIX = "http://www.wikidata.org/entity/"
-
-def matches_item(arg: str) -> Optional[Match[str]]:
-    """ TODO: remove in favor of I.is_Qid """
-    return re.match(r"^Q\d+$", arg)
-
-def matches_property(arg: str) -> Optional[Match[str]]:
-    """ TODO: remove in favor of I.is_Pid """
-    return re.match(r"^P\d+$", arg)
-
-def matches_lexeme(arg: str) -> Optional[Match[str]]:
-    """ TODO: remove in favor of I.is_Lid """
-    return re.match(r"^L\d+$", arg)
-
-def matches_form(arg: str) -> Optional[Match[str]]:
-    """ TODO: remove in favor of I.is_LFid """
-    return re.match(r"^(L\d+)-(F\d+)$", arg)
-
-def matches_sense(arg: str) -> Optional[Match[str]]:
-    """ TODO: remove in favor of I.is_LSid """
-    return re.match(r"^(L\d+)-(S\d+)$", arg)
 
 def prefix_wd(arg: str) -> str:
     """ Removes the entity prefix from the provided string. """
@@ -81,7 +60,6 @@ external_to_internal_type_mapping = {
 
 @lru_cache
 def values_type(prop: str) -> str:
-    # TODO: rewrite better and make extensible
     """ Returns the internal datatype of the provided property. """
     return external_to_internal_type_mapping[values_datatype(prop)]
 

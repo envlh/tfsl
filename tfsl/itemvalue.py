@@ -1,5 +1,6 @@
 """ Holder of the ItemValue class and a function to build one given a JSON representation of it. """
 
+from typing import Optional
 from typing_extensions import TypeGuard
 
 import tfsl.interfaces as I
@@ -7,18 +8,23 @@ import tfsl.interfaces as I
 class ItemValue:
     """ Representation of a Wikibase entity of some sort. """
     def __init__(self, item_id: I.EntityId):
-        self.id = item_id
         self.type: str
+        self.id: I.EntityId
         if I.is_Qid(item_id):
             self.type = 'item'
+            self.id = I.Qid(item_id)
         elif I.is_Pid(item_id):
             self.type = 'property'
+            self.id = I.Pid(item_id)
         elif I.is_Lid(item_id):
             self.type = 'lexeme'
+            self.id = I.Lid(item_id)
         elif I.is_LFid(item_id):
             self.type = 'form'
+            self.id = I.LFid(item_id)
         elif I.is_LSid(item_id):
             self.type = 'sense'
+            self.id = I.LSid(item_id)
 
     def __eq__(self, rhs: object) -> bool:
         if isinstance(rhs, str):
@@ -41,6 +47,27 @@ class ItemValue:
         if(self.type in ['item', 'property', 'lexeme']):
             base_dict["numeric-id"] = int(self.id[1:])
         return base_dict
+
+    def get_Qid(self, otherwise: Optional[I.Qid]=None) -> I.Qid:
+        if I.is_Qid(self.id):
+            return self.id
+        elif otherwise is not None:
+            return otherwise
+        raise TypeError(f"{self.id} is not an LFid")
+
+    def get_LFid(self, otherwise: Optional[I.LFid]=None) -> I.LFid:
+        if I.is_LFid(self.id):
+            return self.id
+        elif otherwise is not None:
+            return otherwise
+        raise TypeError(f"{self.id} is not an LFid")
+
+    def get_LSid(self, otherwise: Optional[I.LSid]=None) -> I.LSid:
+        if I.is_LSid(self.id):
+            return self.id
+        elif otherwise is not None:
+            return otherwise
+        raise TypeError(f"{self.id} is not an LFid")
 
 def is_itemvalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.ItemValueDict]:
     """ Checks that the keys expected for an ItemValue exist. """

@@ -1,7 +1,7 @@
 """ Holds the LexemeSense class and a function to build one given a JSON representation of it. """
 
 from functools import singledispatchmethod
-from typing import Optional, Union
+from typing import Optional, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.monolingualtext
@@ -47,24 +47,19 @@ class LexemeSense:
         if "id" in sense_in:
             self.id = sense_in["id"]
 
-    def __getitem__(self, arg: object) -> Union[tfsl.monolingualtext.MonolingualText,
-                                    I.StatementList]:
-        return self.getitem(arg)
+    @overload
+    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
 
-    @singledispatchmethod
-    def getitem(self, arg: object) -> Union[tfsl.monolingualtext.MonolingualText,
-                                    I.StatementList]:
-        """ Dispatches __getitem__. """
-        raise KeyError(f"Can't get {type(arg)} from LexemeSense")
-
-    @getitem.register
-    def _(self, arg: str) -> I.StatementList:
-        return self.statements[arg]
-
-    @getitem.register(tfsl.monolingualtext.MonolingualText)
-    @getitem.register(tfsl.languages.Language)
-    def _(self, arg: I.LanguageOrMT) -> tfsl.monolingualtext.MonolingualText:
-        return self.glosses[arg]
+    def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
+        if isinstance(arg, str):
+            return self.statements[arg]
+        elif isinstance(arg, tfsl.languages.Language) or isinstance(arg, tfsl.monolingualtext.MonolingualText):
+            return self.glosses[arg]
+        raise KeyError(f"Can't get {type(arg)} from LexemeForm")
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
         """Shamelessly named after the keyword used on Wikidata to look for a statement."""

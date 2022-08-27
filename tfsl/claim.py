@@ -1,6 +1,6 @@
 """ Holder of the Claim class and a function to build one given a JSON representation of it. """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.coordinatevalue
@@ -80,10 +80,54 @@ class Claim:
             claimdict_out["datavalue"] = datavalue_out
         return claimdict_out
 
-def build_value(value_in: I.ClaimDictDatavalue) -> I.ClaimValue:
+    def get_ItemValue(self,
+                      novalue: Optional[tfsl.itemvalue.ItemValue]=None,
+                      somevalue: Optional[tfsl.itemvalue.ItemValue]=None) -> tfsl.itemvalue.ItemValue:
+        if isinstance(self.value, tfsl.itemvalue.ItemValue):
+            return self.value
+        if self.value is True and somevalue is not None:
+            return somevalue
+        if self.value is False and novalue is not None:
+            return novalue
+        raise TypeError(f"{self.property} statement did not yield an ItemValue")
+
+    def get_MonolingualText(self,
+                      novalue: Optional[tfsl.monolingualtext.MonolingualText]=None,
+                      somevalue: Optional[tfsl.monolingualtext.MonolingualText]=None) -> tfsl.monolingualtext.MonolingualText:
+        if isinstance(self.value, tfsl.monolingualtext.MonolingualText):
+            return self.value
+        if self.value is True and somevalue is not None:
+            return somevalue
+        if self.value is False and novalue is not None:
+            return novalue
+        raise TypeError(f"{self.property} statement did not yield a MonolingualText")
+
+    def get_str(self,
+                      novalue: Optional[str]=None,
+                      somevalue: Optional[str]=None) -> str:
+        if isinstance(self.value, str):
+            return self.value
+        if self.value is True and somevalue is not None:
+            return somevalue
+        if self.value is False and novalue is not None:
+            return novalue
+        raise TypeError(f"{self.property} statement did not yield a string")
+
+@overload
+def build_value(actual_value: I.QuantityValueDict) -> tfsl.quantityvalue.QuantityValue: ...
+@overload
+def build_value(actual_value: I.MonolingualTextDict) -> tfsl.monolingualtext.MonolingualText: ...
+@overload
+def build_value(actual_value: I.CoordinateValueDict) -> tfsl.coordinatevalue.CoordinateValue: ...
+@overload
+def build_value(actual_value: I.TimeValueDict) -> tfsl.timevalue.TimeValue: ...
+@overload
+def build_value(actual_value: I.ItemValueDict) -> tfsl.itemvalue.ItemValue: ...
+@overload
+def build_value(actual_value: str) -> str: ...
+
+def build_value(actual_value: Union[str, I.ClaimDictValueDictionary]) -> I.ClaimValue:
     """ Builds a ClaimValue given the Wikibase JSON for one. """
-    value_type = value_in["type"]
-    actual_value = value_in["value"]
     if isinstance(actual_value, str):
         return actual_value
     elif tfsl.itemvalue.is_itemvalue(actual_value):
@@ -96,8 +140,7 @@ def build_value(value_in: I.ClaimDictDatavalue) -> I.ClaimValue:
         return tfsl.quantityvalue.build_quantityvalue(actual_value)
     elif tfsl.timevalue.is_timevalue(actual_value):
         return tfsl.timevalue.build_timevalue(actual_value)
-    else:
-        raise ValueError(f"Type {value_type} is not supported yet!")
+    raise ValueError(f"Attempting to build value of unsupported type")
 
 def build_claim(claim_in: I.ClaimDict) -> Claim:
     """ Builds a Claim given the Wikibase JSON for one. """
@@ -110,7 +153,8 @@ def build_claim(claim_in: I.ClaimDict) -> Claim:
     elif claim_in["snaktype"] == 'somevalue':
         claim_value = True
     else:
-        claim_value = build_value(claim_in["datavalue"])
+        claim_datavalue = claim_in["datavalue"]
+        claim_value = build_value(claim_datavalue["value"])
 
     claim_out = Claim(claim_prop, claim_value)
     claim_out.snaktype = claim_in["snaktype"]

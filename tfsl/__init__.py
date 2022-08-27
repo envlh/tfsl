@@ -18,4 +18,5 @@ from tfsl.reference import Reference as Reference
 from tfsl.statement import Statement as Statement
 from tfsl.statementholder import StatementHolder as StatementHolder
 from tfsl.timevalue import TimeValue as TimeValue
+import tfsl.interfaces as interfaces
 import tfsl.utils as utils

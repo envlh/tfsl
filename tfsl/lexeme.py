@@ -4,9 +4,8 @@ import json
 import os
 import os.path
 import time
-from functools import singledispatchmethod
 from textwrap import indent
-from typing import Optional, List, Union
+from typing import Collection, Optional, List, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.auth
@@ -26,13 +25,12 @@ os.makedirs(default_lexeme_cache_path,exist_ok=True)
 class Lexeme:
     """ Container for a Wikidata lexeme. """
     def __init__(self,
-                lemmata: Union[tfsl.monolingualtextholder.MonolingualTextHolder, I.MonolingualTextList],
+                lemmata: Union[tfsl.monolingualtextholder.MonolingualTextHolder, I.MonolingualTextHolderInput],
                 lang_in: tfsl.languages.Language,
                 cat_in: I.Qid,
                 statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None,
                 senses: Optional[I.LexemeSenseList]=None,
                 forms: Optional[I.LexemeFormList]=None):
-        # TODO: better validation/type hinting and argument fallbacks
         super().__init__()
         if isinstance(lemmata, tfsl.monolingualtextholder.MonolingualTextHolder):
             self.lemmata = lemmata
@@ -63,7 +61,7 @@ class Lexeme:
         self.lastrevid: Optional[int] = None
         self.modified: Optional[str] = None
         self.lexeme_type: Optional[str] = None
-        self.lexeme_id: Optional[str] = None
+        self.lexeme_id: Optional[I.Lid] = None
 
     def get_published_settings(self) -> I.LexemePublishedSettings:
         """ Returns a dictionary containing those portions of the Lexeme JSON dictionary
@@ -157,7 +155,7 @@ class Lexeme:
             return lexeme_out
         raise NotImplementedError(f"Can't subtract {type(arg)} from Lexeme")
 
-    def get_forms(self, inflections: Optional[List[I.Qid]]=None, exclusions: Optional[List[I.Qid]]=None) -> I.LexemeFormList:
+    def get_forms(self, inflections: Optional[Collection[I.Qid]]=None, exclusions: Optional[Collection[I.Qid]]=None) -> I.LexemeFormList:
         """ Returns those forms on the lexeme with the provided inflectional features,
             excluding those listed in the exclusions list.
         """
@@ -178,39 +176,59 @@ class Lexeme:
         """ Returns the language of the lexeme. """
         return self.language
 
-    def __getitem__(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
-        return self.getitem(key)
+    @overload
+    def __getitem__(self, key: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, key: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, key: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, key: I.LFid) -> tfsl.lexemeform.LexemeForm: ...
+    @overload
+    def __getitem__(self, key: I.LSid) -> tfsl.lexemesense.LexemeSense: ...
+    @overload
+    def __getitem__(self, key: I.Fid) -> tfsl.lexemeform.LexemeForm: ...
+    @overload
+    def __getitem__(self, key: I.Sid) -> tfsl.lexemesense.LexemeSense: ...
 
-    @singledispatchmethod
-    def getitem(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
-        """ Dispatches __getitem__. """
+    def __getitem__(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
+        if isinstance(key, tfsl.languages.Language) or isinstance(key, tfsl.monolingualtext.MonolingualText):
+            return self.lemmata[key]
+        elif isinstance(key, str):
+            return self.getitem_str(key)
+        elif isinstance(key, tfsl.itemvalue.ItemValue):
+            return self.getitem_str(key.id)
         raise TypeError(f"Can't get {type(key)} from Lexeme")
 
-    @getitem.register(tfsl.languages.Language)
-    @getitem.register(tfsl.monolingualtext.MonolingualText)
-    def _(self, key: I.LanguageOrMT) -> tfsl.monolingualtext.MonolingualText:
-        return self.lemmata[key]
+    def getitem_pid(self, key: I.Pid) -> I.StatementList:
+        return self.statements[key]
 
-    @getitem.register
-    def _(self, key: str) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]:
-        def id_matches_key(obj: Union[tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]) -> bool:
-            return obj.id == key
+    def getitem_fid(self, key: I.LFid) -> tfsl.lexemeform.LexemeForm:
+        for form in self.forms:
+            if form.id == key:
+                return form
+        raise KeyError
 
+    def getitem_sid(self, key: I.LSid) -> tfsl.lexemesense.LexemeSense:
+        for sense in self.senses:
+            if sense.id == key:
+                return sense
+        raise KeyError
+
+    def getitem_str(self, key: str) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]:
+        """ Common handling of __getitem__ for inputs as strings or the ids of ItemValues. """
         if I.is_Pid(key):
-            return self.statements[key]
-        if I.is_LFid(key):
-            return next(filter(id_matches_key, self.forms))
-        if I.is_LSid(key):
-            return next(filter(id_matches_key, self.senses))
-
-        if self.lexeme_id is not None:
-            thing = self.lexeme_id
-            def id_matches_key_suffix(obj: Union[tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]) -> bool:
-                return obj.id == '-'.join([thing, key])
-            if I.is_Fid(key):
-                return next(filter(id_matches_key_suffix, self.forms))
-            if I.is_Sid(key):
-                return next(filter(id_matches_key_suffix, self.senses))
+            return self.getitem_pid(key)
+        elif I.is_LFid(key):
+            return self.getitem_fid(key)
+        elif I.is_LSid(key):
+            return self.getitem_sid(key)
+        elif self.lexeme_id is not None:
+            new_key = '-'.join([self.lexeme_id, key])
+            if I.is_LFid(new_key):
+                return self.getitem_fid(new_key)
+            elif I.is_LSid(new_key):
+                return self.getitem_sid(new_key)
         raise KeyError
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
@@ -286,11 +304,22 @@ def build_lexeme(lexeme_in: I.LexemeDict) -> Lexeme:
 
 # pylint: disable=invalid-name
 
-def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid]) -> Lexeme:
+# TODO: define L_
+
+def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid, tfsl.itemvalue.ItemValue]) -> Lexeme:
     """ Retrieves and returns the lexeme with the provided Lid. """
     lid: I.Lid
     if isinstance(lid_in, int):
-        lid = I.Lid(I.EntityId('L'+str(lid_in)))
+        lid = I.Lid('L'+str(lid_in))
+    elif isinstance(lid_in, tfsl.itemvalue.ItemValue):
+        if lid_in.type == "lexeme" and I.is_Lid(lid_in.id):
+            lid = lid_in.id
+        if lid_in.type == "form" and I.is_LFid(lid_in.id):
+            if split_lfid := I.split_LFid(lid_in.id):
+                lid, _ = split_lfid
+        if lid_in.type == "sense" and I.is_LSid(lid_in.id):
+            if split_lsid := I.split_LSid(lid_in.id):
+                lid, _ = split_lsid
     elif I.is_LSid(lid_in):
         if split_lsid := I.split_LSid(lid_in):
             lid, _ = split_lsid
