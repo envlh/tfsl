@@ -1,6 +1,7 @@
 """ Miscellaneous utility functions. """
 
 import configparser
+import json
 import os
 from copy import deepcopy
 from functools import lru_cache
@@ -67,12 +68,20 @@ def values_type(prop: str) -> str:
 def values_datatype(prop: str) -> str:
     """ Returns the outward-facing datatype of the provided property. """
     # TODO: rewrite better
-    prop_response = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
-    prop_response_json = prop_response.json()
-    if isinstance(prop_response_json, dict):
-        prop_data: I.PropertyDict = prop_response_json["entities"][prop]
-        return prop_data["datatype"]
-    raise ValueError(f"Response from retrieving {prop} not valid JSON")
+    filename = get_filename(prop)
+    try:
+        with open(filename, encoding="utf-8") as fileptr:
+            prop_data = json.load(fileptr)
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
+        prop_response = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
+        prop_response_json = prop_response.json()
+        if isinstance(prop_response_json, dict):
+            prop_data: I.PropertyDict = prop_response_json["entities"][prop]
+            with open(filename, "w", encoding="utf-8") as fileptr:
+                json.dump(prop_data, fileptr)
+        else:
+            raise ValueError(f"Response from retrieving {prop} not valid JSON")
+    return prop_data["datatype"]
 
 def read_config() -> Tuple[str, float]:
     """ Reads the config file residing at /path/to/tfsl/config.ini. """

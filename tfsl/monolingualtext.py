@@ -42,3 +42,7 @@ def is_mtvalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.MonolingualT
 def build_mtvalue(value_in: I.MonolingualTextDict) -> MonolingualText:
     """ Builds a MonolingualText given the Wikibase JSON for one. """
     return MonolingualText(value_in["text"], tfsl.languages.get_first_lang(value_in["language"]))
+
+def build_lemma(value_in: I.LemmaDict) -> MonolingualText:
+    """ Builds a MonolingualText given the Wikibase JSON for a label, lemma, or form representation. """
+    return MonolingualText(value_in["value"], tfsl.languages.get_first_lang(value_in["language"]))

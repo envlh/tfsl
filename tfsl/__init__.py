@@ -8,7 +8,7 @@ from tfsl.coordinatevalue import CoordinateValue as CoordinateValue
 from tfsl.item import Item as Item, Q as Q, Q_ as Q_
 from tfsl.itemvalue import ItemValue as ItemValue
 from tfsl.languages import Language as Language, langs as langs
-from tfsl.lexeme import Lexeme as Lexeme, L as L
+from tfsl.lexeme import Lexeme as Lexeme, L as L, L_ as L_
 from tfsl.lexemeform import LexemeForm as LexemeForm
 from tfsl.lexemesense import LexemeSense as LexemeSense
 from tfsl.monolingualtext import MonolingualText as MonolingualText

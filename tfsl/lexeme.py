@@ -306,8 +306,7 @@ def build_lexeme(lexeme_in: I.LexemeDict) -> Lexeme:
 
 # TODO: define L_
 
-def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid, tfsl.itemvalue.ItemValue]) -> Lexeme:
-    """ Retrieves and returns the lexeme with the provided Lid. """
+def retrieve_lexeme_json(lid_in: Union[int, I.Lid, I.LFid, I.LSid, tfsl.itemvalue.ItemValue]) -> I.LexemeDict:
     lid: I.Lid
     if isinstance(lid_in, int):
         lid = I.Lid('L'+str(lid_in))
@@ -338,4 +337,130 @@ def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid, tfsl.itemvalue.ItemValue]) -> Le
         lexeme_json = current_lexeme[lid]
         with open(filename, "w", encoding="utf-8") as fileptr:
             json.dump(lexeme_json, fileptr)
+    return lexeme_json
+
+def L(lid_in: Union[int, I.Lid, I.LFid, I.LSid, tfsl.itemvalue.ItemValue]) -> Lexeme:
+    """ Retrieves and returns the lexeme with the provided Lid. """
+    lexeme_json = retrieve_lexeme_json(lid_in)
     return build_lexeme(lexeme_json)
+
+class L_:
+    """ A Lexeme, but lemmata/form representations are not auto-converted to MonolingualTexts,
+        statements are only assembled into Statements when accessed,
+        and forms and senses are returned as LF_ and LS_ objects instead of LexemeForms and LexemeSenses.
+    """
+    def __init__(self, input_arg: Union[int, I.Lid, I.LFid, I.LSid, tfsl.itemvalue.ItemValue]):
+        self.lexeme_json: I.LexemeDict = retrieve_lexeme_json(input_arg)
+
+    @property
+    def category(self) -> I.Qid:
+        return self.lexeme_json["lexicalCategory"]
+
+    @property
+    def language(self) -> tfsl.languages.Language:
+        return self.get_language()
+
+    @property
+    def lexeme_id(self) -> I.Lid:
+        return self.lexeme_json["id"]
+
+    def get_stmts(self, prop: I.Pid) -> I.StatementList:
+        """ Assembles a list of Statements present on the item with the given property. """
+        return [tfsl.statement.build_statement(stmt) for stmt in self.lexeme_json["claims"].get(prop,[])]
+
+    def get_forms(self, inflections: Optional[Collection[I.Qid]]=None, exclusions: Optional[Collection[I.Qid]]=None) -> I.LexemeFormList:
+        if inflections is None:
+            return [tfsl.lexemeform.build_form(form) for form in self.lexeme_json["forms"]]
+        initial_form_list = [tfsl.lexemeform.build_form(form) for form in self.lexeme_json["forms"]
+                if all(i in form["grammaticalFeatures"] for i in inflections)]
+        if exclusions is None:
+            return initial_form_list
+        return [form for form in initial_form_list
+                if all(i not in form.features for i in exclusions)]
+
+    def get_senses(self) -> I.LexemeSenseList:
+        return [tfsl.lexemesense.build_sense(sense) for sense in self.lexeme_json["senses"]]
+
+    def get_language(self) -> tfsl.languages.Language:
+        return tfsl.languages.get_first_lang(self.lexeme_json["language"])
+
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+        if value_in is None:
+            return property_in in self.lexeme_json["claims"]
+        elif tfsl.utils.is_novalue(value_in):
+            def compare_function(stmt: I.StatementDict) -> bool:
+                mainsnak = stmt["mainsnak"]
+                return mainsnak["snaktype"] == "novalue"
+        elif tfsl.utils.is_somevalue(value_in):
+            def compare_function(stmt: I.StatementDict) -> bool:
+                mainsnak = stmt["mainsnak"]
+                return mainsnak["snaktype"] == "somevalue"
+        else:
+            def compare_function(stmt: I.StatementDict) -> bool:
+                mainsnak = stmt["mainsnak"]
+                if mainsnak["snaktype"] not in {"novalue", "somevalue"}:
+                    datavalue = mainsnak["datavalue"]
+                    return tfsl.claim.build_value(datavalue["value"]) == value_in
+                return False
+        return any(map(compare_function, self.lexeme_json["claims"].get(property_in,[])))
+
+    @overload
+    def __getitem__(self, key: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, key: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, key: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, key: I.LFid) -> tfsl.lexemeform.LexemeForm: ...
+    @overload
+    def __getitem__(self, key: I.LSid) -> tfsl.lexemesense.LexemeSense: ...
+    @overload
+    def __getitem__(self, key: I.Fid) -> tfsl.lexemeform.LexemeForm: ...
+    @overload
+    def __getitem__(self, key: I.Sid) -> tfsl.lexemesense.LexemeSense: ...
+
+    def __getitem__(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
+        if isinstance(key, tfsl.languages.Language):
+            lang_code = key.code
+            return tfsl.monolingualtext.build_lemma(self.lexeme_json["lemmas"][lang_code])
+        elif isinstance(key, tfsl.monolingualtext.MonolingualText):
+            lang = key.language
+            lang_code = lang.code
+            return tfsl.monolingualtext.build_lemma(self.lexeme_json["lemmas"][lang_code])
+        elif isinstance(key, str):
+            return self.getitem_str(key)
+        elif isinstance(key, tfsl.itemvalue.ItemValue):
+            return self.getitem_str(key.id)
+        raise TypeError(f"Can't get {type(key)} from Lexeme")
+
+    def getitem_pid(self, key: I.Pid) -> I.StatementList:
+        return self.get_stmts(key)
+
+    def getitem_fid(self, key: I.LFid) -> tfsl.lexemeform.LexemeForm:
+        for form in self.lexeme_json["forms"]:
+            if form["id"] == key:
+                return tfsl.lexemeform.build_form(form)
+        raise KeyError
+
+    def getitem_sid(self, key: I.LSid) -> tfsl.lexemesense.LexemeSense:
+        for sense in self.lexeme_json["senses"]:
+            if sense["id"] == key:
+                return tfsl.lexemesense.build_sense(sense)
+        raise KeyError
+
+    def getitem_str(self, key: str) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]:
+        """ Common handling of __getitem__ for inputs as strings or the ids of ItemValues. """
+        if I.is_Pid(key):
+            return self.getitem_pid(key)
+        elif I.is_LFid(key):
+            return self.getitem_fid(key)
+        elif I.is_LSid(key):
+            return self.getitem_sid(key)
+        elif self.lexeme_json["id"] is not None:
+            lexeme_id = self.lexeme_json["id"]
+            new_key = '-'.join([lexeme_id, key])
+            if I.is_LFid(new_key):
+                return self.getitem_fid(new_key)
+            elif I.is_LSid(new_key):
+                return self.getitem_sid(new_key)
+        raise KeyError
