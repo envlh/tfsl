@@ -114,3 +114,23 @@ def build_statement_list(claims_dict: I.StatementDictSet) -> I.StatementSet:
         for claim in claims_dict[prop]:
             claims[prop].append(tfsl.statement.build_statement(claim))
     return claims
+
+def haswbstatement(statementset: I.StatementSet, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+    if value_in is None:
+        return property_in in statementset
+    elif tfsl.utils.is_novalue(value_in):
+        def compare_function(stmt: I.StatementDict) -> bool:
+            mainsnak = stmt["mainsnak"]
+            return mainsnak["snaktype"] == "novalue"
+    elif tfsl.utils.is_somevalue(value_in):
+        def compare_function(stmt: I.StatementDict) -> bool:
+            mainsnak = stmt["mainsnak"]
+            return mainsnak["snaktype"] == "somevalue"
+    else:
+        def compare_function(stmt: I.StatementDict) -> bool:
+            mainsnak = stmt["mainsnak"]
+            if mainsnak["snaktype"] not in {"novalue", "somevalue"}:
+                datavalue = mainsnak["datavalue"]
+                return tfsl.claim.build_value(datavalue["value"]) == value_in
+            return False
+    return any(map(compare_function, statementset.get(property_in,[])))

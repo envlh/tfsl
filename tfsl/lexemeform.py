@@ -179,3 +179,49 @@ def build_form(form_in: I.LexemeFormDict) -> LexemeForm:
     form_out.set_published_settings(form_in)
 
     return form_out
+
+class LF_:
+    def __init__(self, form_json: I.LexemeFormDict):
+        self.json = form_json
+
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+        return tfsl.statementholder.haswbstatement(self.json["claims"], property_in, value_in)
+
+    @property
+    def features(self) -> List[I.Qid]:
+        return self.json["grammaticalFeatures"]
+
+    @property
+    def id(self) -> str:
+        return self.json["id"]
+
+    @overload
+    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+
+    def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
+        if isinstance(arg, str):
+            return self.getitem_str(arg)
+        elif isinstance(arg, tfsl.languages.Language):
+            return tfsl.monolingualtextholder.get_lang_from_mtlist(self.json["representations"], arg)
+        elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
+            lang = arg.language
+            lang_code = lang.code
+            return tfsl.monolingualtext.build_lemma(self.json["representations"][lang_code])
+        raise KeyError(f"Can't get {type(arg)} from LexemeSense")
+
+    def getitem_str(self, key: str) -> I.StatementList:
+        """ Common handling of __getitem__ for inputs as strings or the ids of ItemValues. """
+        if I.is_Pid(key):
+            return self.getitem_pid(key)
+        raise KeyError
+
+    def getitem_pid(self, key: I.Pid) -> I.StatementList:
+        return self.get_stmts(key)
+
+    def get_stmts(self, prop: I.Pid) -> I.StatementList:
+        """ Assembles a list of Statements present on the item with the given property. """
+        return [tfsl.statement.build_statement(stmt) for stmt in self.json["claims"].get(prop,[])]

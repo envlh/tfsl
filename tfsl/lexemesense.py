@@ -151,3 +151,45 @@ def build_sense(sense_in: I.LexemeSenseDict) -> LexemeSense:
     sense_out = LexemeSense(glosses, statements)
     sense_out.id = sense_in["id"]
     return sense_out
+
+class LS_:
+    def __init__(self, sense_json: I.LexemeFormDict):
+        self.json = sense_json
+
+    @property
+    def id(self) -> I.LSid:
+        return self.json["id"]
+
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+        return tfsl.statementholder.haswbstatement(self.json["claims"], property_in, value_in)
+
+    @overload
+    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+
+    def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
+        if isinstance(arg, str):
+            return self.getitem_str(arg)
+        elif isinstance(arg, tfsl.languages.Language):
+            return tfsl.monolingualtextholder.get_lang_from_mtlist(self.json["glosses"], arg)
+        elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
+            lang = arg.language
+            lang_code = lang.code
+            return tfsl.monolingualtext.build_lemma(self.json["glosses"][lang_code])
+        raise KeyError(f"Can't get {type(arg)} from LexemeSense")
+
+    def getitem_pid(self, key: I.Pid) -> I.StatementList:
+        return self.get_stmts(key)
+
+    def get_stmts(self, prop: I.Pid) -> I.StatementList:
+        """ Assembles a list of Statements present on the item with the given property. """
+        return [tfsl.statement.build_statement(stmt) for stmt in self.json["claims"].get(prop,[])]
+
+    def getitem_str(self, key: str) -> I.StatementList:
+        """ Common handling of __getitem__ for inputs as strings or the ids of ItemValues. """
+        if I.is_Pid(key):
+            return self.getitem_pid(key)
+        raise KeyError

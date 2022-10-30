@@ -83,7 +83,7 @@ class MonolingualTextHolder(object):
         return next(filter(lambda text: text == arg, self.texts))
 
     def __str__(self) -> str:
-        return ' / '.join([str(text) for text in self.texts])
+        return ' / '.join([f"{text.text}@{text.language.code}" for text in self.texts])
 
     def __add__(self, rhs: object) -> 'MonolingualTextHolder':
         if isinstance(rhs, tfsl.monolingualtext.MonolingualText):
@@ -116,3 +116,7 @@ def build_text_list(text_dict: I.LemmaDictSet) -> I.MonolingualTextList:
         new_text = text["value"] @ tfsl.languages.get_first_lang(text["language"])
         texts.append(new_text)
     return texts
+
+def get_lang_from_mtlist(mtlist: I.LemmaDictSet, language: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText:
+    lang_code = language.code
+    return tfsl.monolingualtext.build_lemma(mtlist[lang_code])

@@ -27,7 +27,9 @@ Now rename 'config.ini.example' to 'config.ini' and specify
 
 ## Use
 
-Most facets of use are exemplified in the unit tests. (Unless otherwise stated in a comment in a unit test file, any functionality which is not exhibited in a unit test should be assumed to be unstable.)
+For a quick overview of how to use this library, see the file `overview.md`.
+
+Many facets of use are exemplified in the unit tests. (Unless otherwise stated in a comment in a unit test file, any functionality which is not exhibited in a unit test should be assumed to be unstable.)
 
 Perhaps when this is better developed a more thorough tutorial on its use will come.
 

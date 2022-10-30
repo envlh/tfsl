@@ -76,10 +76,12 @@ class WikibaseSession:
             # truncate bot name if a "bot password" is used
             self.assert_user = username.split("@")[0]
 
-    def push(self, obj_in: I.Entity, summary: Optional[str]=None, maxlag_in: int=maxlag) -> Any:
+    def push(self, obj_in: I.Entity, summary: Optional[str]=None, maxlag_in: int=maxlag, bot: bool=False) -> Any:
         """ Post data to Wikibase. """
         data = obj_in.__jsonout__()
         requestjson = {"action": "wbeditentity", "format": "json"}
+        if bot:
+            requestjson["bot"] = ""
 
         if not data.get("id", False):
             if data.get("lexicalCategory", False):
