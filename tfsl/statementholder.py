@@ -102,6 +102,7 @@ class StatementHolder(object):
         elif isinstance(rhs, tfsl.statement.Statement):
             newstmts = deepcopy(self.statements)
             newstmts[rhs.property] = [stmt for stmt in newstmts[rhs.property] if stmt != rhs]
+            newstmts[rhs.property].append(rhs.set_to_remove())
             if not newstmts[rhs.property]:
                 del newstmts[rhs.property]
             return StatementHolder(newstmts)

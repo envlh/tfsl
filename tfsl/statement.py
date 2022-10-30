@@ -63,6 +63,7 @@ class Statement:
 
         self.id: Optional[str] = None
         self.qualifiers_order: List[I.Pid] = []
+        self.toremove: bool = False
 
     def __getitem__(self, key: str) -> I.ClaimList:
         if I.is_Pid(key):
@@ -71,24 +72,51 @@ class Statement:
 
     def __add__(self, arg: object) -> 'Statement':
         if isinstance(arg, tfsl.claim.Claim):
-            return Statement(self.property, self.value, self.rank, self.qualifiers.add(arg), self.references)
+            return self.add_claim(arg)
         elif isinstance(arg, tfsl.reference.Reference):
-            return Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.add_to_list(self.references, arg))
+            return self.add_reference(arg)
         raise NotImplementedError(f"Can't add {str(type(arg))} to statement")
 
     def __sub__(self, arg: object) -> 'Statement':
         if isinstance(arg, tfsl.claim.Claim):
-            return Statement(self.property, self.value, self.rank, self.qualifiers.sub(arg), self.references)
+            return self.sub_claim(arg)
         elif isinstance(arg, tfsl.reference.Reference):
-            return Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.sub_from_list(self.references, arg))
+            return self.sub_reference(arg)
         raise NotImplementedError(f"Can't subtract {str(type(arg))} from statement")
+
+    def add_claim(self, arg: tfsl.claim.Claim) -> 'Statement':
+        published_settings = self.get_published_settings()
+        stmt_out = Statement(self.property, self.value, self.rank, self.qualifiers.add(arg), self.references)
+        stmt_out.set_published_settings(published_settings)
+        return stmt_out
+
+    def add_reference(self, arg: tfsl.reference.Reference) -> 'Statement':
+        published_settings = self.get_published_settings()
+        stmt_out = Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.add_to_list(self.references, arg))
+        stmt_out.set_published_settings(published_settings)
+        return stmt_out
+
+    def sub_claim(self, arg: tfsl.claim.Claim) -> 'Statement':
+        published_settings = self.get_published_settings()
+        stmt_out = Statement(self.property, self.value, self.rank, self.qualifiers.sub(arg), self.references)
+        stmt_out.set_published_settings(published_settings)
+        return stmt_out
+
+    def sub_reference(self, arg: tfsl.reference.Reference) -> 'Statement':
+        published_settings = self.get_published_settings()
+        stmt_out = Statement(self.property, self.value, self.rank, self.qualifiers, tfsl.utils.sub_from_list(self.references, arg))
+        stmt_out.set_published_settings(published_settings)
+        return stmt_out
 
     def __matmul__(self, arg: object) -> 'Statement':
         if isinstance(arg, Rank):
-            if arg == self.rank:
-                return self
-            return Statement(self.property, self.value, arg, self.qualifiers, self.references)
+            return self.matmul_rank(arg)
         raise NotImplementedError(f"{str(type(arg))} is not a rank")
+
+    def matmul_rank(self, arg: Rank) -> 'Statement':
+        if arg == self.rank:
+            return self
+        return Statement(self.property, self.value, arg, self.qualifiers, self.references)
 
     def __eq__(self, rhs: object) -> bool:
         if isinstance(rhs, tfsl.claim.Claim):
@@ -96,6 +124,27 @@ class Statement:
         elif isinstance(rhs, Statement):
             return self.property == rhs.property and self.value == rhs.value and self.rank == rhs.rank and self.qualifiers == rhs.qualifiers and self.references == rhs.references
         return NotImplemented
+
+    def set_to_remove(self) -> 'Statement':
+        published_settings = self.get_published_settings()
+        stmt_out = Statement(self.property, self.value, self.rank, self.qualifiers, self.references)
+        stmt_out.toremove = True
+        stmt_out.set_published_settings(published_settings)
+        return stmt_out
+
+    def set_to_keep(self) -> 'Statement':
+        published_settings = self.get_published_settings()
+        stmt_out = Statement(self.property, self.value, self.rank, self.qualifiers, self.references)
+        stmt_out.toremove = False
+        stmt_out.set_published_settings(published_settings)
+        return stmt_out
+
+    def set_published_settings(self, stmt_in: I.StatementDictPublishedSettings) -> None:
+        """ Sets based on a Statement JSON dictionary those variables
+            which are only significant at editing time for existing statements.
+        """
+        self.id = stmt_in["id"]
+        self.qualifiers_order = stmt_in.get("qualifiers-order", [])
 
     def get_published_settings(self) -> I.StatementDictPublishedSettings:
         """ Returns a dictionary containing those portions of the Statement JSON dictionary
@@ -107,13 +156,6 @@ class Statement:
                 "qualifiers-order": self.qualifiers_order
             }
         return {}
-
-    def set_published_settings(self, stmt_in: I.StatementDictPublishedSettings) -> None:
-        """ Sets based on a Statement JSON dictionary those variables
-            which are only significant at editing time for existing statements.
-        """
-        self.id = stmt_in["id"]
-        self.qualifiers_order = stmt_in.get("qualifiers-order", [])
 
     def __str__(self) -> str:
         # TODO: output everything else
@@ -131,6 +173,10 @@ class Statement:
         base_dict: I.StatementDict = {"type": "statement", "mainsnak": tfsl.claim.Claim(self.property, self.value).__jsonout__()}
         if self.id is not None:
             base_dict["id"] = self.id
+        if self.toremove:
+            base_dict["remove"] = ""
+            return base_dict
+
         base_dict["rank"] = ["deprecated", "normal", "preferred"][self.rank.value+1]
         base_dict["qualifiers"] = defaultdict(list)
         for stmtprop, stmtval in self.qualifiers.items():
