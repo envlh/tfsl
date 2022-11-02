@@ -171,7 +171,8 @@ ReferenceDict = TypedDict('ReferenceDict', {
 
 StatementDictPublishedSettings = TypedDict('StatementDictPublishedSettings', {
     'id': NotRequired[str],
-    'qualifiers-order': NotRequired[List[Pid]]
+    'qualifiers-order': NotRequired[List[Pid]],
+    'remove': NotRequired[str]
 }, total=False)
 
 class StatementData(TypedDict, total=False):
@@ -340,6 +341,10 @@ class ItemDict(ItemPublishedSettings, ItemData):
 def is_ItemDict(arg: EntityPublishedSettings) -> TypeGuard[ItemDict]:
     """ Checks that the keys expected for an Item exist. """
     return all(x in arg for x in ["labels", "descriptions", "aliases", "claims", "sitelinks"])
+
+def is_LexemeDict(arg: EntityPublishedSettings) -> TypeGuard[LexemeDict]:
+    """ Checks that the keys expected for an Item exist. """
+    return all(x in arg for x in ["lemmas", "lexicalCategory", "language", "claims", "forms", "senses"])
 
 Entity = Union[
     'tfsl.lexeme.Lexeme',

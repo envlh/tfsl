@@ -6,7 +6,7 @@ import os
 from copy import deepcopy
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, List, Match, Optional, Tuple, TypeVar
+from typing import Any, List, Tuple, TypeVar
 
 import requests
 
@@ -69,18 +69,19 @@ def values_datatype(prop: str) -> str:
     """ Returns the outward-facing datatype of the provided property. """
     # TODO: rewrite better
     filename = get_filename(prop)
+    prop_data: I.PropertyDict
     try:
         with open(filename, encoding="utf-8") as fileptr:
             prop_data = json.load(fileptr)
-    except (FileNotFoundError, OSError, json.JSONDecodeError):
+    except (FileNotFoundError, OSError, json.JSONDecodeError) as e:
         prop_response = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
         prop_response_json = prop_response.json()
         if isinstance(prop_response_json, dict):
-            prop_data: I.PropertyDict = prop_response_json["entities"][prop]
+            prop_data = prop_response_json["entities"][prop]
             with open(filename, "w", encoding="utf-8") as fileptr:
                 json.dump(prop_data, fileptr)
         else:
-            raise ValueError(f"Response from retrieving {prop} not valid JSON")
+            raise ValueError(f"Response from retrieving {prop} not valid JSON") from e
     return prop_data["datatype"]
 
 def read_config() -> Tuple[str, float]:

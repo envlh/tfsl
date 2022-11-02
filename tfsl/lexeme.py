@@ -327,13 +327,18 @@ def retrieve_lexeme_json(lid_in: Union[int, I.Lid, I.LFid, I.LSid, tfsl.itemvalu
     elif I.is_Lid(lid_in):
         lid = lid_in
     filename = tfsl.utils.get_filename(lid)
+    lexeme_json: I.LexemeDict
     try:
         assert time.time() - os.path.getmtime(filename) < tfsl.utils.time_to_live
         with open(filename, encoding="utf-8") as fileptr:
             lexeme_json = json.load(fileptr)
-    except (FileNotFoundError, OSError, AssertionError):
+    except (FileNotFoundError, OSError, AssertionError) as e:
         current_lexeme = tfsl.auth.get_lexemes([lid])
-        lexeme_json = current_lexeme[lid]
+        current_lid_output = current_lexeme[lid]
+        if I.is_LexemeDict(current_lid_output):
+            lexeme_json = current_lid_output
+        else:
+            raise ValueError(f"Retrieved entity {lid} was not an item") from e
         with open(filename, "w", encoding="utf-8") as fileptr:
             json.dump(lexeme_json, fileptr)
     return lexeme_json
@@ -372,7 +377,7 @@ class L_:
         """ Assembles a list of Statements present on the item with the given property. """
         return [tfsl.statement.build_statement(stmt) for stmt in self.lexeme_json["claims"].get(prop,[])]
 
-    def get_forms(self, inflections: Optional[Collection[I.Qid]]=None, exclusions: Optional[Collection[I.Qid]]=None) -> I.LexemeFormList:
+    def get_forms(self, inflections: Optional[Collection[I.Qid]]=None, exclusions: Optional[Collection[I.Qid]]=None) -> List[tfsl.lexemeform.LF_]:
         if inflections is None:
             return [tfsl.lexemeform.LF_(form) for form in self.lexeme_json["forms"]]
         initial_form_list = [tfsl.lexemeform.LF_(form) for form in self.lexeme_json["forms"]
@@ -382,7 +387,7 @@ class L_:
         return [form for form in initial_form_list
                 if all(i not in form.features for i in exclusions)]
 
-    def get_senses(self) -> I.LexemeSenseList:
+    def get_senses(self) -> List[tfsl.lexemesense.LS_]:
         return [tfsl.lexemesense.LS_(sense) for sense in self.lexeme_json["senses"]]
 
     def get_language(self) -> tfsl.languages.Language:
@@ -398,15 +403,15 @@ class L_:
     @overload
     def __getitem__(self, key: I.Pid) -> I.StatementList: ...
     @overload
-    def __getitem__(self, key: I.LFid) -> tfsl.lexemeform.LexemeForm: ...
+    def __getitem__(self, key: I.LFid) -> tfsl.lexemeform.LF_: ...
     @overload
-    def __getitem__(self, key: I.LSid) -> tfsl.lexemesense.LexemeSense: ...
+    def __getitem__(self, key: I.LSid) -> tfsl.lexemesense.LS_: ...
     @overload
-    def __getitem__(self, key: I.Fid) -> tfsl.lexemeform.LexemeForm: ...
+    def __getitem__(self, key: I.Fid) -> tfsl.lexemeform.LF_: ...
     @overload
-    def __getitem__(self, key: I.Sid) -> tfsl.lexemesense.LexemeSense: ...
+    def __getitem__(self, key: I.Sid) -> tfsl.lexemesense.LS_: ...
 
-    def __getitem__(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense, tfsl.monolingualtext.MonolingualText]:
+    def __getitem__(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LF_, tfsl.lexemesense.LS_, tfsl.monolingualtext.MonolingualText]:
         if isinstance(key, tfsl.languages.Language):
             return tfsl.monolingualtextholder.get_lang_from_mtlist(self.lexeme_json["lemmas"], key)
         elif isinstance(key, tfsl.monolingualtext.MonolingualText):
@@ -422,19 +427,19 @@ class L_:
     def getitem_pid(self, key: I.Pid) -> I.StatementList:
         return self.get_stmts(key)
 
-    def getitem_fid(self, key: I.LFid) -> tfsl.lexemeform.LexemeForm:
+    def getitem_fid(self, key: I.LFid) -> tfsl.lexemeform.LF_:
         for form in self.lexeme_json["forms"]:
             if form["id"] == key:
                 return tfsl.lexemeform.LF_(form)
         raise KeyError
 
-    def getitem_sid(self, key: I.LSid) -> tfsl.lexemesense.LexemeSense:
+    def getitem_sid(self, key: I.LSid) -> tfsl.lexemesense.LS_:
         for sense in self.lexeme_json["senses"]:
             if sense["id"] == key:
                 return tfsl.lexemesense.LS_(sense)
         raise KeyError
 
-    def getitem_str(self, key: str) -> Union[I.StatementList, tfsl.lexemeform.LexemeForm, tfsl.lexemesense.LexemeSense]:
+    def getitem_str(self, key: str) -> Union[I.StatementList, tfsl.lexemeform.LF_, tfsl.lexemesense.LS_]:
         """ Common handling of __getitem__ for inputs as strings or the ids of ItemValues. """
         if I.is_Pid(key):
             return self.getitem_pid(key)

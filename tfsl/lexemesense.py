@@ -153,12 +153,15 @@ def build_sense(sense_in: I.LexemeSenseDict) -> LexemeSense:
     return sense_out
 
 class LS_:
-    def __init__(self, sense_json: I.LexemeFormDict):
+    def __init__(self, sense_json: I.LexemeSenseDict):
         self.json = sense_json
 
     @property
     def id(self) -> I.LSid:
-        return self.json["id"]
+        current_id = self.json["id"]
+        if I.is_LSid(current_id):
+            return current_id
+        raise ValueError("Somehow the sense ID is not a valid sense ID")
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
         return tfsl.statementholder.haswbstatement(self.json["claims"], property_in, value_in)

@@ -116,7 +116,7 @@ def build_statement_list(claims_dict: I.StatementDictSet) -> I.StatementSet:
             claims[prop].append(tfsl.statement.build_statement(claim))
     return claims
 
-def haswbstatement(statementset: I.StatementSet, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+def haswbstatement(statementset: I.StatementDictSet, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
     if value_in is None:
         return property_in in statementset
     elif tfsl.utils.is_novalue(value_in):
