@@ -9,8 +9,8 @@ from tfsl.item import Item as Item, Q as Q, Q_ as Q_
 from tfsl.itemvalue import ItemValue as ItemValue
 from tfsl.languages import Language as Language, langs as langs
 from tfsl.lexeme import Lexeme as Lexeme, L as L, L_ as L_
-from tfsl.lexemeform import LexemeForm as LexemeForm
-from tfsl.lexemesense import LexemeSense as LexemeSense
+from tfsl.lexemeform import LexemeForm as LexemeForm, LF_ as LF_, LexemeFormLike as LexemeFormLike
+from tfsl.lexemesense import LexemeSense as LexemeSense, LS_ as LS_, LexemeSenseLike as LexemeSenseLike
 from tfsl.monolingualtext import MonolingualText as MonolingualText
 from tfsl.monolingualtextholder import MonolingualTextHolder as MonolingualTextHolder
 from tfsl.quantityvalue import QuantityValue as QuantityValue

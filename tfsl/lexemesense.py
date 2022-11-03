@@ -1,7 +1,7 @@
 """ Holds the LexemeSense class and a function to build one given a JSON representation of it. """
 
 from functools import singledispatchmethod
-from typing import Optional, Union, overload
+from typing import Optional, Protocol, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.monolingualtext
@@ -9,6 +9,19 @@ import tfsl.monolingualtextholder
 import tfsl.statement
 import tfsl.statementholder
 import tfsl.utils
+
+class LexemeSenseLike(Protocol):
+    @property
+    def id(self) -> Optional[str]: ...
+
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool: ...
+
+    @overload
+    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
 
 class LexemeSense:
     """ Container for a Wikidata lexeme sense. """
@@ -152,7 +165,7 @@ def build_sense(sense_in: I.LexemeSenseDict) -> LexemeSense:
     sense_out.id = sense_in["id"]
     return sense_out
 
-class LS_:
+class LS_(LexemeSenseLike):
     def __init__(self, sense_json: I.LexemeSenseDict):
         self.json = sense_json
 

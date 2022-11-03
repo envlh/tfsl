@@ -5,7 +5,7 @@ import os
 import os.path
 import time
 from textwrap import indent
-from typing import Collection, Optional, List, Union, overload
+from typing import Collection, Optional, List, Protocol, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.auth

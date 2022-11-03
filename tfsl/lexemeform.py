@@ -1,7 +1,7 @@
 """ Holds the LexemeForm class and a function to build one given a JSON representation of it. """
 
 from functools import singledispatchmethod
-from typing import List, Optional, Set, Union, overload
+from typing import Collection, List, Optional, Protocol, Set, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.languages
@@ -10,6 +10,22 @@ import tfsl.monolingualtextholder
 import tfsl.statement
 import tfsl.statementholder
 import tfsl.utils
+
+class LexemeFormLike(Protocol):
+    @property
+    def features(self) -> Collection[I.Qid]: ...
+    @property
+    def representations(self) -> tfsl.monolingualtextholder.MonolingualTextHolder:...
+    @property
+    def id(self) -> Optional[str]: ...
+
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool: ...
+    @overload
+    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
+    @overload
+    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
 
 class LexemeForm:
     """ Container for a Wikidata lexeme form. """
@@ -180,7 +196,7 @@ def build_form(form_in: I.LexemeFormDict) -> LexemeForm:
 
     return form_out
 
-class LF_:
+class LF_(LexemeFormLike):
     def __init__(self, form_json: I.LexemeFormDict):
         self.json = form_json
 
@@ -190,6 +206,10 @@ class LF_:
     @property
     def features(self) -> List[I.Qid]:
         return self.json["grammaticalFeatures"]
+
+    @property
+    def representations(self) -> tfsl.monolingualtextholder.MonolingualTextHolder:
+        return tfsl.monolingualtextholder.MonolingualTextHolder(tfsl.monolingualtextholder.build_text_list(self.json["representations"]))
 
     @property
     def id(self) -> str:

@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import Any, DefaultDict, Dict, List, NewType, Optional, Tuple, TypedDict, Union, TYPE_CHECKING
+from typing import Any, DefaultDict, Dict, List, NewType, Optional, Sequence, Tuple, TypedDict, Union, TYPE_CHECKING
 from typing_extensions import NotRequired, TypeGuard
 
 if TYPE_CHECKING:
@@ -156,7 +156,14 @@ ClaimList = List['tfsl.claim.Claim']
 StatementList = List['tfsl.statement.Statement']
 MonolingualTextList = List['tfsl.monolingualtext.MonolingualText']
 LexemeSenseList = List['tfsl.lexemesense.LexemeSense']
+LS_List = List['tfsl.lexemesense.LS_']
+LexemeSenseLikeList = Sequence['tfsl.lexemesense.LexemeSenseLike']
 LexemeFormList = List['tfsl.lexemeform.LexemeForm']
+LF_List = List['tfsl.lexemeform.LF_']
+LexemeFormLikeList = Sequence['tfsl.lexemeform.LexemeFormLike']
+LexemeList = List['tfsl.lexeme.Lexeme']
+L_List = List['tfsl.lexeme.L_']
+LexemeLikeList = List['tfsl.lexeme.LexemeLike']
 ReferenceList = List['tfsl.reference.Reference']
 
 ClaimDictSet = Dict[Pid, List[ClaimDict]]
@@ -350,6 +357,10 @@ Entity = Union[
     'tfsl.lexeme.Lexeme',
     'tfsl.lexemeform.LexemeForm',
     'tfsl.lexemesense.LexemeSense'
+]
+EntityLike = Union[
+    'tfsl.lexemeform.LexemeFormLike',
+    'tfsl.lexemesense.LexemeSenseLike'
 ]
 EntityDict = Union[LexemeDict, LexemeFormDict, LexemeSenseDict]
 
