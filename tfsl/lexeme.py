@@ -263,6 +263,9 @@ class Lexeme:
     def __repr__(self) -> str:
         return self.lexeme_id or "L0" + f" ({self.language.item}): " + str(self.lemmata)
 
+    def repr_lemmata_first(self) -> str:
+        return str(self.lemmata) + ": " + (self.lexeme_id or "L0") + f" ({self.language.item})"
+
     def __jsonout__(self) -> I.LexemeDict:
         lemma_dict: I.LemmaDictSet = self.lemmata.__jsonout__()
 
@@ -372,6 +375,9 @@ class L_:
 
     def __repr__(self) -> str:
         return self.lexeme_json['id'] + f" ({self.lexeme_json['language']}): " + " / ".join(f"{x['value']}@{x['language']}" for _, x in self.lexeme_json["lemmas"].items())
+
+    def repr_lemmata_first(self) -> str:
+        return " / ".join(f"{x['value']}@{x['language']}" for _, x in self.lexeme_json["lemmas"].items()) + ": " + self.lexeme_json['id'] + f" ({self.lexeme_json['language']})"
 
     def get_stmts(self, prop: I.Pid) -> I.StatementList:
         """ Assembles a list of Statements present on the item with the given property. """

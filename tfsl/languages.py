@@ -58,7 +58,6 @@ class Languages:
     __itemlookup__: DefaultDict[I.Qid, List[Language]] = defaultdict(list)
     __codelookup__: DefaultDict[str, List[Language]] = defaultdict(list)
 
-    # TODO: everywhere this method is called, find a way to specify among results if multiple found
     @classmethod
     def find(cls, string_in: str) -> List[Language]:
         """ If the input is a Qid, finds the languages with that Qid as the item;
@@ -642,11 +641,14 @@ class Languages:
         self.manbhumi_ = Language("bn-x-Q6747180", "Q6747180") # manbhumi
         self.rarhi_ = Language("bn-x-Q48726759", "Q48726759") # rarhi
         self.noakhailla_ = Language("bn-x-Q107548681", "Q107548681") # noakhailla
+        self.medinipuri_ = Language("bn-x-Q61315051", "Q61315051") # medinipuri
 
 langs: Languages = Languages()
 
 def get_first_lang(arg: str) -> Language:
-    """ Obtains the first language in tfsl.langs with the given language code. """
+    """ Obtains the first language in tfsl.langs with the given language code.
+        TODO: find a way to specify among results if multiple found
+    """
     try:
         return langs.find(arg)[0]
     except IndexError as e:

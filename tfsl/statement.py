@@ -158,7 +158,6 @@ class Statement:
         return {}
 
     def __str__(self) -> str:
-        # TODO: output everything else
         base_str = f'{self.property}: {self.value} ({self.rank})'
         qualifiers_str = ""
         references_str = ""

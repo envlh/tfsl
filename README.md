@@ -7,15 +7,17 @@ Support for manipulating items, as well as claim types other than monolingual te
 
 ## Setup
 
-Clone this repository. (Depending on which Git host you're reading this from, the URL might vary.)
+[Clone this repository](https://docs.gitlab.com/ee/gitlab-basics/start-using-git.html#clone-a-repository). (Depending on which Git host you're reading this from, the URL with which to clone might vary.) The cloned repository should now reside in some folder, which may vary depending on where you performed the clone. Let's call that folder `/path/to/tfsl` (or `C:\path\to\tfsl` on a Windows system).
 
-Now make sure this ends up in your PYTHONPATH. The simplest way to do this below is for a Unix system, where the path must be substituted accordingly:
+Make sure the cloned repository ends up in your PYTHONPATH. The simplest way to do this below, for a Unix (Linux/Mac OS/BSD) system, where the folder path `/path/to/tfsl` must be substituted with the :
 
 ```
 export PYTHONPATH=$PYTHONPATH:/path/to/tfsl
 ```
 
-Now install its dependencies, again substituting the path accordingly:
+([On Windows this process is a bit different.](https://stackoverflow.com/q/3701646))
+
+Install the dependencies of the repository, again substituting the path accordingly:
 
 ```
 pip install -r /path/to/tfsl/requirements.txt
