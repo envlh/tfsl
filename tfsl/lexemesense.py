@@ -137,7 +137,6 @@ class LexemeSense:
         return glosses_equal and statements_equal
 
     def __str__(self) -> str:
-        # TODO: output everything else
         gloss_str = str(self.glosses)
         stmt_str = str(self.statements)
         return "\n".join([gloss_str, stmt_str])

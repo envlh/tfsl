@@ -263,7 +263,6 @@ class Languages:
         self.zh_sg_ = Language("zh-sg", "Q9192")  # Chinese (Singapore)
         self.zh_tw_ = Language("zh-tw", "Q9192")  # Mandarin (Taiwan)
 
-        # TODO: clean up the giant mess below, imported from the label languages list
         self.aa_ = Language("aa", "Q27811")  # Afar
         self.ab_ = Language("ab", "Q5111")  # Abkhazian
         self.abs_ = Language("abs", "Q3124354")  # Ambonese Malay

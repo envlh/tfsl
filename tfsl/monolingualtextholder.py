@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 from functools import singledispatchmethod
-from typing import Callable, Optional, Union
+from typing import Callable, Optional
 
 import tfsl.interfaces as I
 import tfsl.languages
