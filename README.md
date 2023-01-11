@@ -9,7 +9,7 @@ Support for manipulating items, as well as claim types other than monolingual te
 
 [Clone this repository](https://docs.gitlab.com/ee/gitlab-basics/start-using-git.html#clone-a-repository). (Depending on which Git host you're reading this from, the URL with which to clone might vary.) The cloned repository should now reside in some folder, which may vary depending on where you performed the clone. Let's call that folder `/path/to/tfsl` (or `C:\path\to\tfsl` on a Windows system).
 
-Make sure the cloned repository ends up in your PYTHONPATH. The simplest way to do this below, for a Unix (Linux/Mac OS/BSD) system, where the folder path `/path/to/tfsl` must be substituted with the :
+Make sure the cloned repository ends up in your PYTHONPATH. The simplest way to do this, [for a Unix (Linux/Mac OS/BSD) system](https://stackoverflow.com/q/3402168), is below, where the folder path `/path/to/tfsl` must be substituted with the actual folder into which tfsl was cloned:
 
 ```
 export PYTHONPATH=$PYTHONPATH:/path/to/tfsl
