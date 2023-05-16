@@ -17,9 +17,6 @@ import tfsl.statement
 import tfsl.statementholder
 import tfsl.utils
 
-default_item_cache_path = os.path.expanduser('~/.cache/tfsl')
-os.makedirs(default_item_cache_path,exist_ok=True)
-
 class Item:
     """ Container for a Wikidata item. """
     def __init__(self,
@@ -98,6 +95,12 @@ class Item:
             else:
                 raise KeyError
         raise KeyError
+
+    def __str__(self) -> str:
+        remainder = f"{len(self.labels)}/{len(self.descriptions)}, {len(self.statements)}"
+        if self.item_id:
+            return "{"+self.item_id+": "+remainder+"}"
+        return "{Item: "+remainder+"}"
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
         """Shamelessly named after the keyword used on Wikidata to look for a statement."""

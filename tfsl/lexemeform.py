@@ -6,47 +6,39 @@ from typing import Collection, List, Optional, Protocol, Set, Union, overload
 import tfsl.interfaces as I
 import tfsl.languages
 import tfsl.monolingualtext
-import tfsl.monolingualtextholder
+import tfsl.monolingualtextholder as MTH
 import tfsl.statement
-import tfsl.statementholder
+import tfsl.statementholder as STH
 import tfsl.utils
 
-class LexemeFormLike(Protocol):
+class LexemeFormLike(I.MTST, Protocol):
     @property
     def features(self) -> Collection[I.Qid]: ...
     @property
-    def representations(self) -> tfsl.monolingualtextholder.MonolingualTextHolder:...
+    def representations(self) -> MTH.MonolingualTextHolder:...
     @property
     def id(self) -> Optional[str]: ...
-
-    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool: ...
-    @overload
-    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
-    @overload
-    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
-    @overload
-    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
 
 class LexemeForm:
     """ Container for a Wikidata lexeme form. """
     def __init__(self,
-                 representations: Union[tfsl.monolingualtextholder.MonolingualTextHolder,
+                 representations: Union[MTH.MonolingualTextHolder,
                                         tfsl.monolingualtext.MonolingualText,
                                         I.MonolingualTextList],
                  features: Optional[Union[List[I.Qid], Set[I.Qid]]]=None,
-                 statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None):
+                 statements: Optional[Union[STH.StatementHolder, I.StatementHolderInput]]=None):
         super().__init__()
 
-        self.representations: tfsl.monolingualtextholder.MonolingualTextHolder
-        if isinstance(representations, tfsl.monolingualtextholder.MonolingualTextHolder):
+        self.representations: MTH.MonolingualTextHolder
+        if isinstance(representations, MTH.MonolingualTextHolder):
             self.representations = representations
         else:
-            self.representations = tfsl.monolingualtextholder.MonolingualTextHolder(representations)
+            self.representations = MTH.MonolingualTextHolder(representations)
 
-        if isinstance(statements, tfsl.statementholder.StatementHolder):
+        if isinstance(statements, STH.StatementHolder):
             self.statements = statements
         else:
-            self.statements = tfsl.statementholder.StatementHolder(statements)
+            self.statements = STH.StatementHolder(statements)
 
         self.features: Set[I.Qid]
         if features is None:
@@ -79,10 +71,14 @@ class LexemeForm:
     def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
     @overload
     def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> I.StatementList: ...
 
     def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
         if isinstance(arg, str):
             return self.statements[arg]
+        elif isinstance(arg, tfsl.itemvalue.ItemValue):
+            return self.statements[arg.id]
         elif isinstance(arg, tfsl.languages.Language) or isinstance(arg, tfsl.monolingualtext.MonolingualText):
             return self.representations[arg]
         raise KeyError(f"Can't get {type(arg)} from LexemeForm")
@@ -187,33 +183,36 @@ class LexemeForm:
 
 def build_form(form_in: I.LexemeFormDict) -> LexemeForm:
     """ Builds a LexemeForm from the JSON dictionary describing it. """
-    reps = tfsl.monolingualtextholder.build_text_list(form_in["representations"])
+    reps = MTH.build_text_list(form_in["representations"])
     feats = form_in["grammaticalFeatures"]
-    claims = tfsl.statementholder.build_statement_list(form_in["claims"])
+    claims = STH.build_statement_list(form_in["claims"])
 
     form_out = LexemeForm(reps, feats, claims)
     form_out.set_published_settings(form_in)
 
     return form_out
 
-class LF_(LexemeFormLike):
+class LF_:
     def __init__(self, form_json: I.LexemeFormDict):
         self.json = form_json
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
-        return tfsl.statementholder.haswbstatement(self.json["claims"], property_in, value_in)
+        return STH.haswbstatement(self.json["claims"], property_in, value_in)
 
     @property
     def features(self) -> List[I.Qid]:
         return self.json["grammaticalFeatures"]
 
     @property
-    def representations(self) -> tfsl.monolingualtextholder.MonolingualTextHolder:
-        return tfsl.monolingualtextholder.MonolingualTextHolder(tfsl.monolingualtextholder.build_text_list(self.json["representations"]))
+    def representations(self) -> MTH.MonolingualTextHolder:
+        return MTH.MonolingualTextHolder(MTH.build_text_list(self.json["representations"]))
 
     @property
     def id(self) -> str:
         return self.json["id"]
+
+    def __repr__(self) -> str:
+        return f"<{self.id}: {len(self.json['representations'])} reps, {len(self.json['grammaticalFeatures'])} features, {sum(len(y) for x, y in self.json['claims'].items())} statements>"
 
     @overload
     def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
@@ -221,12 +220,16 @@ class LF_(LexemeFormLike):
     def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
     @overload
     def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> I.StatementList: ...
 
     def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
         if isinstance(arg, str):
             return self.getitem_str(arg)
+        elif isinstance(arg, tfsl.itemvalue.ItemValue):
+            return self.getitem_str(arg.id)
         elif isinstance(arg, tfsl.languages.Language):
-            return tfsl.monolingualtextholder.get_lang_from_mtlist(self.json["representations"], arg)
+            return MTH.get_lang_from_mtlist(self.json["representations"], arg)
         elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
             lang = arg.language
             lang_code = lang.code

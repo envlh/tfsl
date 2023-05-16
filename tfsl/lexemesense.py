@@ -5,41 +5,34 @@ from typing import Optional, Protocol, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.monolingualtext
-import tfsl.monolingualtextholder
+import tfsl.monolingualtextholder as MTH
 import tfsl.statement
-import tfsl.statementholder
+import tfsl.statementholder as STH
 import tfsl.utils
 
-class LexemeSenseLike(Protocol):
+class LexemeSenseLike(I.MTST, Protocol):
+    @property
+    def glosses(self) -> MTH.MonolingualTextHolder:...
     @property
     def id(self) -> Optional[str]: ...
-
-    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool: ...
-
-    @overload
-    def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
-    @overload
-    def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
-    @overload
-    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
 
 class LexemeSense:
     """ Container for a Wikidata lexeme sense. """
     def __init__(self,
-                 glosses: Union[tfsl.monolingualtextholder.MonolingualTextHolder,
+                 glosses: Union[MTH.MonolingualTextHolder,
                                 tfsl.monolingualtext.MonolingualText,
                                 I.MonolingualTextList],
-                 statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None):
+                 statements: Optional[Union[STH.StatementHolder, I.StatementHolderInput]]=None):
         super().__init__()
-        if isinstance(glosses, tfsl.monolingualtextholder.MonolingualTextHolder):
+        if isinstance(glosses, MTH.MonolingualTextHolder):
             self.glosses = glosses
         else:
-            self.glosses = tfsl.monolingualtextholder.MonolingualTextHolder(glosses)
+            self.glosses = MTH.MonolingualTextHolder(glosses)
 
-        if isinstance(statements, tfsl.statementholder.StatementHolder):
+        if isinstance(statements, STH.StatementHolder):
             self.statements = statements
         else:
-            self.statements = tfsl.statementholder.StatementHolder(statements)
+            self.statements = STH.StatementHolder(statements)
 
         self.id: Optional[str] = None
 
@@ -66,10 +59,14 @@ class LexemeSense:
     def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
     @overload
     def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> I.StatementList: ...
 
     def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
         if isinstance(arg, str):
             return self.statements[arg]
+        elif isinstance(arg, tfsl.itemvalue.ItemValue):
+            return self.statements[arg.id]
         elif isinstance(arg, tfsl.languages.Language) or isinstance(arg, tfsl.monolingualtext.MonolingualText):
             return self.glosses[arg]
         raise KeyError(f"Can't get {type(arg)} from LexemeForm")
@@ -129,6 +126,9 @@ class LexemeSense:
     def _(self, arg: Union[str, tfsl.claim.Claim, tfsl.statement.Statement]) -> bool:
         return arg in self.statements
 
+    def __repr__(self) -> str:
+        return f"<{self.id}: {len(self.glosses)} glosses, {len(self.statements)} statements>"
+
     def __eq__(self, rhs: object) -> bool:
         if not isinstance(rhs, LexemeSense):
             return NotImplemented
@@ -157,14 +157,14 @@ class LexemeSense:
 
 def build_sense(sense_in: I.LexemeSenseDict) -> LexemeSense:
     """ Builds a LexemeSense from the JSON dictionary describing it. """
-    glosses = tfsl.monolingualtextholder.build_text_list(sense_in["glosses"])
-    statements = tfsl.statementholder.build_statement_list(sense_in["claims"])
+    glosses = MTH.build_text_list(sense_in["glosses"])
+    statements = STH.build_statement_list(sense_in["claims"])
 
     sense_out = LexemeSense(glosses, statements)
     sense_out.id = sense_in["id"]
     return sense_out
 
-class LS_(LexemeSenseLike):
+class LS_:
     def __init__(self, sense_json: I.LexemeSenseDict):
         self.json = sense_json
 
@@ -175,8 +175,15 @@ class LS_(LexemeSenseLike):
             return current_id
         raise ValueError("Somehow the sense ID is not a valid sense ID")
 
+    @property
+    def glosses(self) -> MTH.MonolingualTextHolder:
+        return MTH.MonolingualTextHolder(MTH.build_text_list(self.json["glosses"]))
+
+    def __repr__(self) -> str:
+        return f"<{self.id}: {len(self.json['glosses'])} glosses, {sum(len(y) for x, y in self.json['claims'].items())} statements>"
+
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
-        return tfsl.statementholder.haswbstatement(self.json["claims"], property_in, value_in)
+        return STH.haswbstatement(self.json["claims"], property_in, value_in)
 
     @overload
     def __getitem__(self, arg: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
@@ -184,12 +191,16 @@ class LS_(LexemeSenseLike):
     def __getitem__(self, arg: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
     @overload
     def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> I.StatementList: ...
 
     def __getitem__(self, arg: object) -> Union[I.StatementList, tfsl.monolingualtext.MonolingualText]:
         if isinstance(arg, str):
             return self.getitem_str(arg)
+        elif isinstance(arg, tfsl.itemvalue.ItemValue):
+            return self.getitem_str(arg.id)
         elif isinstance(arg, tfsl.languages.Language):
-            return tfsl.monolingualtextholder.get_lang_from_mtlist(self.json["glosses"], arg)
+            return MTH.get_lang_from_mtlist(self.json["glosses"], arg)
         elif isinstance(arg, tfsl.monolingualtext.MonolingualText):
             lang = arg.language
             lang_code = lang.code

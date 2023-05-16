@@ -6,6 +6,7 @@ from textwrap import indent
 from typing import Optional
 
 import tfsl.interfaces as I
+import tfsl.itemvalue
 import tfsl.statement
 import tfsl.utils as U
 

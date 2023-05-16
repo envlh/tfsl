@@ -49,13 +49,15 @@ class ItemValue:
         return base_dict
 
     def get_Qid(self, otherwise: Optional[I.Qid]=None) -> I.Qid:
+        """ Returns the id in this ItemValue if it is a Qid. """
         if I.is_Qid(self.id):
             return self.id
         elif otherwise is not None:
             return otherwise
-        raise TypeError(f"{self.id} is not an LFid")
+        raise TypeError(f"{self.id} is not a Qid")
 
     def get_LFid(self, otherwise: Optional[I.LFid]=None) -> I.LFid:
+        """ Returns the id in this ItemValue if it is an LFid. """
         if I.is_LFid(self.id):
             return self.id
         elif otherwise is not None:
@@ -63,11 +65,12 @@ class ItemValue:
         raise TypeError(f"{self.id} is not an LFid")
 
     def get_LSid(self, otherwise: Optional[I.LSid]=None) -> I.LSid:
+        """ Returns the id in this ItemValue if it is an LSid. """
         if I.is_LSid(self.id):
             return self.id
         elif otherwise is not None:
             return otherwise
-        raise TypeError(f"{self.id} is not an LFid")
+        raise TypeError(f"{self.id} is not an LSid")
 
 def is_itemvalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.ItemValueDict]:
     """ Checks that the keys expected for an ItemValue exist. """

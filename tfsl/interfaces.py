@@ -3,7 +3,7 @@
 """
 
 import re
-from typing import Any, DefaultDict, Dict, List, NewType, Optional, Sequence, Tuple, TypedDict, Union, TYPE_CHECKING
+from typing import Any, DefaultDict, Dict, List, NewType, Optional, Protocol, Sequence, Tuple, TypedDict, Union, TYPE_CHECKING, overload
 from typing_extensions import NotRequired, TypeGuard
 
 if TYPE_CHECKING:
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     import tfsl.coordinatevalue
     import tfsl.item
     import tfsl.itemvalue
+    import tfsl.languages
     import tfsl.lexeme
     import tfsl.lexemeform
     import tfsl.lexemesense
@@ -155,15 +156,15 @@ ClaimValue = Union[
 ClaimList = List['tfsl.claim.Claim']
 StatementList = List['tfsl.statement.Statement']
 MonolingualTextList = List['tfsl.monolingualtext.MonolingualText']
-LexemeSenseList = List['tfsl.lexemesense.LexemeSense']
-LS_List = List['tfsl.lexemesense.LS_']
+
 LexemeSenseLikeList = Sequence['tfsl.lexemesense.LexemeSenseLike']
-LexemeFormList = List['tfsl.lexemeform.LexemeForm']
-LF_List = List['tfsl.lexemeform.LF_']
 LexemeFormLikeList = Sequence['tfsl.lexemeform.LexemeFormLike']
-LexemeList = List['tfsl.lexeme.Lexeme']
-L_List = List['tfsl.lexeme.L_']
 LexemeLikeList = List['tfsl.lexeme.LexemeLike']
+
+LexemeSenseList = List['tfsl.lexemesense.LexemeSense']
+LexemeFormList = List['tfsl.lexemeform.LexemeForm']
+LexemeList = List['tfsl.lexeme.Lexeme']
+
 ReferenceList = List['tfsl.reference.Reference']
 
 ClaimDictSet = Dict[Pid, List[ClaimDict]]
@@ -344,6 +345,18 @@ class ItemDict(ItemPublishedSettings, ItemData):
     """ In the output of wikidata.org/wiki/Special:EntityData/Q1356.json,
         the dictionary represented by the XPath "/entities/Q1356".
     """
+
+class MTST(Protocol):
+    def haswbstatement(self, property_in: Pid, value_in: Optional[ClaimValue]=None) -> bool: ...
+
+    @overload
+    def __getitem__(self, arg: 'tfsl.languages.Language') -> 'tfsl.monolingualtext.MonolingualText': ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.monolingualtext.MonolingualText') -> 'tfsl.monolingualtext.MonolingualText': ...
+    @overload
+    def __getitem__(self, arg: Pid) -> StatementList: ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> StatementList: ...
 
 def is_ItemDict(arg: EntityPublishedSettings) -> TypeGuard[ItemDict]:
     """ Checks that the keys expected for an Item exist. """

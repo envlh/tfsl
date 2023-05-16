@@ -5,7 +5,7 @@ import os
 import os.path
 import time
 from textwrap import indent
-from typing import Collection, Optional, List, Protocol, Union, overload
+from typing import Collection, Optional, List, Protocol, Sequence, Union, overload
 
 import tfsl.interfaces as I
 import tfsl.auth
@@ -14,33 +14,63 @@ import tfsl.languages
 import tfsl.lexemeform
 import tfsl.lexemesense
 import tfsl.monolingualtext
-import tfsl.monolingualtextholder
+import tfsl.monolingualtextholder as MTH
 import tfsl.statement
-import tfsl.statementholder
+import tfsl.statementholder as STH
 import tfsl.utils
 
-default_lexeme_cache_path = os.path.expanduser('~/.cache/tfsl')
-os.makedirs(default_lexeme_cache_path,exist_ok=True)
+class LexemeLike(I.MTST, Protocol):
+    @property
+    def lexeme_id(self) -> Optional[I.Lid]: ...
+    @property
+    def lemmata(self) -> MTH.MonolingualTextHolder:...
+    @property
+    def language(self) -> tfsl.languages.Language: ...
+    @property
+    def category(self) -> I.Qid: ...
+
+    def get_forms(self, inflections: Optional[Collection[I.Qid]]=None, exclusions: Optional[Collection[I.Qid]]=None) -> Sequence[tfsl.lexemeform.LexemeFormLike]: ...
+
+    def get_senses(self) -> Sequence[tfsl.lexemesense.LexemeSenseLike]: ...
+
+    def repr_lemmata_first(self) -> str: ...
+
+    @overload
+    def __getitem__(self, arg: 'tfsl.languages.Language') -> 'tfsl.monolingualtext.MonolingualText': ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.monolingualtext.MonolingualText') -> 'tfsl.monolingualtext.MonolingualText': ...
+    @overload
+    def __getitem__(self, arg: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> I.StatementList: ...
+    @overload
+    def __getitem__(self, key: I.LFid) -> tfsl.lexemeform.LexemeFormLike: ...
+    @overload
+    def __getitem__(self, key: I.LSid) -> tfsl.lexemesense.LexemeSenseLike: ...
+    @overload
+    def __getitem__(self, key: I.Fid) -> tfsl.lexemeform.LexemeFormLike: ...
+    @overload
+    def __getitem__(self, key: I.Sid) -> tfsl.lexemesense.LexemeSenseLike: ...
 
 class Lexeme:
     """ Container for a Wikidata lexeme. """
     def __init__(self,
-                lemmata: Union[tfsl.monolingualtextholder.MonolingualTextHolder, I.MonolingualTextHolderInput],
+                lemmata: Union[MTH.MonolingualTextHolder, I.MonolingualTextHolderInput],
                 lang_in: tfsl.languages.Language,
                 cat_in: I.Qid,
-                statements: Optional[Union[tfsl.statementholder.StatementHolder, I.StatementHolderInput]]=None,
+                statements: Optional[Union[STH.StatementHolder, I.StatementHolderInput]]=None,
                 senses: Optional[I.LexemeSenseList]=None,
                 forms: Optional[I.LexemeFormList]=None):
         super().__init__()
-        if isinstance(lemmata, tfsl.monolingualtextholder.MonolingualTextHolder):
+        if isinstance(lemmata, MTH.MonolingualTextHolder):
             self.lemmata = lemmata
         else:
-            self.lemmata = tfsl.monolingualtextholder.MonolingualTextHolder(lemmata)
+            self.lemmata = MTH.MonolingualTextHolder(lemmata)
 
-        if isinstance(statements, tfsl.statementholder.StatementHolder):
+        if isinstance(statements, STH.StatementHolder):
             self.statements = statements
         else:
-            self.statements = tfsl.statementholder.StatementHolder(statements)
+            self.statements = STH.StatementHolder(statements)
 
         self.language = lang_in
         self.category = cat_in
@@ -183,6 +213,8 @@ class Lexeme:
     @overload
     def __getitem__(self, key: I.Pid) -> I.StatementList: ...
     @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> I.StatementList: ...
+    @overload
     def __getitem__(self, key: I.LFid) -> tfsl.lexemeform.LexemeForm: ...
     @overload
     def __getitem__(self, key: I.LSid) -> tfsl.lexemesense.LexemeSense: ...
@@ -294,12 +326,12 @@ class Lexeme:
 
 def build_lexeme(lexeme_in: I.LexemeDict) -> Lexeme:
     """ Builds a Lexeme from the JSON dictionary describing it. """
-    lemmas = tfsl.monolingualtextholder.build_text_list(lexeme_in["lemmas"])
+    lemmas = MTH.build_text_list(lexeme_in["lemmas"])
 
     lexemecat = lexeme_in["lexicalCategory"]
     language = tfsl.languages.get_first_lang(lexeme_in["language"])
 
-    statements = tfsl.statementholder.build_statement_list(lexeme_in["claims"])
+    statements = STH.build_statement_list(lexeme_in["claims"])
 
     forms = [tfsl.lexemeform.build_form(form) for form in lexeme_in["forms"]]
     senses = [tfsl.lexemesense.build_sense(sense) for sense in lexeme_in["senses"]]
@@ -362,6 +394,10 @@ class L_:
         self.lexeme_json: I.LexemeDict = retrieve_lexeme_json(input_arg)
 
     @property
+    def lemmata(self) -> MTH.MonolingualTextHolder:
+        return MTH.MonolingualTextHolder(MTH.build_text_list(self.lexeme_json["lemmas"]))
+
+    @property
     def category(self) -> I.Qid:
         return self.lexeme_json["lexicalCategory"]
 
@@ -400,7 +436,7 @@ class L_:
         return tfsl.languages.get_first_lang(self.lexeme_json["language"])
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
-        return tfsl.statementholder.haswbstatement(self.lexeme_json["claims"], property_in, value_in)
+        return STH.haswbstatement(self.lexeme_json["claims"], property_in, value_in)
 
     @overload
     def __getitem__(self, key: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText: ...
@@ -408,6 +444,8 @@ class L_:
     def __getitem__(self, key: tfsl.monolingualtext.MonolingualText) -> tfsl.monolingualtext.MonolingualText: ...
     @overload
     def __getitem__(self, key: I.Pid) -> I.StatementList: ...
+    @overload
+    def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> I.StatementList: ...
     @overload
     def __getitem__(self, key: I.LFid) -> tfsl.lexemeform.LF_: ...
     @overload
@@ -419,7 +457,7 @@ class L_:
 
     def __getitem__(self, key: object) -> Union[I.StatementList, tfsl.lexemeform.LF_, tfsl.lexemesense.LS_, tfsl.monolingualtext.MonolingualText]:
         if isinstance(key, tfsl.languages.Language):
-            return tfsl.monolingualtextholder.get_lang_from_mtlist(self.lexeme_json["lemmas"], key)
+            return MTH.get_lang_from_mtlist(self.lexeme_json["lemmas"], key)
         elif isinstance(key, tfsl.monolingualtext.MonolingualText):
             lang = key.language
             lang_code = lang.code
