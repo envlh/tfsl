@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 from functools import singledispatchmethod
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 import tfsl.interfaces as I
 import tfsl.languages
@@ -52,6 +52,9 @@ class MonolingualTextHolder(object):
 
     def __len__(self) -> int:
         return len(self.texts)
+
+    def __iter__(self) -> List[tfsl.monolingualtext.MonolingualText]:
+        return iter(self.texts)
 
     @singledispatchmethod
     def contains(self, arg: object) -> bool:

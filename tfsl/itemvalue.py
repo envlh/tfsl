@@ -56,6 +56,22 @@ class ItemValue:
             return otherwise
         raise TypeError(f"{self.id} is not a Qid")
 
+    def get_Pid(self, otherwise: Optional[I.Pid]=None) -> I.Pid:
+        """ Returns the id in this ItemValue if it is a Pid. """
+        if I.is_Pid(self.id):
+            return self.id
+        elif otherwise is not None:
+            return otherwise
+        raise TypeError(f"{self.id} is not a Pid")
+
+    def get_Lid(self, otherwise: Optional[I.Lid]=None) -> I.Lid:
+        """ Returns the id in this ItemValue if it is a Lid. """
+        if I.is_Lid(self.id):
+            return self.id
+        elif otherwise is not None:
+            return otherwise
+        raise TypeError(f"{self.id} is not a Lid")
+
     def get_LFid(self, otherwise: Optional[I.LFid]=None) -> I.LFid:
         """ Returns the id in this ItemValue if it is an LFid. """
         if I.is_LFid(self.id):

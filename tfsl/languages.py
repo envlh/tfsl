@@ -199,6 +199,8 @@ class Languages:
         self.ka_ = Language("ka", "Q8108")  # Georgian
         self.kk_ = Language("kk", "Q9252")  # Kazakh
         self.ko_ = Language("ko", "Q9176")  # Korean
+        self.ko_hanja_ = Language("ko-x-Q485619", "Q9176")  # Korean
+        self.ko_financial_ = Language("ko-x-Q13163531", "Q9176")  # Korean
         self.kw_ = Language("kw", "Q25289")  # Cornish
         self.la_ = Language("la", "Q397")  # Latin
         self.lb_ = Language("lb", "Q9051")  # Luxembourgish
@@ -300,6 +302,7 @@ class Languages:
         self.bcc_ = Language("bcc", "Q12634001")  # Southern Balochi
         self.bcl_ = Language("bcl", "Q33284")  # Central Bikol
         self.be_x_old_ = Language("be-x-old", "Q9091")  # Belarusian (Taraškievica orthography)
+        self.bfi_ = Language("bfi", "Q33000")  # British Sign Language
         self.bgn_ = Language("bgn", "Q12645561")  # Western Balochi
         self.bh_ = Language("bh", "Q33268")  # Bhojpuri
         self.bi_ = Language("bi", "Q35452")  # Bislama
@@ -317,6 +320,7 @@ class Languages:
         self.bug_ = Language("bug", "Q33190")  # Buginese
         self.bxr_ = Language("bxr", "Q16116629")  # Russia Buriat
         self.byv_ = Language("byv", "Q36019")  # Medumba
+        self.bzs_ = Language("bzs", "Q3436689")  # Brazilian Sign Language
         self.cak_ = Language("cak", "Q35115")  # Kaqchikel
         self.cbk_zam_ = Language("cbk-zam", "Q33281")  # Chavacano
         self.cdo_ = Language("cdo", "Q36455")  # Min Dong Chinese
@@ -378,6 +382,7 @@ class Languages:
         self.gor_ = Language("gor", "Q2501174")  # Gorontalo
         self.got_ = Language("got", "Q35722")  # Gothic
         self.grc_ = Language("grc", "Q35497")  # Ancient Greek
+        self.gsg_ = Language("gsg", "Q33282")  # German Sign Language
         self.gsw_ = Language("gsw", "Q131339")  # Swiss German
         self.guc_ = Language("guc", "Q891085")  # Wayuu
         self.gur_ = Language("gur", "Q35331")  # Frafra
@@ -523,6 +528,7 @@ class Languages:
         self.pdt_ = Language("pdt", "Q1751432")  # Plautdietsch
         self.pfl_ = Language("pfl", "Q23014")  # Palatine German
         self.pih_ = Language("pih", "Q36554")  # Norfuk / Pitkern
+        self.pks_ = Language("pks", "Q22964057")  # Pakistan Sign Language
         self.pms_ = Language("pms", "Q15085")  # Piedmontese
         self.pnt_ = Language("pnt", "Q36748")  # Pontic
         self.prg_ = Language("prg", "Q35501")  # Prussian
