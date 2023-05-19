@@ -163,6 +163,7 @@ class Languages:
         self.sje_ = Language("sje", "Q56314")  # Pite Sami
         self.sju_ = Language("sju", "Q56415")  # Ume Sami
         self.sma_ = Language("sma", "Q13293")  # Southern Sami
+        self.sia_ = Language("sia", "Q35241")  # Akkala Sami
 
         # other languages (in general)
         self.af_ = Language("af", "Q14196")  # Afrikaans
@@ -179,22 +180,32 @@ class Languages:
         self.dsb_ = Language("dsb", "Q13286")  # Lower Sorbian
         self.de_at_ = Language("de-at", "Q306626")  # Austrian German
         self.de_ch_ = Language("de-ch", "Q387066")  # Swiss German
+        self.en_ca_ = Language("en-ca", "Q44676")  # Canadian English
         self.en_gb_ = Language("en-gb", "Q7979")  # British English
+        self.en_us_ = Language("en-us", "Q7976")  # American English
         self.eo_ = Language("eo", "Q143")  # Esperanto
+        self.eo_hsistemo_ = Language("eo-hsistemo", "Q143")  # Esperanto
+        self.eo_xsistemo_ = Language("eo-xsistemo", "Q143")  # Esperanto
         self.eu_ = Language("eu", "Q8752")  # Basque
         self.fa_ = Language("fa", "Q9168")  # Persian
         self.fy_ = Language("fy", "Q27175")  # West Frisian
         self.gd_ = Language("gd", "Q9314")  # Scottish Gaelic
         self.gl_ = Language("gl", "Q9307")  # Galician
+        self.gmh_ = Language("gmh", "Q837985")  # Middle High German
         self.gn_ = Language("gn", "Q35876")  # Guarani
+        self.goh_ = Language("goh", "Q35218")  # Old High German
         self.ha_ = Language("ha", "Q56475")  # Hausa
         self.ha_arab_ = Language("ha-arab", "Q56475")  # Hausa
         self.he_ = Language("he", "Q9288")  # Hebrew
+        self.he_tiberian_ = Language("he-x-Q21283070", "Q9288")  # Hebrew
+        self.hno_ = Language("hno", "Q382273")  # Hindko
         self.hsb_ = Language("hsb", "Q13248")  # Upper Sorbian
         self.hy_ = Language("hy", "Q8785")  # Armenian
         self.ig_ = Language("ig", "Q33578")  # Igbo
         self.io_ = Language("io", "Q35224")  # Ido
         self.ja_ = Language("ja", "Q5287")  # Japanese
+        self.ja_hira_ = Language("ja-hira", "Q5287")  # Japanese
+        self.ja_kana_ = Language("ja-kana", "Q5287")  # Japanese
         self.jv_ = Language("jv", "Q33549")  # Javanese
         self.ka_ = Language("ka", "Q8108")  # Georgian
         self.kk_ = Language("kk", "Q9252")  # Kazakh
@@ -453,6 +464,7 @@ class Languages:
         self.kv_ = Language("kv", "Q36126")  # Komi
         self.ky_ = Language("ky", "Q9255")  # Kyrgyz
         self.lad_ = Language("lad", "Q36196")  # Ladino
+        self.lad_hebr_ = Language("lad-hebr", "Q36196")  # Ladino
         self.lbe_ = Language("lbe", "Q36206")  # Lak
         self.lem_ = Language("lem", "Q13479983")  # Nomaande
         self.lez_ = Language("lez", "Q31746")  # Lezghian

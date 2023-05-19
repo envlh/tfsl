@@ -189,7 +189,7 @@ def build_item(item_in: I.ItemDict) -> Item:
             new_alias = alias["value"]# @ tfsl.languages.get_first_lang(alias["language"])
             aliases[lang].add(new_alias)
 
-    sitelinks = item_in["sitelinks"]
+    sitelinks = item_in.get("sitelinks", {})
 
     item_out = Item(labels, descriptions, aliases, statements, sitelinks)
     item_out.set_published_settings(item_in)
@@ -202,7 +202,7 @@ def retrieve_item_json(lid_in: Union[int, I.Qid]) -> I.ItemDict:
     lid: I.Qid
     if isinstance(lid_in, int):
         lid = I.Qid('Q'+str(lid_in))
-    elif I.is_Qid(lid_in):
+    elif I.is_Qid(lid_in) or I.is_Pid(lid_in):
         lid = lid_in
     filename = tfsl.utils.get_filename(lid)
     item_json: I.ItemDict
@@ -213,7 +213,7 @@ def retrieve_item_json(lid_in: Union[int, I.Qid]) -> I.ItemDict:
     except (FileNotFoundError, OSError, AssertionError) as e:
         current_lexeme = tfsl.auth.get_lexemes([lid])
         current_lid_output = current_lexeme[lid]
-        if I.is_ItemDict(current_lid_output):
+        if I.is_ItemDict(current_lid_output) or I.is_PropertyDict(current_lid_output):
             item_json = current_lid_output
         else:
             raise ValueError(f"Retrieved entity {lid} was not an item") from e

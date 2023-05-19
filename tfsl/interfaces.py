@@ -358,6 +358,10 @@ class MTST(Protocol):
     @overload
     def __getitem__(self, arg: 'tfsl.itemvalue.ItemValue') -> StatementList: ...
 
+def is_PropertyDict(arg: EntityPublishedSettings) -> TypeGuard[PropertyDict]:
+    """ Checks that the keys expected for an Item exist. """
+    return all(x in arg for x in ["labels", "descriptions", "aliases", "claims"])
+
 def is_ItemDict(arg: EntityPublishedSettings) -> TypeGuard[ItemDict]:
     """ Checks that the keys expected for an Item exist. """
     return all(x in arg for x in ["labels", "descriptions", "aliases", "claims", "sitelinks"])
