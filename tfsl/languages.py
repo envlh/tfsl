@@ -64,9 +64,19 @@ class Languages:
             otherwise finds the languages with the input as the language code.
         """
         if I.is_Qid(string_in):
-            return cls.__itemlookup__[string_in]
+            thing_to_return = cls.__itemlookup__[string_in]
+            if not thing_to_return:
+                thing_to_return = [Language("mis", string_in)]
+            return thing_to_return
         else:
-            return cls.__codelookup__[string_in]
+            thing_to_return = cls.__codelookup__[string_in]
+            if not thing_to_return:
+                if '-x-' in string_in:
+                    prefix, _, suffix = string_in.partition('-x-')
+                    thing_to_return = [Language(string_in, suffix)]
+                else:
+                    thing_to_return = [Language(string_in, "Q22282914")]
+            return thing_to_return
 
     def __setattr__(self, name: str, value: Any) -> None:
         super().__setattr__(name, value)
@@ -174,6 +184,8 @@ class Languages:
         self.be_ = Language("be", "Q9091")  # Belarusian
         self.be_tarask_ = Language("be-tarask", "Q9091")  # Taraskievica
         self.br_ = Language("br", "Q12107")  # Breton
+        self.xbm_ = Language("xbm", "Q787610")  # Middle Breton
+        self.obt_ = Language("obt", "Q3558112")  # Old Breton
         self.ca_ = Language("ca", "Q7026")  # Catalan
         self.cy_ = Language("cy", "Q9309")  # Welsh
         self.dag_ = Language("dag", "Q32238")  # Dagbani
