@@ -2,7 +2,7 @@
 
 from copy import deepcopy
 from functools import singledispatchmethod
-from typing import Callable, List, Optional
+from typing import Callable, Iterator, Optional
 
 import tfsl.interfaces as I
 import tfsl.languages
@@ -53,7 +53,7 @@ class MonolingualTextHolder(object):
     def __len__(self) -> int:
         return len(self.texts)
 
-    def __iter__(self) -> List[tfsl.monolingualtext.MonolingualText]:
+    def __iter__(self) -> Iterator[tfsl.monolingualtext.MonolingualText]:
         return iter(self.texts)
 
     @singledispatchmethod
@@ -121,5 +121,6 @@ def build_text_list(text_dict: I.LemmaDictSet) -> I.MonolingualTextList:
     return texts
 
 def get_lang_from_mtlist(mtlist: I.LemmaDictSet, language: tfsl.languages.Language) -> tfsl.monolingualtext.MonolingualText:
+    """ Returns a MonolingualText from a LemmaDictSet based on the language code of the provided Language. """
     lang_code = language.code
     return tfsl.monolingualtext.build_lemma(mtlist[lang_code])
