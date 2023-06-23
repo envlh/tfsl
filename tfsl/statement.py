@@ -84,6 +84,24 @@ class Statement:
             return self.sub_reference(arg)
         raise NotImplementedError(f"Can't subtract {str(type(arg))} from statement")
 
+    def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+        """ Shamelessly named after the keyword used on Wikidata to look for a statement.
+
+            :return: Whether the property (with the value provided) is used as a qualifier on the statement.
+        """
+        if value_in is None:
+            return property_in in self.qualifiers
+        elif tfsl.utils.is_novalue(value_in):
+            def compare_function(stmt: tfsl.Statement) -> bool:
+                return tfsl.utils.is_novalue(stmt.value)
+        elif tfsl.utils.is_somevalue(value_in):
+            def compare_function(stmt: tfsl.Statement) -> bool:
+                return tfsl.utils.is_somevalue(stmt.value)
+        else:
+            def compare_function(stmt: tfsl.statement.Statement) -> bool:
+                return stmt.value == value_in
+        return any(map(compare_function, self.qualifiers[property_in]))
+
     def add_claim(self, arg: tfsl.claim.Claim) -> 'Statement':
         published_settings = self.get_published_settings()
         stmt_out = Statement(self.property, self.value, self.rank, self.qualifiers.add(arg), self.references)

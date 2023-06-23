@@ -154,6 +154,7 @@ class Languages:
         self.sat_latn_ = Language("sat-latn", "Q33965")  # Santali
         self.sat_orya_ = Language("sat-orya", "Q33965")  # Santali
         self.sd_ = Language("sd", "Q33997")  # Sindhi (aran)
+        self.sd_deva_ = Language("sd-x-Q116688933", "Q33997")  # Sindhi (deva)
         # omitting sd-deva for now pending script request
         self.ta_ = Language("ta", "Q5885")  # Tamil
         self.te_ = Language("te", "Q8097")  # Telugu
