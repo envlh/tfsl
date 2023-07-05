@@ -13,9 +13,9 @@ import tfsl.utils
 
 class Rank(Enum):
     """ Represents the rank of a given statement. """
-    Preferred = 1
-    Normal = 0
-    Deprecated = -1
+    Preferred = 1   # pylint: disable=invalid-name
+    Normal = 0      # pylint: disable=invalid-name
+    Deprecated = -1 # pylint: disable=invalid-name
 
 class Statement:
     """ Represents a statement, or a claim with accompanying rank, optional qualifiers,
@@ -61,7 +61,7 @@ class Statement:
         else:
             self.references = deepcopy(references)
 
-        self.id: Optional[str] = None
+        self.id: Optional[str] = None # pylint: disable=invalid-name
         self.qualifiers_order: List[I.Pid] = []
         self.toremove: bool = False
 
@@ -92,13 +92,13 @@ class Statement:
         if value_in is None:
             return property_in in self.qualifiers
         elif tfsl.utils.is_novalue(value_in):
-            def compare_function(stmt: tfsl.Statement) -> bool:
+            def compare_function(stmt: tfsl.claim.Claim) -> bool:
                 return tfsl.utils.is_novalue(stmt.value)
         elif tfsl.utils.is_somevalue(value_in):
-            def compare_function(stmt: tfsl.Statement) -> bool:
+            def compare_function(stmt: tfsl.claim.Claim) -> bool:
                 return tfsl.utils.is_somevalue(stmt.value)
         else:
-            def compare_function(stmt: tfsl.statement.Statement) -> bool:
+            def compare_function(stmt: tfsl.claim.Claim) -> bool:
                 return stmt.value == value_in
         return any(map(compare_function, self.qualifiers[property_in]))
 
@@ -161,8 +161,9 @@ class Statement:
         """ Sets based on a Statement JSON dictionary those variables
             which are only significant at editing time for existing statements.
         """
-        self.id = stmt_in["id"]
-        self.qualifiers_order = stmt_in.get("qualifiers-order", [])
+        if "id" in stmt_in:
+            self.id = stmt_in["id"]
+            self.qualifiers_order = stmt_in.get("qualifiers-order", [])
 
     def get_published_settings(self) -> I.StatementDictPublishedSettings:
         """ Returns a dictionary containing those portions of the Statement JSON dictionary
@@ -208,7 +209,7 @@ class Statement:
         base_dict["references"] = [reference.__jsonout__() for reference in self.references]
         return base_dict
 
-    def get_ItemValue(self,
+    def get_ItemValue(self, # pylint: disable=invalid-name
                       novalue: Optional[tfsl.itemvalue.ItemValue]=None,
                       somevalue: Optional[tfsl.itemvalue.ItemValue]=None) -> tfsl.itemvalue.ItemValue:
         if isinstance(self.value, tfsl.itemvalue.ItemValue):
@@ -219,7 +220,7 @@ class Statement:
             return novalue
         raise TypeError(f"{self.property} statement did not yield an ItemValue")
 
-    def get_MonolingualText(self,
+    def get_MonolingualText(self, # pylint: disable=invalid-name
                       novalue: Optional[tfsl.monolingualtext.MonolingualText]=None,
                       somevalue: Optional[tfsl.monolingualtext.MonolingualText]=None) -> tfsl.monolingualtext.MonolingualText:
         if isinstance(self.value, tfsl.monolingualtext.MonolingualText):

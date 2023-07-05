@@ -80,9 +80,14 @@ class Claim:
             claimdict_out["datavalue"] = datavalue_out
         return claimdict_out
 
-    def get_ItemValue(self,
+    def get_ItemValue(self, # pylint: disable=invalid-name
                       novalue: Optional[tfsl.itemvalue.ItemValue]=None,
                       somevalue: Optional[tfsl.itemvalue.ItemValue]=None) -> tfsl.itemvalue.ItemValue:
+        """ Returns the claim's value if it is an ItemValue,
+            or the 'somevalue' argument if the claim's value is somevalue,
+            or likewise with respect to 'novalue',
+            or fails entirely.
+        """
         if isinstance(self.value, tfsl.itemvalue.ItemValue):
             return self.value
         if self.value is True and somevalue is not None:
@@ -91,9 +96,14 @@ class Claim:
             return novalue
         raise TypeError(f"{self.property} statement did not yield an ItemValue")
 
-    def get_MonolingualText(self,
+    def get_MonolingualText(self, # pylint: disable=invalid-name
                       novalue: Optional[tfsl.monolingualtext.MonolingualText]=None,
                       somevalue: Optional[tfsl.monolingualtext.MonolingualText]=None) -> tfsl.monolingualtext.MonolingualText:
+        """ Returns the claim's value if it is a MonolingualText,
+            or the 'somevalue' argument if the claim's value is somevalue,
+            or likewise with respect to 'novalue',
+            or fails entirely.
+        """
         if isinstance(self.value, tfsl.monolingualtext.MonolingualText):
             return self.value
         if self.value is True and somevalue is not None:
@@ -105,6 +115,11 @@ class Claim:
     def get_str(self,
                       novalue: Optional[str]=None,
                       somevalue: Optional[str]=None) -> str:
+        """ Returns the claim's value if it is a string,
+            or the 'somevalue' argument if the claim's value is somevalue,
+            or likewise with respect to 'novalue',
+            or fails entirely.
+        """
         if isinstance(self.value, str):
             return self.value
         if self.value is True and somevalue is not None:
@@ -138,9 +153,9 @@ def build_value(actual_value: Union[str, I.ClaimDictValueDictionary]) -> I.Claim
         return tfsl.coordinatevalue.build_coordinatevalue(actual_value)
     elif tfsl.quantityvalue.is_quantityvalue(actual_value):
         return tfsl.quantityvalue.build_quantityvalue(actual_value)
-    elif tfsl.timevalue.is_timevalue(actual_value):
-        return tfsl.timevalue.build_timevalue(actual_value)
-    raise ValueError(f"Attempting to build value of unsupported type")
+    elif tfsl.timevalue.is_TimeValue(actual_value):
+        return tfsl.timevalue.build_TimeValue(actual_value)
+    raise ValueError("Attempting to build value of unsupported type")
 
 def build_claim(claim_in: I.ClaimDict) -> Claim:
     """ Builds a Claim given the Wikibase JSON for one. """

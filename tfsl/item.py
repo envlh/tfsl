@@ -1,9 +1,5 @@
 """ Holds the Item class and a function to build one given a JSON representation of it. """
 
-import json
-import os
-import os.path
-import time
 from typing import Dict, Optional, Set, Union
 
 import tfsl.interfaces as I
@@ -56,22 +52,22 @@ class Item:
         self.title: Optional[str] = None
         self.lastrevid: Optional[int] = None
         self.modified: Optional[str] = None
-        self.item_type: Optional[str] = None
-        self.item_id: Optional[I.Qid] = None
+        self.type: Optional[str] = None
+        self.id: Optional[I.Qid] = None # pylint: disable=invalid-name
 
     def get_published_settings(self) -> I.ItemPublishedSettings:
         """ Returns a dictionary containing those portions of the Item JSON dictionary
             which are only significant at editing time for existing items.
         """
-        if self.pageid is not None and self.namespace is not None and self.title is not None and self.lastrevid is not None and self.modified is not None and self.item_type is not None and self.item_id is not None:
+        if self.pageid is not None and self.namespace is not None and self.title is not None and self.lastrevid is not None and self.modified is not None and self.type is not None and self.id is not None:
             return {
                 "pageid": self.pageid,
                 "ns": self.namespace,
                 "title": self.title,
                 "lastrevid": self.lastrevid,
                 "modified": self.modified,
-                "type": self.item_type,
-                "id": self.item_id
+                "type": self.type,
+                "id": self.id
             }
         return {}
 
@@ -85,8 +81,8 @@ class Item:
             self.title = item_in["title"]
             self.lastrevid = item_in["lastrevid"]
             self.modified = item_in["modified"]
-            self.item_type = item_in["type"]
-            self.item_id = item_in["id"]
+            self.type = item_in["type"]
+            self.id = item_in["id"]
 
     def __getitem__(self, key: object) -> I.StatementList:
         if isinstance(key, str):
@@ -98,8 +94,8 @@ class Item:
 
     def __str__(self) -> str:
         remainder = f"{len(self.labels)}/{len(self.descriptions)}, {len(self.statements)}"
-        if self.item_id:
-            return "{"+self.item_id+": "+remainder+"}"
+        if self.id:
+            return "{"+self.id+": "+remainder+"}"
         return "{Item: "+remainder+"}"
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
@@ -195,38 +191,20 @@ def build_item(item_in: I.ItemDict) -> Item:
     item_out.set_published_settings(item_in)
     return item_out
 
-# pylint: disable=invalid-name
-
-def retrieve_item_json(lid_in: Union[int, I.Qid]) -> I.ItemDict:
+def retrieve_item_json(qid_in: Union[int, I.Qid]) -> I.ItemDict:
     """ Retrieves the JSON for the item with the given Qid. """
-    lid: I.Qid
-    if isinstance(lid_in, int):
-        lid = I.Qid('Q'+str(lid_in))
-    elif I.is_Qid(lid_in) or I.is_Pid(lid_in):
-        lid = lid_in
-    filename = tfsl.utils.get_filename(lid)
-    item_json: I.ItemDict
-    try:
-        assert time.time() - os.path.getmtime(filename) < tfsl.utils.time_to_live
-        with open(filename, encoding="utf-8") as fileptr:
-            item_json = json.load(fileptr)
-    except (FileNotFoundError, OSError, AssertionError) as e:
-        current_lexeme = tfsl.auth.get_lexemes([lid])
-        current_lid_output = current_lexeme[lid]
-        if I.is_ItemDict(current_lid_output) or I.is_PropertyDict(current_lid_output):
-            item_json = current_lid_output
-        else:
-            raise ValueError(f"Retrieved entity {lid} was not an item") from e
-        with open(filename, "w", encoding="utf-8") as fileptr:
-            json.dump(item_json, fileptr)
-    return item_json
+    qid = I.get_Qid_string(qid_in)
+    item_dict = tfsl.auth.retrieve_single_entity(qid)
+    if I.is_ItemDict(item_dict):
+        return item_dict
+    raise ValueError(f'Returned JSON for {qid_in} is not an item')
 
-def Q(qid: Union[int, I.Qid]) -> Item:
+def Q(qid: Union[int, I.Qid]) -> Item: # pylint: disable=invalid-name
     """ Retrieves and returns the item with the provided Qid. """
     item_json = retrieve_item_json(qid)
     return build_item(item_json)
 
-class Q_:
+class Q_: # pylint: disable=invalid-name
     """ An Item, but labels/descriptions are not auto-converted to MonolingualTexts
         and statements are only assembled into Statements when accessed.
     """

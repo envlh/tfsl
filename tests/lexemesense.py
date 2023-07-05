@@ -80,7 +80,7 @@ class TestSenseMethods(unittest.TestCase):
 
         self.assertCountEqual(y.glosses.texts, glosslist)
         self.assertEqual(x.statements, {self.property: [stmtlist[0], newstmt]})
-        self.assertEqual(y.statements, {self.property: [stmtlist[0]]})
+        self.assertEqual(y.statements, {self.property: [stmtlist[0], newstmt.set_to_remove()]})
 
         x = LexemeSense(glosslist, [stmtlist[0], newstmt])
         y = x - self.property

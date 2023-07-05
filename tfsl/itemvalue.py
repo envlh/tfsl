@@ -9,7 +9,7 @@ class ItemValue:
     """ Representation of a Wikibase entity of some sort. """
     def __init__(self, item_id: I.EntityId):
         self.type: str
-        self.id: I.EntityId
+        self.id: I.EntityId # pylint: disable=invalid-name
         if I.is_Qid(item_id):
             self.type = 'item'
             self.id = I.Qid(item_id)
@@ -48,7 +48,7 @@ class ItemValue:
             base_dict["numeric-id"] = int(self.id[1:])
         return base_dict
 
-    def get_Qid(self, otherwise: Optional[I.Qid]=None) -> I.Qid:
+    def get_Qid(self, otherwise: Optional[I.Qid]=None) -> I.Qid: # pylint: disable=invalid-name
         """ Returns the id in this ItemValue if it is a Qid. """
         if I.is_Qid(self.id):
             return self.id
@@ -56,7 +56,7 @@ class ItemValue:
             return otherwise
         raise TypeError(f"{self.id} is not a Qid")
 
-    def get_Pid(self, otherwise: Optional[I.Pid]=None) -> I.Pid:
+    def get_Pid(self, otherwise: Optional[I.Pid]=None) -> I.Pid: # pylint: disable=invalid-name
         """ Returns the id in this ItemValue if it is a Pid. """
         if I.is_Pid(self.id):
             return self.id
@@ -64,7 +64,7 @@ class ItemValue:
             return otherwise
         raise TypeError(f"{self.id} is not a Pid")
 
-    def get_Lid(self, otherwise: Optional[I.Lid]=None) -> I.Lid:
+    def get_Lid(self, otherwise: Optional[I.Lid]=None) -> I.Lid: # pylint: disable=invalid-name
         """ Returns the id in this ItemValue if it is a Lid. """
         if I.is_Lid(self.id):
             return self.id
@@ -72,7 +72,7 @@ class ItemValue:
             return otherwise
         raise TypeError(f"{self.id} is not a Lid")
 
-    def get_LFid(self, otherwise: Optional[I.LFid]=None) -> I.LFid:
+    def get_LFid(self, otherwise: Optional[I.LFid]=None) -> I.LFid: # pylint: disable=invalid-name
         """ Returns the id in this ItemValue if it is an LFid. """
         if I.is_LFid(self.id):
             return self.id
@@ -80,7 +80,7 @@ class ItemValue:
             return otherwise
         raise TypeError(f"{self.id} is not an LFid")
 
-    def get_LSid(self, otherwise: Optional[I.LSid]=None) -> I.LSid:
+    def get_LSid(self, otherwise: Optional[I.LSid]=None) -> I.LSid: # pylint: disable=invalid-name
         """ Returns the id in this ItemValue if it is an LSid. """
         if I.is_LSid(self.id):
             return self.id

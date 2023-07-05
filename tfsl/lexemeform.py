@@ -12,15 +12,25 @@ import tfsl.statementholder as STH
 import tfsl.utils
 
 class LexemeFormLike(I.MTST, Protocol):
+    """ Defines methods that may be expected when reading from an object representing a Wikibase lexeme form,
+        whether this object is editable (LexemeForm) or not (LF_).
+    """
     @property
-    def features(self) -> Collection[I.Qid]: ...
+    def features(self) -> Collection[I.Qid]:
+        """ Returns the form's grammatical features. """
     @property
-    def representations(self) -> MTH.MonolingualTextHolder:...
+    def representations(self) -> MTH.MonolingualTextHolder:
+        """ Returns the form's representations. """
     @property
-    def id(self) -> Optional[str]: ...
+    def id(self) -> Optional[str]: # pylint: disable=invalid-name
+        """ Returns the form's LFid. """
 
 class LexemeForm:
-    """ Container for a Wikidata lexeme form. """
+    """ Container for a Wikidata lexeme form.
+
+        See the documentation of LexemeFormLike methods for general information about
+        what certain methods do.
+    """
     def __init__(self,
                  representations: Union[MTH.MonolingualTextHolder,
                                         tfsl.monolingualtext.MonolingualText,
@@ -46,7 +56,7 @@ class LexemeForm:
         else:
             self.features = set(features)
 
-        self.id: Optional[str] = None
+        self.id: Optional[str] = None # pylint: disable=invalid-name
 
     def get_published_settings(self) -> I.LexemeFormPublishedSettings:
         """ Returns a dictionary containing those portions of the LexemeForm JSON dictionary
@@ -192,23 +202,33 @@ def build_form(form_in: I.LexemeFormDict) -> LexemeForm:
 
     return form_out
 
-class LF_:
+class LF_: # pylint: disable=invalid-name
+    """ A LexemeForm, but form representations are not auto-converted to MonolingualTexts
+        and statements are only assembled into Statements when accessed.
+
+        See the documentation of LexemeLike methods for general information about
+        what certain methods do.
+    """
     def __init__(self, form_json: I.LexemeFormDict):
         self.json = form_json
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+        """Shamelessly named after the keyword used on Wikidata to look for a statement."""
         return STH.haswbstatement(self.json["claims"], property_in, value_in)
 
     @property
     def features(self) -> List[I.Qid]:
+        """ (See LexemeFormLike.features for what this method does.) """
         return self.json["grammaticalFeatures"]
 
     @property
     def representations(self) -> MTH.MonolingualTextHolder:
+        """ (See LexemeFormLike.representations for what this method does.) """
         return MTH.MonolingualTextHolder(MTH.build_text_list(self.json["representations"]))
 
     @property
     def id(self) -> str:
+        """ (See LexemeFormLike.id for what this method does.) """
         return self.json["id"]
 
     def __repr__(self) -> str:
@@ -237,12 +257,13 @@ class LF_:
         raise KeyError(f"Can't get {type(arg)} from LexemeSense")
 
     def getitem_str(self, key: str) -> I.StatementList:
-        """ Common handling of __getitem__ for inputs as strings or the ids of ItemValues. """
+        """ :meta private: """
         if I.is_Pid(key):
             return self.getitem_pid(key)
         raise KeyError
 
     def getitem_pid(self, key: I.Pid) -> I.StatementList:
+        """ :meta private: """
         return self.get_stmts(key)
 
     def get_stmts(self, prop: I.Pid) -> I.StatementList:

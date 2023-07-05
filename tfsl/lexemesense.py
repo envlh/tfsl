@@ -11,10 +11,15 @@ import tfsl.statementholder as STH
 import tfsl.utils
 
 class LexemeSenseLike(I.MTST, Protocol):
+    """ Defines methods that may be expected when reading from an object representing a Wikibase lexeme sense,
+        whether this object is editable (LexemeSense) or not (LS_).
+    """
     @property
-    def glosses(self) -> MTH.MonolingualTextHolder:...
+    def glosses(self) -> MTH.MonolingualTextHolder:
+        """ Returns the sense's glosses. """
     @property
-    def id(self) -> Optional[str]: ...
+    def id(self) -> Optional[str]: # pylint: disable=invalid-name
+        """ Returns the sense's LSid. """
 
 class LexemeSense:
     """ Container for a Wikidata lexeme sense. """
@@ -34,7 +39,7 @@ class LexemeSense:
         else:
             self.statements = STH.StatementHolder(statements)
 
-        self.id: Optional[str] = None
+        self.id: Optional[str] = None # pylint: disable=invalid-name
 
     def get_published_settings(self) -> I.LexemeSensePublishedSettings:
         """ Returns a dictionary containing those portions of the LexemeSense JSON dictionary
@@ -164,12 +169,19 @@ def build_sense(sense_in: I.LexemeSenseDict) -> LexemeSense:
     sense_out.id = sense_in["id"]
     return sense_out
 
-class LS_:
+class LS_: # pylint: disable=invalid-name
+    """ A LexemeSense, but sense glosses are not auto-converted to MonolingualTexts
+        and statements are only assembled into Statements when accessed.
+
+        See the documentation of LexemeSenseLike methods for general information about
+        what certain methods do.
+    """
     def __init__(self, sense_json: I.LexemeSenseDict):
         self.json = sense_json
 
     @property
     def id(self) -> I.LSid:
+        """ (See LexemeSenseLike.id for what this method does.) """
         current_id = self.json["id"]
         if I.is_LSid(current_id):
             return current_id
@@ -177,12 +189,14 @@ class LS_:
 
     @property
     def glosses(self) -> MTH.MonolingualTextHolder:
+        """ (See LexemeSenseLike.glosses for what this method does.) """
         return MTH.MonolingualTextHolder(MTH.build_text_list(self.json["glosses"]))
 
     def __repr__(self) -> str:
         return f"<{self.id}: {len(self.json['glosses'])} glosses, {sum(len(y) for x, y in self.json['claims'].items())} statements>"
 
     def haswbstatement(self, property_in: I.Pid, value_in: Optional[I.ClaimValue]=None) -> bool:
+        """Shamelessly named after the keyword used on Wikidata to look for a statement."""
         return STH.haswbstatement(self.json["claims"], property_in, value_in)
 
     @overload
@@ -208,6 +222,7 @@ class LS_:
         raise KeyError(f"Can't get {type(arg)} from LexemeSense")
 
     def getitem_pid(self, key: I.Pid) -> I.StatementList:
+        """ :meta private: """
         return self.get_stmts(key)
 
     def get_stmts(self, prop: I.Pid) -> I.StatementList:

@@ -116,7 +116,7 @@ class TestFormMethods(unittest.TestCase):
         self.assertCountEqual(y.representations.texts, replist)
         self.assertCountEqual(y.features, featlist)
         self.assertEqual(x.statements, {self.property: [stmtlist[0], newstmt]})
-        self.assertEqual(y.statements, {self.property: [stmtlist[0]]})
+        self.assertEqual(y.statements, {self.property: [stmtlist[0], newstmt.set_to_remove()]})
 
         x = LexemeForm(replist, featlist, [stmtlist[0], newstmt])
         y = x - self.property

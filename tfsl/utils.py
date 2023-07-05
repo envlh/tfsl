@@ -1,15 +1,10 @@
 """ Miscellaneous utility functions. """
 
-import configparser
-import json
-import os
 from copy import deepcopy
 from functools import lru_cache
-from pathlib import Path
-from typing import Any, List, Tuple, TypeVar
+from typing import Any, List, TypeVar
 
-import requests
-
+import tfsl.auth
 import tfsl.interfaces as I
 
 DEFAULT_INDENT = "    "
@@ -60,42 +55,17 @@ external_to_internal_type_mapping = {
 }
 
 @lru_cache
-def values_type(prop: str) -> str:
+def values_type(prop: I.Pid) -> str:
     """ Returns the internal datatype of the provided property. """
     return external_to_internal_type_mapping[values_datatype(prop)]
 
 @lru_cache
-def values_datatype(prop: str) -> str:
+def values_datatype(prop: I.Pid) -> str:
     """ Returns the outward-facing datatype of the provided property. """
-    # TODO: rewrite better
-    filename = get_filename(prop)
-    prop_data: I.PropertyDict
-    try:
-        with open(filename, encoding="utf-8") as fileptr:
-            prop_data = json.load(fileptr)
-    except (FileNotFoundError, OSError, json.JSONDecodeError) as e:
-        prop_response = requests.get('https://www.wikidata.org/wiki/Special:EntityData/'+prop+'.json')
-        prop_response_json = prop_response.json()
-        if isinstance(prop_response_json, dict):
-            prop_data = prop_response_json["entities"][prop]
-            with open(filename, "w", encoding="utf-8") as fileptr:
-                json.dump(prop_data, fileptr)
-        else:
-            raise ValueError(f"Response from retrieving {prop} not valid JSON") from e
-    return prop_data["datatype"]
-
-def read_config() -> Tuple[str, float]:
-    """ Reads the config file residing at /path/to/tfsl/config.ini. """
-    config = configparser.ConfigParser()
-    current_config_path = (Path(__file__).parent / '../config.ini').resolve()
-    config.read(current_config_path)
-    cpath = config['Tfsl']['CachePath']
-    ttl = float(config['Tfsl']['TimeToLive'])
-    return cpath, ttl
-
-def get_filename(entity_name: str) -> str:
-    """ Constructs the name of a text file containing a sense subgraph based on a given property. """
-    return os.path.join(cache_path, f"{entity_name}.json")
+    prop_data = tfsl.auth.retrieve_single_entity(prop)
+    if I.is_PropertyDict(prop_data):
+        return prop_data["datatype"]
+    raise ValueError(f'Attempting to get datatype of non-property {prop}')
 
 def is_novalue(value: Any) -> bool:
     """ Checks that a value is a novalue. """
@@ -104,6 +74,3 @@ def is_novalue(value: Any) -> bool:
 def is_somevalue(value: Any) -> bool:
     """ Checks that a value is a somevalue. """
     return value is True
-
-cache_path, time_to_live = read_config()
-os.makedirs(cache_path,exist_ok=True)

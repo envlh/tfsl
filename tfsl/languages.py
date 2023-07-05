@@ -72,7 +72,7 @@ class Languages:
             thing_to_return = cls.__codelookup__[string_in]
             if not thing_to_return:
                 if '-x-' in string_in:
-                    prefix, _, suffix = string_in.partition('-x-')
+                    _, _, suffix = string_in.partition('-x-')
                     thing_to_return = [Language(string_in, suffix)]
                 else:
                     thing_to_return = [Language(string_in, "Q22282914")]
@@ -681,5 +681,5 @@ def get_first_lang(arg: str) -> Language:
     """
     try:
         return langs.find(arg)[0]
-    except IndexError as e:
-        raise Exception('Could not find', arg) from e
+    except IndexError as exception:
+        raise Exception('Could not find', arg) from exception

@@ -33,22 +33,22 @@ class TimeValue:
         return base_dict
 
 @singledispatch
-def toTimeValue(obj_in: object, precision: int=11) -> TimeValue:
+def to_TimeValue(obj_in: object, precision: int=11) -> TimeValue: # pylint: disable=invalid-name
     """ Intended to convert arbitrary objects to TimeValues. """
-    raise ValueError("Can't convert " + str(type(obj_in)) + " to TimeValue")
+    raise ValueError(f"Can't convert {type(obj_in)} to TimeValue")
 
-@toTimeValue.register(datetime.date)
-@toTimeValue.register(datetime.datetime)
+@to_TimeValue.register(datetime.date)
+@to_TimeValue.register(datetime.datetime)
 def _(obj_in: Union[datetime.datetime, datetime.date], precision: int=11) -> TimeValue:
     if precision > 11:
-        raise ValueError("Precisions smaller than day are not supported")
+        raise ValueError("Precisions smaller than day are not supported (T57755)")
     timestr = obj_in.strftime("+%Y-%m-%dT00:00:00Z") + '/' + str(precision)
     return TimeValue(timestr, precision=precision)
 
-def is_timevalue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.TimeValueDict]:
+def is_TimeValue(value_in: I.ClaimDictValueDictionary) -> TypeGuard[I.TimeValueDict]: # pylint: disable=invalid-name
     """ Checks that the keys expected for a TimeValue exist. """
     return all(key in value_in for key in ["time", "precision"])
 
-def build_timevalue(value_in: I.TimeValueDict) -> TimeValue:
+def build_TimeValue(value_in: I.TimeValueDict) -> TimeValue: # pylint: disable=invalid-name
     """ Builds a TimeValue given the Wikibase JSON for one. """
     return TimeValue(**value_in)
