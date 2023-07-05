@@ -104,12 +104,12 @@ class MonolingualTextHolder(object):
                     self.removed_texts.append(rep)
                 else:
                     newtexts.append(rep)
-            return MonolingualTextHolder(newtexts)
+            return MonolingualTextHolder(newtexts, self.removed_texts)
         elif isinstance(rhs, tfsl.monolingualtext.MonolingualText):
             newtexts = [rep for rep in self.texts if rep != rhs]
             if rhs in self.texts:
                 self.removed_texts.append(rhs)
-            return MonolingualTextHolder(newtexts)
+            return MonolingualTextHolder(newtexts, self.removed_texts)
         raise TypeError(f"Can't subtract {type(rhs)} from MonolingualTextHolder")
 
 def build_text_list(text_dict: I.LemmaDictSet) -> I.MonolingualTextList:

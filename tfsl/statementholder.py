@@ -12,7 +12,9 @@ import tfsl.utils as U
 
 class StatementHolder(object):
     """ Holds a set of statements. """
-    def __init__(self, statements: Optional[I.StatementHolderInput]=None):
+    def __init__(self,
+                 statements: Optional[I.StatementHolderInput]=None,
+                 removed_statements: Optional[I.StatementSet]=None):
         super().__init__()
 
         self.statements = defaultdict(list)
@@ -23,6 +25,10 @@ class StatementHolder(object):
         elif isinstance(statements, list):
             for arg in statements:
                 self.statements[arg.property].append(arg)
+        if removed_statements is None:
+            self.removed_statements = defaultdict(list)
+        else:
+            self.removed_statements = removed_statements
 
     def get_statements(self, property_in: I.Pid) -> I.StatementList:
         """ Returns a list of statements with the provided property. """
@@ -45,6 +51,8 @@ class StatementHolder(object):
 
     def __jsonout__(self) -> I.StatementDictSet:
         statement_dict = defaultdict(list)
+        for stmtprop, stmtval in self.removed_statements.items():
+            statement_dict[stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
         for stmtprop, stmtval in self.statements.items():
             statement_dict[stmtprop].extend([stmt.__jsonout__() for stmt in stmtval])
         return dict(statement_dict)
@@ -96,17 +104,17 @@ class StatementHolder(object):
         if isinstance(rhs, str):
             if I.is_Pid(rhs):
                 newstmts = deepcopy(self.statements)
-                if rhs in newstmts:
-                    del newstmts[rhs]
-                return StatementHolder(newstmts)
+                newremoved = deepcopy(self.removed_statements)
+                newremoved[rhs].extend([stmt.set_to_remove() for stmt in newstmts[rhs]])
+                del newstmts[rhs]
+                return StatementHolder(newstmts, newremoved)
             raise TypeError(f"String {rhs} is not a property")
         elif isinstance(rhs, tfsl.statement.Statement):
             newstmts = deepcopy(self.statements)
+            newremoved = deepcopy(self.removed_statements)
             newstmts[rhs.property] = [stmt for stmt in newstmts[rhs.property] if stmt != rhs]
-            newstmts[rhs.property].append(rhs.set_to_remove())
-            if not newstmts[rhs.property]:
-                del newstmts[rhs.property]
-            return StatementHolder(newstmts)
+            newremoved[rhs.property].append(rhs.set_to_remove())
+            return StatementHolder(newstmts, newremoved)
         raise TypeError(f"Can't subtract {type(rhs)} from StatementHolder")
 
 def build_statement_list(claims_dict: I.StatementDictSet) -> I.StatementSet:

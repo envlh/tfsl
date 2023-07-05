@@ -186,7 +186,7 @@ class LexemeForm:
         else:
             base_dict["add"] = ""
 
-        if (statement_dict := self.statements.__jsonout__()):
+        if (statement_dict := self.statements.__jsonout__()) is not None:
             base_dict["claims"] = statement_dict
 
         return base_dict

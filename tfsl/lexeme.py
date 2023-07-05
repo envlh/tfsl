@@ -296,16 +296,16 @@ class Lexeme:
             prefix = "{\n"
             suffix = "\n}"
             sense_strings = [str(sense) for sense in self.senses]
-            base_str = indent('\n'.join(sense_strings), tfsl.utils.DEFAULT_INDENT)
-            senses_str = prefix + base_str + suffix
+            base_str_sense = indent('\n'.join(sense_strings), tfsl.utils.DEFAULT_INDENT)
+            senses_str = prefix + base_str_sense + suffix
 
         forms_str = ""
         if len(self.forms) != 0:
             prefix = "(\n"
             suffix = "\n)"
             form_strings = [str(form) for form in self.forms]
-            base_str = indent('\n'.join(form_strings), tfsl.utils.DEFAULT_INDENT)
-            forms_str = prefix + base_str + suffix
+            base_str_form = indent('\n'.join(form_strings), tfsl.utils.DEFAULT_INDENT)
+            forms_str = prefix + base_str_form + suffix
 
         return "\n".join([lemma_str + base_str, stmts_str, senses_str, forms_str])
 
